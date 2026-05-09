@@ -181,7 +181,8 @@ $string['privacy:metadata:openai:conversation_turns']               = 'The text 
 $string['publish_grade']       = 'Publish grade';
 $string['push_to_talk']        = 'Hold to respond';
 
-$string['rate_limit_exceeded'] = 'You have made too many requests. Please wait a moment before trying again.';
+$string['rate_limit_exceeded']        = 'You have made too many requests. Please wait a moment before trying again.';
+$string['rate_limit_exceeded_global'] = 'The site-wide AI Roleplay request limit has been reached. Please try again shortly.';
 
 $string['regen_confirm']       = 'This will replace the current evaluation with a new one. Continue?';
 $string['regen_cooldown']      = 'Please wait before regenerating again. This operation has a cooldown to prevent excessive API usage.';
@@ -222,6 +223,8 @@ $string['settings_anonymize_salt']           = 'Anonymisation salt';
 $string['settings_anonymize_salt_desc']      = 'Random string added to the hash for extra security.';
 $string['settings_api_rate_limit']           = 'Max API calls per user per minute';
 $string['settings_api_rate_limit_desc']      = 'Rate limit per Moodle user to prevent API abuse.';
+$string['settings_api_rate_limit_global']    = 'Max API calls per minute (whole site)';
+$string['settings_api_rate_limit_global_desc'] = 'Site-wide cap that backs up the per-user limit. Counts every OpenAI call (chat, TTS, evaluation, cron tasks). Lower this if cost runaway is a concern.';
 $string['settings_api_timeout']              = 'API request timeout (seconds)';
 $string['settings_api_timeout_desc']         = 'Maximum time to wait for a response from OpenAI.';
 $string['settings_apikeys_heading']          = 'OpenAI API Keys';

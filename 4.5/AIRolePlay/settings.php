@@ -157,4 +157,13 @@ if ($ADMIN->fulltree) {
         10,
         PARAM_INT
     ));
+
+    // Max API calls per minute across the whole installation (global backstop).
+    $settings->add(new admin_setting_configtext(
+        'mod_airoleplay/api_rate_limit_global',
+        get_string('settings_api_rate_limit_global', 'mod_airoleplay'),
+        get_string('settings_api_rate_limit_global_desc', 'mod_airoleplay'),
+        60,
+        PARAM_INT
+    ));
 }

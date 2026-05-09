@@ -55,6 +55,9 @@ class openai_client {
     /** @var int Max calls per minute per user. */
     private int $ratelimit;
 
+    /** @var int Max calls per minute across the whole installation (global backstop). */
+    private int $globalratelimit;
+
     /**
      * Private constructor — use {@see self::get_instance()}.
      */
@@ -67,10 +70,11 @@ class openai_client {
         $encryptedsecondary = $config->openai_apikey_secondary ?? '';
         $this->apikeysecondary = $encryptedsecondary ? $this->decrypt_key($encryptedsecondary) : null;
 
-        $this->timeout       = max(30, (int)($config->api_timeout ?? 120));
-        $this->maxtokens     = max(256, (int)($config->safety_max_tokens ?? 4096));
-        $this->contentfilter = !empty($config->safety_content_filter);
-        $this->ratelimit     = max(1, (int)($config->api_rate_limit ?? 10));
+        $this->timeout         = max(30, (int)($config->api_timeout ?? 120));
+        $this->maxtokens       = max(256, (int)($config->safety_max_tokens ?? 4096));
+        $this->contentfilter   = !empty($config->safety_content_filter);
+        $this->ratelimit       = max(1, (int)($config->api_rate_limit ?? 10));
+        $this->globalratelimit = max(1, (int)($config->api_rate_limit_global ?? 60));
     }
 
     /**
@@ -274,24 +278,36 @@ class openai_client {
     }
 
     /**
-     * Checks per-user rate limit using Moodle application cache.
+     * Enforces both a global (per-installation) and a per-user rate limit.
      *
-     * @param int $userid Moodle user id (0 = skip).
-     * @throws \moodle_exception if rate limit exceeded.
+     * The global limit is always applied and acts as a backstop against
+     * runaway cost when the per-user limit is bypassed (e.g. cron tasks
+     * that legitimately omit a user id).
+     *
+     * @param int $userid Moodle user id (0 skips the per-user check only).
+     * @throws \moodle_exception if either rate limit is exceeded.
      */
     private function check_rate_limit(int $userid): void {
+        $cache  = \cache::make('mod_airoleplay', 'ratelimit');
+        $window = floor(time() / 60);
+
+        // Global per-installation backstop, always enforced.
+        $globalkey   = 'global_' . $window;
+        $globalcount = (int)($cache->get($globalkey) ?? 0);
+        if ($globalcount >= $this->globalratelimit) {
+            throw new \moodle_exception('rate_limit_exceeded_global', 'mod_airoleplay');
+        }
+        $cache->set($globalkey, $globalcount + 1);
+
         if (!$userid) {
             return;
         }
 
-        $cache = \cache::make('mod_airoleplay', 'ratelimit');
-        $key   = 'user_' . $userid . '_' . floor(time() / 60);
+        $key   = 'user_' . $userid . '_' . $window;
         $count = (int)($cache->get($key) ?? 0);
-
         if ($count >= $this->ratelimit) {
             throw new \moodle_exception('rate_limit_exceeded', 'mod_airoleplay');
         }
-
         $cache->set($key, $count + 1);
     }
 

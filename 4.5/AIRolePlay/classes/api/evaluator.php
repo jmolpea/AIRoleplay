@@ -120,7 +120,7 @@ PROMPT;
             $messages,
             $model,
             ['response_format' => ['type' => 'json_object']],
-            0
+            (int)$submission->userid
         );
 
         $jsontext = $response['choices'][0]['message']['content'] ?? '{}';
