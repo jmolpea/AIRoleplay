@@ -97,16 +97,32 @@ try {
             require_capability('mod/airoleplay:submit', $context);
             $submission = get_or_create_submission($airoleplay, $cm, $context);
 
-            // Mark as active when session begins.
-            if ($submission->status === 'draft') {
-                $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
-                $submission->status = 'active';
-
-                \mod_airoleplay\event\submission_created::create([
-                    'context'  => $context,
-                    'objectid' => $submission->id,
-                    'userid'   => $USER->id,
-                ])->trigger();
+            $lock = airoleplay_acquire_submission_lock($submission->id);
+            if (!$lock) {
+                json_error('Submission is busy, please retry');
+            }
+            try {
+                // Re-read state under the lock so concurrent callers cannot
+                // both observe 'draft' and both fire submission_created.
+                $current = $DB->get_record(
+                    'airoleplay_submissions',
+                    ['id' => $submission->id],
+                    'id, status',
+                    MUST_EXIST
+                );
+                if ($current->status === 'draft') {
+                    $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
+                    $submission->status = 'active';
+                    \mod_airoleplay\event\submission_created::create([
+                        'context'  => $context,
+                        'objectid' => $submission->id,
+                        'userid'   => $USER->id,
+                    ])->trigger();
+                } else {
+                    $submission->status = $current->status;
+                }
+            } finally {
+                $lock->release();
             }
 
             $conductor = new \mod_airoleplay\api\roleplay_conductor($airoleplay, $submission);
@@ -124,14 +140,26 @@ try {
                 MUST_EXIST
             );
 
-            if (!in_array($submission->status, ['active', 'draft'])) {
-                throw new \moodle_exception('invalidsubmissionstatus', 'mod_airoleplay');
+            $lock = airoleplay_acquire_submission_lock($submission->id);
+            if (!$lock) {
+                json_error('Submission is busy, please retry');
             }
-
-            // Ensure active.
-            if ($submission->status === 'draft') {
-                $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
+            try {
+                $current = $DB->get_record(
+                    'airoleplay_submissions',
+                    ['id' => $submission->id],
+                    'id, status',
+                    MUST_EXIST
+                );
+                if (!in_array($current->status, ['active', 'draft'], true)) {
+                    throw new \moodle_exception('invalidsubmissionstatus', 'mod_airoleplay');
+                }
+                if ($current->status === 'draft') {
+                    $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
+                }
                 $submission->status = 'active';
+            } finally {
+                $lock->release();
             }
 
             $participantinput = substr(trim($jsonbody['response'] ?? ''), 0, 5000);
@@ -154,15 +182,43 @@ try {
                 MUST_EXIST
             );
 
-            if (!in_array($submission->status, ['active', 'draft'])) {
-                throw new \moodle_exception('invalidsubmissionstatus', 'mod_airoleplay');
-            }
-
             $turn = (int)($jsonbody['turn'] ?? 0);
 
-            // Mark as submitted immediately.
-            $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submission->id]);
-            $DB->set_field('airoleplay_submissions', 'timesubmitted', time(), ['id' => $submission->id]);
+            // Claim the submission under the lock. Only the worker that
+            // actually transitions active/draft -> submitted runs the
+            // closing statement and the evaluator; every concurrent caller
+            // sees a non-active state and bails idempotently.
+            $lock = airoleplay_acquire_submission_lock($submission->id);
+            if (!$lock) {
+                json_error('Submission is busy, please retry');
+            }
+            $iswinner = false;
+            try {
+                $current = $DB->get_record(
+                    'airoleplay_submissions',
+                    ['id' => $submission->id],
+                    '*',
+                    MUST_EXIST
+                );
+                if (!in_array($current->status, ['active', 'draft'], true)) {
+                    // Already closed by another worker — return its outcome
+                    // without retriggering the evaluator.
+                    echo json_encode([
+                        'success'           => true,
+                        'evaluation_status' => $current->status,
+                        'duplicate'         => true,
+                    ]);
+                    break;
+                }
+                $now = time();
+                $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submission->id]);
+                $DB->set_field('airoleplay_submissions', 'timesubmitted', $now, ['id' => $submission->id]);
+                $submission->status        = 'submitted';
+                $submission->timesubmitted = $now;
+                $iswinner = true;
+            } finally {
+                $lock->release();
+            }
 
             $conductor = new \mod_airoleplay\api\roleplay_conductor($airoleplay, $submission);
             $result    = $conductor->closing_statement($turn);

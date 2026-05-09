@@ -22,6 +22,22 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// Concurrency helpers.
+
+/**
+ * Acquires a per-submission lock so concurrent ajax workers cannot duplicate
+ * state transitions or trigger the evaluator twice.
+ *
+ * @param int $submissionid The airoleplay_submissions.id to guard.
+ * @param int $timeoutsecs  How long to wait before giving up.
+ * @return \core\lock\lock|null Acquired lock, or null on timeout.
+ */
+function airoleplay_acquire_submission_lock(int $submissionid, int $timeoutsecs = 10): ?\core\lock\lock {
+    $factory = \core\lock\lock_config::get_lock_factory('mod_airoleplay');
+    $lock    = $factory->get_lock('submission_' . $submissionid, $timeoutsecs);
+    return $lock ?: null;
+}
+
 // Course module API.
 
 /**
