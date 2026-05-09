@@ -91,6 +91,9 @@ $string['gdpr_consent_label']   = 'I understand and agree that my spoken respons
 $string['gdpr_consent_required'] = 'You must provide consent on the activity page before starting the session.';
 $string['gdpr_default_notice']  = '<p>To complete this activity, your spoken responses during the roleplay session will be sent to <strong>OpenAI\'s API</strong> for AI-driven conversation and evaluation.</p><p>Data is not retained by OpenAI beyond the immediate request.</p><p>By proceeding, you consent to this processing in accordance with our privacy policy.</p>';
 $string['gdpr_notice_title']    = 'Privacy Notice — AI Processing';
+$string['gdpr_revoke_button']   = 'Withdraw consent and delete my data';
+$string['gdpr_revoke_confirm']  = 'This will delete every roleplay submission, transcript and grade you have on this activity. This cannot be undone. Continue?';
+$string['gdpr_revoked_notice']  = 'Your consent has been withdrawn and your roleplay data has been deleted from this activity.';
 
 $string['grade_breakdown']       = 'Grade breakdown';
 $string['grade_override_saved']  = 'Grade saved successfully.';
