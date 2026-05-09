@@ -302,7 +302,7 @@ class openai_client {
             if ($e->errorcode === 'content_flagged') {
                 throw $e;
             }
-            debugging('airoleplay: moderation endpoint failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            \airoleplay_log_internal_error('moderation_endpoint', $e);
         }
     }
 

@@ -38,6 +38,41 @@ function airoleplay_acquire_submission_lock(int $submissionid, int $timeoutsecs 
     return $lock ?: null;
 }
 
+// Logging helpers.
+
+/**
+ * Records an internal error.
+ *
+ * Sends the full message, file/line and stack trace to PHP's error_log
+ * (server-side only) and emits a short, identifier-only debugging() line
+ * so an admin running with debug display on does not see the raw message,
+ * which can contain prompt fragments, request bodies or file paths.
+ *
+ * @param string     $context Short, free-text context (e.g. "ajax dispatch").
+ * @param \Throwable $e       The caught exception.
+ * @param array      $ids     Optional integer identifiers to include in the
+ *                            short debug line (submission id, cmid, ...).
+ */
+function airoleplay_log_internal_error(string $context, \Throwable $e, array $ids = []): void {
+    error_log(sprintf(
+        '[mod_airoleplay] %s: %s in %s:%d%s%s',
+        $context,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        PHP_EOL,
+        $e->getTraceAsString()
+    ));
+    $idstr = '';
+    foreach ($ids as $key => $value) {
+        $idstr .= ' ' . $key . '=' . (int)$value;
+    }
+    debugging(
+        'mod_airoleplay ' . $context . ' error (' . get_class($e) . ')' . $idstr,
+        DEBUG_DEVELOPER
+    );
+}
+
 // Course module API.
 
 /**
@@ -130,7 +165,7 @@ function airoleplay_process_form_data(stdClass $data): void {
         try {
             $data->openai_apikey = \core\encryption::encrypt($data->openai_apikey);
         } catch (\moodle_exception $e) {
-            debugging('airoleplay: could not encrypt API key: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            airoleplay_log_internal_error('apikey_encrypt', $e);
         }
     }
 

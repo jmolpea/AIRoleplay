@@ -284,7 +284,7 @@ class roleplay_conductor {
             $audiobytes = $this->client->text_to_speech($text, $voice, $this->submission->userid);
             return base64_encode($audiobytes);
         } catch (\moodle_exception $e) {
-            debugging('airoleplay: TTS failed for avatar ' . $avatar . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            \airoleplay_log_internal_error('tts_failed', $e, ['avatar' => $avatar]);
             return '';
         }
     }

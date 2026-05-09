@@ -74,7 +74,8 @@ class evaluate_submission_task extends \core\task\adhoc_task {
             $evaluator->evaluate($submission, $airoleplay, $course, $cm);
             mtrace('airoleplay evaluate_submission_task: completed for submission ' . $submissionid);
         } catch (\moodle_exception $e) {
-            mtrace('airoleplay evaluate_submission_task error: ' . $e->getMessage());
+            \airoleplay_log_internal_error('evaluate_submission_task', $e, ['submissionid' => $submissionid]);
+            mtrace('airoleplay evaluate_submission_task: failed for submission ' . $submissionid . ' (see error log)');
             $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submissionid]);
         }
     }

@@ -231,7 +231,11 @@ try {
                 $evaluator->evaluate($submission, $airoleplay, $course, $cm);
                 $evalstatus = 'graded';
             } catch (\Throwable $evalerr) {
-                debugging('airoleplay: evaluation failed for submission ' . $submission->id . ': ' . $evalerr->getMessage(), DEBUG_DEVELOPER);
+                airoleplay_log_internal_error(
+                    'evaluation_sync_failed',
+                    $evalerr,
+                    ['submissionid' => $submission->id]
+                );
                 $task = new \mod_airoleplay\task\evaluate_submission_task();
                 $task->set_custom_data(['submissionid' => $submission->id, 'cmid' => $cmid]);
                 \core\task\manager::queue_adhoc_task($task);
@@ -266,9 +270,11 @@ try {
             json_error('Unknown action: ' . s($action));
     }
 } catch (\moodle_exception $e) {
+    // moodle_exception messages are already translated language strings
+    // safe to surface to the caller; no internal details leak.
     json_error($e->getMessage());
 } catch (\Throwable $e) {
-    debugging('airoleplay ajax error: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), DEBUG_DEVELOPER);
+    airoleplay_log_internal_error('ajax_dispatch', $e, ['cmid' => $cmid]);
     json_error(get_string('unexpectederror', 'error'));
 }
 
