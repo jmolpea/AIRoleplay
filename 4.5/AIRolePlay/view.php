@@ -299,9 +299,13 @@ if ($submission && $submission->gdpr_consent) {
             );
 
             if ($submission->final_feedback) {
+                // Feedback comes from the AI evaluator (or from a teacher
+                // override saved through submissions.php). Render as plain
+                // text so a hostile transcript that survived prompt-injection
+                // checks cannot smuggle HTML into the student's screen.
                 echo html_writer::div(
                     html_writer::tag('h5', get_string('feedback', 'mod_airoleplay')) .
-                    format_text($submission->final_feedback, FORMAT_HTML),
+                    format_text($submission->final_feedback, FORMAT_PLAIN, ['context' => $context]),
                     'airoleplay-feedback mt-3'
                 );
             }

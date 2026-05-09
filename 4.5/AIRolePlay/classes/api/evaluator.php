@@ -193,9 +193,12 @@ PROMPT;
         $result['academic_integrity_flags'] = $flags;
 
         // Strip any of our delimiter strings from free-text fields the model
-        // produced so they cannot be reused to attack the next render.
-        $result['overall_feedback'] = self::neutralise_delimiters(
-            (string)($result['overall_feedback'] ?? '')
+        // produced so they cannot be reused to attack the next render, then
+        // strip HTML tags so even a misconfigured renderer downstream cannot
+        // execute model-emitted markup.
+        $result['overall_feedback'] = clean_param(
+            self::neutralise_delimiters((string)($result['overall_feedback'] ?? '')),
+            PARAM_NOTAGS
         );
 
         $maxgrade   = max(1, (int)($airoleplay->grade ?? 100));
