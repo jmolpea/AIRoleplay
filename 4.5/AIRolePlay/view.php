@@ -335,15 +335,18 @@ if ($submission && $submission->gdpr_consent) {
             // Show grade breakdown if available.
             if ($submission->grade_breakdown) {
                 $breakdown = json_decode($submission->grade_breakdown, true);
-                if ($breakdown) {
+                if (is_array($breakdown) && !empty($breakdown)) {
                     echo html_writer::tag('h5', get_string('grade_breakdown', 'mod_airoleplay'), ['class' => 'mt-4']);
                     echo html_writer::start_tag('ul', ['class' => 'list-group']);
                     foreach ($breakdown as $dimension => $data) {
+                        if (!is_string($dimension) || !is_array($data)) {
+                            continue;
+                        }
                         $label = get_string('dimension_' . $dimension, 'mod_airoleplay', $dimension);
                         echo html_writer::tag('li',
                             html_writer::tag('strong', $label) . ': ' .
                             (int)($data['score'] ?? 0) . '/100 — ' .
-                            s($data['feedback'] ?? ''),
+                            s((string)($data['feedback'] ?? '')),
                             ['class' => 'list-group-item']
                         );
                     }

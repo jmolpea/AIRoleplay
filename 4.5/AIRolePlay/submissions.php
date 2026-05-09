@@ -278,14 +278,18 @@ function render_submission_detail(
     // Roleplay transcript.
     if ($submission->roleplay_transcript) {
         $transcript = json_decode($submission->roleplay_transcript, true);
-        if ($transcript) {
+        if (is_array($transcript) && !empty($transcript)) {
             echo html_writer::start_div('card card-body mb-3');
             echo html_writer::tag('h5', get_string('conversation_log', 'mod_airoleplay'));
             echo html_writer::start_div('airoleplay-log-detail');
             foreach ($transcript as $turn) {
-                $speaker  = s($turn['speaker'] ?? '');
-                $text     = s($turn['text'] ?? '');
-                $cssclass = ($turn['speaker'] === 'participant') ? 'participant-turn' : 'avatar-turn';
+                if (!is_array($turn)) {
+                    continue;
+                }
+                $speakerraw = (string)($turn['speaker'] ?? '');
+                $speaker    = s($speakerraw);
+                $text       = s((string)($turn['text'] ?? ''));
+                $cssclass   = ($speakerraw === 'participant') ? 'participant-turn' : 'avatar-turn';
                 echo html_writer::div(
                     html_writer::tag('strong', $speaker . ': ') . $text,
                     'transcript-item ' . $cssclass
@@ -299,16 +303,19 @@ function render_submission_detail(
     // Grade breakdown.
     if ($submission->grade_breakdown) {
         $breakdown = json_decode($submission->grade_breakdown, true);
-        if ($breakdown) {
+        if (is_array($breakdown) && !empty($breakdown)) {
             echo html_writer::start_div('card card-body mb-3');
             echo html_writer::tag('h5', get_string('grade_breakdown', 'mod_airoleplay'));
             foreach ($breakdown as $dimension => $data) {
+                if (!is_string($dimension) || !is_array($data)) {
+                    continue;
+                }
                 $label = get_string('dimension_' . $dimension, 'mod_airoleplay', $dimension);
                 echo html_writer::div(
                     html_writer::tag('strong', $label) .
                     ' — Score: ' . (int)($data['score'] ?? 0) . '/100' .
                     ' (weight: ' . (float)($data['weight'] ?? 0) . ')<br/>' .
-                    s($data['feedback'] ?? ''),
+                    s((string)($data['feedback'] ?? '')),
                     'mb-2'
                 );
             }
