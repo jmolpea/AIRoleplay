@@ -29,14 +29,40 @@ define('AJAX_SCRIPT', true);
 require_once('../../config.php');
 require_once($CFG->dirroot . '/mod/airoleplay/lib.php');
 
-$rawbody  = file_get_contents('php://input');
-$jsonbody = json_decode($rawbody, true) ?? [];
-
-$action       = $jsonbody['action'] ?? required_param('action', PARAM_ALPHANUMEXT);
-$cmid         = (int)($jsonbody['cmid'] ?? required_param('cmid', PARAM_INT));
-$submissionid = (int)($jsonbody['submissionid'] ?? optional_param('submissionid', 0, PARAM_INT));
-
 header('Content-Type: application/json');
+
+// Pick exactly one source of truth: a JSON request body when the caller
+// declared application/json (the only path the bundled JS uses), or the
+// URL/form parameters otherwise. Mixing the two enabled WAF-evading
+// parameter pollution attacks where querystring and body disagreed.
+$contenttype = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? ''));
+$isjsonrequest = $contenttype !== '' && str_starts_with($contenttype, 'application/json');
+
+$jsonbody = [];
+if ($isjsonrequest) {
+    $rawbody  = file_get_contents('php://input');
+    $jsonbody = json_decode((string)$rawbody, true);
+    if (!is_array($jsonbody)) {
+        echo json_encode(['success' => false, 'error' => 'Malformed JSON body']);
+        exit;
+    }
+}
+
+if ($isjsonrequest) {
+    $action = isset($jsonbody['action']) && is_string($jsonbody['action'])
+        ? clean_param($jsonbody['action'], PARAM_ALPHANUMEXT)
+        : '';
+    if ($action === '') {
+        echo json_encode(['success' => false, 'error' => 'Missing action']);
+        exit;
+    }
+    $cmid         = isset($jsonbody['cmid']) ? (int)$jsonbody['cmid'] : 0;
+    $submissionid = isset($jsonbody['submissionid']) ? (int)$jsonbody['submissionid'] : 0;
+} else {
+    $action       = required_param('action', PARAM_ALPHANUMEXT);
+    $cmid         = required_param('cmid', PARAM_INT);
+    $submissionid = optional_param('submissionid', 0, PARAM_INT);
+}
 
 try {
     if ($cmid <= 0) {
@@ -51,8 +77,14 @@ try {
 
     // POST-mutating actions require sesskey.
     $mutating = ['roleplay_opening', 'roleplay_turn', 'roleplay_closing', 'regen_evaluation'];
-    if (in_array($action, $mutating)) {
-        $sesskey = $jsonbody['sesskey'] ?? required_param('sesskey', PARAM_RAW);
+    if (in_array($action, $mutating, true)) {
+        if ($isjsonrequest) {
+            $sesskey = isset($jsonbody['sesskey']) && is_string($jsonbody['sesskey'])
+                ? $jsonbody['sesskey']
+                : '';
+        } else {
+            $sesskey = required_param('sesskey', PARAM_RAW);
+        }
         if (!confirm_sesskey($sesskey)) {
             json_error('Invalid session key');
         }
