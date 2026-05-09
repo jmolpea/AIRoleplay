@@ -78,8 +78,11 @@ if ($action && $userid) {
     } else if ($action === 'return') {
         $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
     } else if ($action === 'savegarde') {
-        $newgrade    = required_param('grade', PARAM_FLOAT);
-        $newfeedback = optional_param('feedback', '', PARAM_RAW);
+        $newgrade = required_param('grade', PARAM_FLOAT);
+        // Teacher feedback is shown to students with FORMAT_PLAIN, so we
+        // only need printable text. PARAM_NOTAGS strips any markup the
+        // teacher (or a CSRF-tricked browser) might have submitted.
+        $newfeedback = optional_param('feedback', '', PARAM_NOTAGS);
         $DB->set_field('airoleplay_submissions', 'final_grade', $newgrade, ['id' => $submission->id]);
         $DB->set_field('airoleplay_submissions', 'final_feedback', $newfeedback, ['id' => $submission->id]);
         $DB->set_field('airoleplay_submissions', 'grader_userid', $USER->id, ['id' => $submission->id]);
