@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/airoleplay/db" VERSION="20250421" COMMENT="XMLDB file for mod_airoleplay"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="airoleplay" COMMENT="Main table for airoleplay activity instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Course this activity belongs to"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="openai_apikey" TYPE="text" NOTNULL="false" COMMENT="Encrypted OpenAI API key (overrides global)"/>
+        <FIELD NAME="openai_model_roleplay" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-4o" COMMENT="Model for roleplay conversation"/>
+        <FIELD NAME="openai_model_eval" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-4o" COMMENT="Model for final evaluation"/>
+        <FIELD NAME="num_avatars" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" COMMENT="Number of active avatars: 1, 2 or 3"/>
+        <FIELD NAME="scenario_description" TYPE="text" NOTNULL="false" COMMENT="The roleplay situation shown to the participant"/>
+        <FIELD NAME="scenario_descriptionformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="participant_role" TYPE="text" NOTNULL="false" COMMENT="The character/role the participant plays"/>
+        <FIELD NAME="session_duration" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="10" COMMENT="Roleplay session duration in minutes"/>
+        <FIELD NAME="roleplay_prompt_eval" TYPE="text" NOTNULL="false" COMMENT="Final evaluation prompt for the teacher"/>
+        <FIELD NAME="avatar_1_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Alex"/>
+        <FIELD NAME="avatar_1_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
+        <FIELD NAME="avatar_1_prompt" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="avatar_1_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="onyx"/>
+        <FIELD NAME="avatar_1_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="avatar_1_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="avatar_2_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Jordan"/>
+        <FIELD NAME="avatar_2_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
+        <FIELD NAME="avatar_2_prompt" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="avatar_2_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="nova"/>
+        <FIELD NAME="avatar_2_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="2"/>
+        <FIELD NAME="avatar_2_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="avatar_3_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Morgan"/>
+        <FIELD NAME="avatar_3_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
+        <FIELD NAME="avatar_3_prompt" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="avatar_3_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="echo"/>
+        <FIELD NAME="avatar_3_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="3"/>
+        <FIELD NAME="avatar_3_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="max_attempts" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="2" COMMENT="0 = unlimited"/>
+        <FIELD NAME="grading_workflow" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="group_submission" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="groupingid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="notify_student" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="safety_max_tokens" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="4096"/>
+        <FIELD NAME="safety_content_filter" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="safety_extra_prompt" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="100"/>
+        <FIELD NAME="completionsubmit" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="completiongrade" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="completionmingradeval" TYPE="number" LENGTH="10" NOTNULL="false" DECIMALS="5" DEFAULT="0.00000"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="airoleplay_submissions" COMMENT="Student submissions for airoleplay activities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="airoleplay" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to airoleplay table"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="draft" COMMENT="draft|active|submitted|graded"/>
+        <FIELD NAME="attempt" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="gdpr_consent" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="gdpr_consent_time" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="roleplay_transcript" TYPE="text" NOTNULL="false" COMMENT="JSON with full conversation history"/>
+        <FIELD NAME="roleplay_analysis" TYPE="text" NOTNULL="false" COMMENT="Full AI evaluation JSON"/>
+        <FIELD NAME="final_grade" TYPE="number" LENGTH="10" NOTNULL="false" DECIMALS="5"/>
+        <FIELD NAME="final_feedback" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="grade_breakdown" TYPE="text" NOTNULL="false" COMMENT="JSON with evaluation breakdown"/>
+        <FIELD NAME="grader_userid" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="workflow_state" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="inreview|readyforrelease|released"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timesubmitted" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timegraded" TYPE="int" LENGTH="10" NOTNULL="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="airoleplay" TYPE="foreign" FIELDS="airoleplay" REFTABLE="airoleplay" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="airoleplay_userid" UNIQUE="false" FIELDS="airoleplay, userid"/>
+        <INDEX NAME="airoleplay_status" UNIQUE="false" FIELDS="airoleplay, status"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="airoleplay_messages" COMMENT="Detailed log of each roleplay turn">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="submission_id" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to airoleplay_submissions"/>
+        <FIELD NAME="turn_number" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="speaker" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="avatar_1|avatar_2|avatar_3|participant"/>
+        <FIELD NAME="message_text" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timestamp" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="submission_id" TYPE="foreign" FIELDS="submission_id" REFTABLE="airoleplay_submissions" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="submission_turn" UNIQUE="false" FIELDS="submission_id, turn_number"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="airoleplay_overrides" COMMENT="Per-user or per-group overrides for airoleplay activities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="airoleplay" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to airoleplay table"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="FK to user table (null for group overrides)"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="FK to groups table (null for user overrides)"/>
+        <FIELD NAME="max_attempts" TYPE="int" LENGTH="4" NOTNULL="false" COMMENT="Override max attempts (null = use activity default)"/>
+        <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Override open timestamp (null = use activity default)"/>
+        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Override close timestamp (null = use activity default)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="airoleplay" TYPE="foreign" FIELDS="airoleplay" REFTABLE="airoleplay" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="airoleplay_userid" UNIQUE="false" FIELDS="airoleplay, userid"/>
+        <INDEX NAME="airoleplay_groupid" UNIQUE="false" FIELDS="airoleplay, groupid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

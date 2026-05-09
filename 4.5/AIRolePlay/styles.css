@@ -1,0 +1,419 @@
+/**
+ * Styles for mod_airoleplay — AI Roleplay activity plugin.
+ *
+ * @package    mod_airoleplay
+ * @copyright  2025 Pluginia
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* =========================================================================
+   CSS Custom Properties
+   ========================================================================= */
+:root {
+    --airoleplay-primary:       #0082CA;
+    --airoleplay-success:       #28a745;
+    --airoleplay-danger:        #dc3545;
+    --airoleplay-warning:       #ffc107;
+    --airoleplay-dark:          #1a1a2e;
+    --airoleplay-dark-card:     #16213e;
+    --airoleplay-dark-surface:  #0f3460;
+    --airoleplay-text-light:    #e0e0e0;
+    --airoleplay-glow:          rgba(0, 130, 202, 0.6);
+    --airoleplay-active-glow:   rgba(66, 133, 244, 0.6);
+    --airoleplay-radius:        12px;
+    --airoleplay-transition:    0.3s ease;
+}
+
+/* =========================================================================
+   Container
+   ========================================================================= */
+.airoleplay-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.airoleplay-title {
+    color: var(--airoleplay-primary);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* =========================================================================
+   Attempts info
+   ========================================================================= */
+.airoleplay-attempts-info {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* =========================================================================
+   GDPR Notice
+   ========================================================================= */
+.airoleplay-gdpr-notice {
+    border-left: 4px solid var(--airoleplay-warning);
+    margin-bottom: 2rem;
+}
+
+.airoleplay-gdpr-notice h4 {
+    color: #856404;
+}
+
+/* =========================================================================
+   Scenario card
+   ========================================================================= */
+.airoleplay-scenario-card {
+    margin-bottom: 1.5rem;
+}
+
+.airoleplay-scenario-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.airoleplay-participant-role {
+    font-size: 0.95rem;
+    border-radius: var(--airoleplay-radius);
+}
+
+/* =========================================================================
+   Status Message
+   ========================================================================= */
+.airoleplay-status-message {
+    margin-top: 1rem;
+    display: none;
+    border-radius: var(--airoleplay-radius);
+}
+
+/* =========================================================================
+   Evaluating panel
+   ========================================================================= */
+.airoleplay-panel {
+    width: 100%;
+}
+
+/* =========================================================================
+   Roleplay Room
+   ========================================================================= */
+.airoleplay-room {
+    background: linear-gradient(160deg, var(--airoleplay-dark) 0%, var(--airoleplay-dark-card) 60%, var(--airoleplay-dark-surface) 100%);
+    border-radius: var(--airoleplay-radius);
+    padding: 1.5rem;
+    color: var(--airoleplay-text-light);
+    position: relative;
+    min-height: 600px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 1fr 280px;
+    gap: 1rem;
+}
+
+/* Header */
+.airoleplay-header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 1rem;
+}
+
+.airoleplay-timer {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.1);
+    padding: 0.3rem 0.8rem;
+    border-radius: 8px;
+}
+
+.airoleplay-timer.urgent {
+    color: var(--airoleplay-danger);
+    animation: urgentPulse 1s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+    0%,100% { background: rgba(220,53,69,0.2); }
+    50%     { background: rgba(220,53,69,0.5); }
+}
+
+/* Avatars */
+.airoleplay-avatars {
+    grid-column: 1;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 1rem 0;
+}
+
+.airoleplay-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    transition: var(--airoleplay-transition);
+    cursor: default;
+}
+
+.avatar-glow {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.2);
+    transition: box-shadow 0.3s, border-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+}
+
+.avatar-glow svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+video.avatar-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.avatar-info {
+    text-align: center;
+}
+
+.avatar-info strong {
+    display: block;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.avatar-info .avatar-role {
+    display: block;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+}
+
+/* Active speaker */
+.airoleplay-avatar.active-speaker .avatar-glow {
+    border-color: var(--airoleplay-primary);
+    box-shadow: 0 0 0 4px var(--airoleplay-glow), 0 0 40px 10px rgba(0, 130, 202, 0.4);
+}
+
+.airoleplay-avatar.inactive-speaker {
+    opacity: 0.5;
+    filter: grayscale(40%);
+}
+
+/* Lip sync */
+@keyframes lipSync {
+    0%,100% { transform: scaleY(1); }
+    50%     { transform: scaleY(1.4); }
+}
+
+.speaking .mouth {
+    animation: lipSync 0.15s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Transcript */
+.airoleplay-transcript {
+    grid-column: 1;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+.airoleplay-transcript .transcript-item {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+}
+
+.transcript-item.participant-turn {
+    background: rgba(0, 130, 202, 0.2);
+    border-left: 3px solid var(--airoleplay-primary);
+}
+
+.transcript-item.avatar-turn {
+    background: rgba(255,255,255,0.07);
+    border-left: 3px solid rgba(255,255,255,0.3);
+}
+
+.transcript-item.avatar-1 { border-left-color: #e74c3c; }
+.transcript-item.avatar-2 { border-left-color: #2ecc71; }
+.transcript-item.avatar-3 { border-left-color: #f39c12; }
+
+.speaker-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 0.25rem;
+}
+
+.message-text {
+    color: var(--airoleplay-text-light);
+}
+
+/* Participant controls */
+.airoleplay-participant-controls {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.push-to-talk {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    user-select: none;
+}
+
+.push-to-talk.active {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 6px rgba(0, 130, 202, 0.4);
+}
+
+/* Waveform visualiser */
+.participant-waveform {
+    width: 100%;
+    height: 40px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    display: none;
+}
+
+/* Sidebar */
+.airoleplay-sidebar {
+    grid-column: 2;
+    grid-row: 2 / -1;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.airoleplay-sidebar h4 {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.75rem;
+}
+
+.conversation-log .transcript-item {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* =========================================================================
+   Results card
+   ========================================================================= */
+.airoleplay-results {
+    border-radius: var(--airoleplay-radius);
+}
+
+.airoleplay-final-grade {
+    font-size: 1.4rem;
+    font-weight: 700;
+    border-radius: var(--airoleplay-radius);
+}
+
+/* =========================================================================
+   Submissions table (teacher view)
+   ========================================================================= */
+.airoleplay-submissions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.airoleplay-submissions-table th {
+    background: var(--airoleplay-primary);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+
+.airoleplay-submissions-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.airoleplay-submissions-table tr:hover td {
+    background: rgba(0, 130, 202, 0.05);
+}
+
+/* Workflow badges */
+.badge-inreview        { background: #6c757d; color: #fff; }
+.badge-readyforrelease { background: var(--airoleplay-warning); color: #000; }
+.badge-released        { background: var(--airoleplay-success); color: #fff; }
+
+/* Detail view transcript */
+.airoleplay-log-detail .transcript-item {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid #dee2e6;
+}
+
+.airoleplay-log-detail .participant-turn {
+    background: rgba(0, 130, 202, 0.08);
+    border-left-color: var(--airoleplay-primary);
+}
+
+.airoleplay-log-detail .avatar-turn {
+    background: #f8f9fa;
+    border-left-color: #adb5bd;
+}
+
+/* =========================================================================
+   Responsive
+   ========================================================================= */
+@media (max-width: 768px) {
+    .airoleplay-room {
+        grid-template-columns: 1fr;
+    }
+    .airoleplay-sidebar {
+        grid-column: 1;
+        grid-row: auto;
+        max-height: 200px;
+    }
+    .airoleplay-avatars {
+        gap: 0.5rem;
+    }
+    .avatar-glow {
+        width: 90px;
+        height: 90px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .airoleplay-container {
+        max-width: 1140px;
+    }
+    .avatar-glow {
+        width: 160px;
+        height: 160px;
+    }
+}
