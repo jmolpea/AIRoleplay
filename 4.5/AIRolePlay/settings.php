@@ -109,13 +109,15 @@ if ($ADMIN->fulltree) {
         get_string('settings_anonymize_desc', 'mod_airoleplay')
     ));
 
-    // Salt for anonymisation hash.
+    // Salt for anonymisation hash. Empty values are allowed and will be
+    // auto-generated on upgrade with random_bytes(32). Manual values must
+    // be at least 32 characters of [A-Za-z0-9_-] for predictability.
     $settings->add(new admin_setting_configtext(
         'mod_airoleplay/anonymize_salt',
         get_string('settings_anonymize_salt', 'mod_airoleplay'),
         get_string('settings_anonymize_salt_desc', 'mod_airoleplay'),
         '',
-        PARAM_TEXT
+        '/^([A-Za-z0-9_\-]{32,128})?$/'
     ));
 
     // Section: GDPR notice text.
