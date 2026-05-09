@@ -37,6 +37,9 @@ class openai_client {
     /** @var int Maximum retry attempts. */
     private const MAX_RETRIES = 3;
 
+    /** @var int Connection-establishment timeout (seconds). */
+    private const CONNECT_TIMEOUT = 10;
+
     /** @var string Primary API key (decrypted). */
     private string $apikey;
 
@@ -149,30 +152,47 @@ class openai_client {
      * @throws \moodle_exception on failure after all retries.
      */
     private function request(string $method, string $path, array $body, ?string $key = null): array {
-        $key = $key ?? $this->apikey;
-        $url = self::BASE_URL . $path;
-        $attempt = 0;
-        $lasterr = '';
+        $key       = $key ?? $this->apikey;
+        $url       = self::BASE_URL . $path;
+        $deadline  = microtime(true) + $this->timeout;
+        $attempt   = 0;
+        $lasterr   = '';
+
+        $encoded = null;
+        if ($method === 'POST') {
+            $encoded = json_encode($body, JSON_UNESCAPED_UNICODE);
+            if ($encoded === false) {
+                throw new \moodle_exception(
+                    'openai_api_error',
+                    'mod_airoleplay',
+                    '',
+                    'Failed to encode request as JSON: ' . json_last_error_msg()
+                );
+            }
+        }
 
         while ($attempt < self::MAX_RETRIES) {
             $attempt++;
+
+            $remaining = (int)max(1, ceil($deadline - microtime(true)));
+            if ($remaining <= 0) {
+                $lasterr = $lasterr !== '' ? $lasterr : 'request deadline exceeded';
+                break;
+            }
+
             $curl = new \curl();
             $curl->setHeader([
                 'Authorization: Bearer ' . $key,
                 'Content-Type: application/json',
             ]);
-            $options = ['CURLOPT_TIMEOUT' => $this->timeout];
+            $options = [
+                'CURLOPT_TIMEOUT'        => $remaining,
+                'CURLOPT_CONNECTTIMEOUT' => min(self::CONNECT_TIMEOUT, $remaining),
+                'CURLOPT_SSL_VERIFYPEER' => true,
+                'CURLOPT_SSL_VERIFYHOST' => 2,
+            ];
 
             if ($method === 'POST') {
-                $encoded = json_encode($body, JSON_UNESCAPED_UNICODE);
-                if ($encoded === false) {
-                    throw new \moodle_exception(
-                        'openai_api_error',
-                        'mod_airoleplay',
-                        '',
-                        'Failed to encode request as JSON: ' . json_last_error_msg()
-                    );
-                }
                 $raw = $curl->post($url, $encoded, $options);
             } else {
                 $raw = $curl->delete($url, [], $options);
@@ -180,12 +200,14 @@ class openai_client {
 
             if ($curl->get_errno()) {
                 $lasterr = $curl->error;
-                $this->sleep_backoff($attempt);
+                if (!$this->sleep_within_deadline($attempt, $deadline)) {
+                    break;
+                }
                 continue;
             }
 
-            $info   = $curl->get_info();
-            $status = (int)($info['http_code'] ?? 0);
+            $info    = $curl->get_info();
+            $status  = (int)($info['http_code'] ?? 0);
             $decoded = json_decode($raw, true);
 
             if ($status >= 200 && $status < 300) {
@@ -196,7 +218,9 @@ class openai_client {
             $lasterr = $decoded['error']['message'] ?? "HTTP {$status}";
 
             if ($status === 429 || $status >= 500) {
-                $this->sleep_backoff($attempt);
+                if (!$this->sleep_within_deadline($attempt, $deadline)) {
+                    break;
+                }
                 continue;
             }
 
@@ -225,7 +249,12 @@ class openai_client {
             'Authorization: Bearer ' . $key,
             'Content-Type: application/json',
         ]);
-        $raw = $curl->post($url, json_encode($body), ['CURLOPT_TIMEOUT' => $this->timeout]);
+        $raw = $curl->post($url, json_encode($body), [
+            'CURLOPT_TIMEOUT'        => $this->timeout,
+            'CURLOPT_CONNECTTIMEOUT' => self::CONNECT_TIMEOUT,
+            'CURLOPT_SSL_VERIFYPEER' => true,
+            'CURLOPT_SSL_VERIFYHOST' => 2,
+        ]);
 
         if ($curl->get_errno()) {
             throw new \moodle_exception('openai_api_error', 'mod_airoleplay', '', $curl->error);
@@ -312,13 +341,27 @@ class openai_client {
     }
 
     /**
-     * Sleeps for an exponentially increasing duration between retries.
+     * Sleeps an exponential back-off, but never past the request deadline.
      *
-     * @param int $attempt Current attempt number (1-based).
+     * Returns false when there is no time left to retry, so callers can stop
+     * looping instead of blocking the PHP worker indefinitely.
+     *
+     * @param int   $attempt  Current attempt number (1-based).
+     * @param float $deadline Absolute unix timestamp (microtime).
+     * @return bool True if there is time left to retry; false otherwise.
      */
-    private function sleep_backoff(int $attempt): void {
-        $seconds = min(30, 2 ** ($attempt - 1));
-        sleep($seconds);
+    private function sleep_within_deadline(int $attempt, float $deadline): bool {
+        $backoff   = min(30, 2 ** max(0, $attempt - 1));
+        $remaining = $deadline - microtime(true);
+        if ($remaining <= 0) {
+            return false;
+        }
+        // Never burn more than half of the remaining budget on a sleep.
+        $sleep = (int)max(0, min($backoff, floor($remaining / 2)));
+        if ($sleep > 0) {
+            sleep($sleep);
+        }
+        return ($deadline - microtime(true)) > 0;
     }
 
     /**
