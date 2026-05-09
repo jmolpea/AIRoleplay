@@ -106,7 +106,14 @@ PROMPT;
                 : "[Participant Role]\nNot specified.",
             $submission->roleplay_transcript
                 ? "=== ROLEPLAY TRANSCRIPT START ===\n" .
-                  mb_substr($submission->roleplay_transcript, 0, 8000) .
+                  mb_substr(
+                      \mod_airoleplay\privacy\anonymizer::redact_transcript_json(
+                          (string)$submission->roleplay_transcript,
+                          (int)$submission->userid
+                      ),
+                      0,
+                      8000
+                  ) .
                   "\n=== ROLEPLAY TRANSCRIPT END ==="
                 : "[Roleplay Transcript]\nNot available.",
         ]));

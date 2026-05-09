@@ -61,5 +61,21 @@ function xmldb_airoleplay_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2025050900, 'airoleplay');
     }
 
+    if ($oldversion < 2025050901) {
+        // Auto-generate a high-entropy anonymisation salt if the admin never set one.
+        $salt = (string)get_config('mod_airoleplay', 'anonymize_salt');
+        if (mb_strlen($salt) < 32) {
+            try {
+                set_config('anonymize_salt', bin2hex(random_bytes(32)), 'mod_airoleplay');
+            } catch (\Throwable $e) {
+                debugging(
+                    'airoleplay upgrade: failed to seed anonymize_salt: ' . $e->getMessage(),
+                    DEBUG_DEVELOPER
+                );
+            }
+        }
+        upgrade_mod_savepoint(true, 2025050901, 'airoleplay');
+    }
+
     return true;
 }
