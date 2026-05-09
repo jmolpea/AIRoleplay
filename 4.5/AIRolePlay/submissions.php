@@ -62,13 +62,11 @@ if ($action === 'delete' && $submissionid) {
 if ($action && $userid) {
     require_sesskey();
     require_capability('mod/airoleplay:grade', $context);
+    if (!is_enrolled($context, $userid)) {
+        throw new \moodle_exception('nopermissions', 'error', '', 'view submission');
+    }
 
-    $submission = $DB->get_record(
-        'airoleplay_submissions',
-        ['airoleplay' => $airoleplay->id, 'userid' => $userid],
-        '*',
-        MUST_EXIST
-    );
+    $submission = airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid);
 
     if ($action === 'publish') {
         $DB->set_field('airoleplay_submissions', 'workflow_state', 'released', ['id' => $submission->id]);
@@ -108,7 +106,7 @@ echo $OUTPUT->heading(format_string($airoleplay->name) . ' — ' . get_string('s
 
 // Detail view for a single submission.
 if ($userid) {
-    render_submission_detail($airoleplay, $userid, $id, $context, $cm, $course);
+    render_submission_detail($airoleplay, $userid, $id, $context, $cm, $course, $submissionid);
     echo $OUTPUT->footer();
     exit;
 }
@@ -141,8 +139,9 @@ $table->head = [
 $table->attributes['class'] = 'generaltable airoleplay-submissions-table';
 
 foreach ($submissions as $sub) {
+    $detailparams = ['id' => $id, 'userid' => $sub->userid, 'submissionid' => $sub->id];
     $studentlink = html_writer::link(
-        new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id, 'userid' => $sub->userid]),
+        new moodle_url('/mod/airoleplay/submissions.php', $detailparams),
         fullname($sub)
     );
     $submitted     = $sub->timesubmitted ? userdate($sub->timesubmitted) : '—';
@@ -159,7 +158,7 @@ foreach ($submissions as $sub) {
         'id' => $id, 'submissionid' => $sub->id, 'action' => 'delete', 'sesskey' => sesskey(),
     ]);
     $actions = html_writer::link(
-        new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id, 'userid' => $sub->userid]),
+        new moodle_url('/mod/airoleplay/submissions.php', $detailparams),
         get_string('view'),
         ['class' => 'btn btn-sm btn-outline-primary me-1']
     );
@@ -188,6 +187,40 @@ echo html_writer::table($table);
 echo $OUTPUT->footer();
 
 /**
+ * Fetches a single submission, preferring an explicit submissionid to
+ * avoid ambiguity when a student has more than one attempt.
+ *
+ * @param int $airoleplayid Activity instance id.
+ * @param int $userid       Student user id.
+ * @param int $submissionid Specific submission id (0 = latest attempt).
+ * @return stdClass Submission record.
+ * @throws \dml_exception when no submission exists.
+ */
+function airoleplay_fetch_submission(int $airoleplayid, int $userid, int $submissionid = 0): stdClass {
+    global $DB;
+    if ($submissionid > 0) {
+        return $DB->get_record(
+            'airoleplay_submissions',
+            ['id' => $submissionid, 'airoleplay' => $airoleplayid, 'userid' => $userid],
+            '*',
+            MUST_EXIST
+        );
+    }
+    $records = $DB->get_records(
+        'airoleplay_submissions',
+        ['airoleplay' => $airoleplayid, 'userid' => $userid],
+        'attempt DESC, id DESC',
+        '*',
+        0,
+        1
+    );
+    if (empty($records)) {
+        throw new \dml_missing_record_exception('airoleplay_submissions');
+    }
+    return reset($records);
+}
+
+/**
  * Renders the detailed view for a single student submission.
  *
  * @param stdClass $airoleplay Airoleplay instance.
@@ -203,17 +236,14 @@ function render_submission_detail(
     int $cmid,
     context $context,
     stdClass $cm,
-    stdClass $course
+    stdClass $course,
+    int $submissionid = 0
 ): void {
     global $DB, $OUTPUT, $USER;
 
     $student    = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-    $submission = $DB->get_record(
-        'airoleplay_submissions',
-        ['airoleplay' => $airoleplay->id, 'userid' => $userid],
-        '*',
-        MUST_EXIST
-    );
+    $submission = airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid);
+    $submissionid = (int)$submission->id;
 
     echo $OUTPUT->heading(fullname($student), 3);
 
@@ -362,6 +392,7 @@ JS);
         ]);
         echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cmid]);
         echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'userid', 'value' => $userid]);
+        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'submissionid', 'value' => $submissionid]);
         echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'savegarde']);
         echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
         echo html_writer::start_div('card card-body mb-3');
@@ -398,7 +429,11 @@ JS);
                 get_string('publish_grade', 'mod_airoleplay'),
                 ['type' => 'submit', 'class' => 'btn btn-success me-2',
                     'formaction' => new moodle_url('/mod/airoleplay/submissions.php', [
-                        'id' => $cmid, 'userid' => $userid, 'action' => 'publish', 'sesskey' => sesskey(),
+                        'id'           => $cmid,
+                        'userid'       => $userid,
+                        'submissionid' => $submissionid,
+                        'action'       => 'publish',
+                        'sesskey'      => sesskey(),
                     ])]
             );
         }
