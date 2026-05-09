@@ -1,6 +1,47 @@
-composer.phar
+# === Composer / PHP ===
 /vendor/
+composer.phar
+composer.lock
 
-# Commit your application's lock file https://getcomposer.org/doc/01-basic-usage.md#commit-your-composer-lock-file-to-version-control
-# You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
-# composer.lock
+# === Moodle específico ===
+# Datos de instancias locales de prueba
+moodledata/
+*.log
+
+# Caché de tests
+.phpunit.result.cache
+phpunit.xml
+behat.yml
+/tests/behat/screenshots/
+
+# Archivos de configuración local
+config.php
+config-dist-local.php
+
+# === Node / Frontend (AMD modules, Grunt) ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Builds compilados (los .min.js sí van al repo en Moodle)
+# pero los temporales no
+.grunt/
+
+# === IDE / Editores ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Archivos sensibles ===
+.env
+.env.local
+*.key
+*.pem
