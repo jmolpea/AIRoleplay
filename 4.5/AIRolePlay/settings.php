@@ -34,20 +34,18 @@ if ($ADMIN->fulltree) {
         get_string('settings_apikeys_heading_desc', 'mod_airoleplay')
     ));
 
-    // Primary OpenAI API Key.
-    $settings->add(new admin_setting_configpasswordunmask(
+    // Primary OpenAI API Key. Stored encrypted via \core\encryption.
+    $settings->add(new admin_setting_encryptedpassword(
         'mod_airoleplay/openai_apikey',
         get_string('settings_openai_apikey', 'mod_airoleplay'),
-        get_string('settings_openai_apikey_desc', 'mod_airoleplay'),
-        ''
+        get_string('settings_openai_apikey_desc', 'mod_airoleplay')
     ));
 
-    // Secondary API Key (optional, for TTS separation).
-    $settings->add(new admin_setting_configpasswordunmask(
+    // Secondary API Key (optional, for TTS separation). Stored encrypted.
+    $settings->add(new admin_setting_encryptedpassword(
         'mod_airoleplay/openai_apikey_secondary',
         get_string('settings_openai_apikey_secondary', 'mod_airoleplay'),
-        get_string('settings_openai_apikey_secondary_desc', 'mod_airoleplay'),
-        ''
+        get_string('settings_openai_apikey_secondary_desc', 'mod_airoleplay')
     ));
 
     // Section: Available Models.

@@ -29,6 +29,37 @@
  * @return bool True on success.
  */
 function xmldb_airoleplay_upgrade(int $oldversion): bool {
-    // Future upgrade steps go here.
+
+    if ($oldversion < 2025050900) {
+        // Migrate API keys from admin_setting_configpasswordunmask (plaintext)
+        // to admin_setting_encryptedpassword. If the stored value cannot be
+        // decrypted, assume it was plaintext and re-encrypt it in place.
+        foreach (['openai_apikey', 'openai_apikey_secondary'] as $configkey) {
+            $value = get_config('mod_airoleplay', $configkey);
+            if (empty($value)) {
+                continue;
+            }
+            $alreadyencrypted = false;
+            try {
+                $decrypted = \core\encryption::decrypt($value);
+                $alreadyencrypted = ($decrypted !== false && $decrypted !== null && $decrypted !== '');
+            } catch (\Throwable $e) {
+                $alreadyencrypted = false;
+            }
+            if ($alreadyencrypted) {
+                continue;
+            }
+            try {
+                set_config($configkey, \core\encryption::encrypt($value), 'mod_airoleplay');
+            } catch (\Throwable $e) {
+                debugging(
+                    'airoleplay upgrade: failed to encrypt legacy ' . $configkey . ': ' . $e->getMessage(),
+                    DEBUG_DEVELOPER
+                );
+            }
+        }
+        upgrade_mod_savepoint(true, 2025050900, 'airoleplay');
+    }
+
     return true;
 }

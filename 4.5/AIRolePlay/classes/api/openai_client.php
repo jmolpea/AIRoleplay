@@ -322,12 +322,14 @@ class openai_client {
     }
 
     /**
-     * Decrypts a stored API key.
+     * Decrypts a stored API key. Fails closed — never falls back to plaintext.
      *
-     * Supports both encrypted values (admin_setting_encryptedpassword) and
-     * plain-text values (admin_setting_configpasswordunmask) for compatibility.
+     * The plugin stores API keys via admin_setting_encryptedpassword, which
+     * always encrypts on save. If decryption fails, we refuse to use the value:
+     * leaking a plaintext key from a misconfigured config column would be far
+     * worse than the OpenAI calls failing loudly.
      *
-     * @param string $value Possibly-encrypted value from config.
+     * @param string $value Encrypted value from config.
      * @return string Plaintext API key, or empty string if unavailable.
      */
     private function decrypt_key(string $value): string {
@@ -336,10 +338,20 @@ class openai_client {
         }
         try {
             $decrypted = \core\encryption::decrypt($value);
-            return $decrypted !== false ? $decrypted : $value;
         } catch (\Throwable $e) {
-            // Not encrypted — return as-is (plain text storage).
-            return $value;
+            debugging(
+                'airoleplay: API key decryption raised an exception; refusing to use raw value',
+                DEBUG_DEVELOPER
+            );
+            return '';
         }
+        if ($decrypted === false || $decrypted === null || $decrypted === '') {
+            debugging(
+                'airoleplay: API key could not be decrypted; refusing to use raw value',
+                DEBUG_DEVELOPER
+            );
+            return '';
+        }
+        return $decrypted;
     }
 }
