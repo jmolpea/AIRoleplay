@@ -103,6 +103,7 @@ class openai_client {
      * @throws \moodle_exception on API error or rate limit exceeded.
      */
     public function chat_completion(array $messages, string $model, array $options = [], int $userid = 0): array {
+        $this->require_api_key();
         $this->check_rate_limit($userid);
 
         if ($this->contentfilter) {
@@ -128,6 +129,7 @@ class openai_client {
      * @throws \moodle_exception on API error.
      */
     public function text_to_speech(string $text, string $voice = 'onyx', int $userid = 0): string {
+        $this->require_api_key();
         $this->check_rate_limit($userid);
 
         $body = [
@@ -377,6 +379,18 @@ class openai_client {
                 sprintf('airoleplay openai: %s %s -> %d', $method, $path, $status),
                 DEBUG_DEVELOPER
             );
+        }
+    }
+
+    /**
+     * Throws a clear error when no API key is configured (or it could not
+     * be decrypted) so callers do not get an opaque 401 from OpenAI.
+     *
+     * @throws \moodle_exception
+     */
+    private function require_api_key(): void {
+        if ($this->apikey === '') {
+            throw new \moodle_exception('openai_apikey_missing', 'mod_airoleplay');
         }
     }
 

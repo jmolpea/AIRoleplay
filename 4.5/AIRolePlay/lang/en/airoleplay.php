@@ -207,6 +207,7 @@ $string['privacy:metadata:openai:evaluation_request']                    = 'The 
 $string['publish_grade']       = 'Publish grade';
 $string['push_to_talk']        = 'Hold to respond';
 
+$string['openai_apikey_missing']      = 'The AI Roleplay plugin has no usable OpenAI API key configured. Ask the site administrator to set it under Site administration > Plugins > Activity modules > AI Roleplay.';
 $string['rate_limit_exceeded']        = 'You have made too many requests. Please wait a moment before trying again.';
 $string['rate_limit_exceeded_global'] = 'The site-wide AI Roleplay request limit has been reached. Please try again shortly.';
 

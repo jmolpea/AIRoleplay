@@ -157,26 +157,47 @@ PROMPT;
         }
 
         // Recompute the grade from the components so the model can never
-        // return a percentage that disagrees with its own breakdown.
+        // return a percentage that disagrees with its own breakdown. We only
+        // override when every rubric component is present with a numeric
+        // score — otherwise a model that returned a valid percentage but a
+        // partial breakdown would unfairly drop to 0.
         $breakdown  = is_array($result['grade_breakdown'] ?? null) ? $result['grade_breakdown'] : [];
-        $recomputed = 0.0;
-        foreach (self::GRADE_WEIGHTS as $dim => $weight) {
-            $score = (float)($breakdown[$dim]['score'] ?? 0);
-            $recomputed += max(0.0, min(100.0, $score)) * $weight;
-        }
-        $recomputed = round($recomputed, 2);
         $reported   = round(max(0.0, min(100.0, (float)$result['grade_percentage'])), 2);
-
         $flags = [];
         if (isset($result['academic_integrity_flags']) && is_array($result['academic_integrity_flags'])) {
             $flags = array_values(array_filter($result['academic_integrity_flags'], 'is_string'));
         }
-        if (abs($recomputed - $reported) > 1.0) {
-            $flags[]  = 'formula_mismatch';
-            $gradepct = $recomputed;
+
+        $breakdowncomplete = true;
+        foreach (self::GRADE_WEIGHTS as $dim => $weight) {
+            if (!is_array($breakdown[$dim] ?? null) || !isset($breakdown[$dim]['score'])
+                    || !is_numeric($breakdown[$dim]['score'])) {
+                $breakdowncomplete = false;
+                break;
+            }
+        }
+
+        if ($breakdowncomplete) {
+            $recomputed = 0.0;
+            foreach (self::GRADE_WEIGHTS as $dim => $weight) {
+                $score = (float)$breakdown[$dim]['score'];
+                $recomputed += max(0.0, min(100.0, $score)) * $weight;
+            }
+            $recomputed = round($recomputed, 2);
+            if (abs($recomputed - $reported) > 1.0) {
+                $flags[]  = 'formula_mismatch';
+                $gradepct = $recomputed;
+            } else {
+                $gradepct = $reported;
+            }
         } else {
+            // Trust the reported percentage but mark the submission so a
+            // teacher reviews it; auto-publish is blocked because $flags is
+            // non-empty.
+            $flags[]  = 'breakdown_incomplete';
             $gradepct = $reported;
         }
+
         if ($injectiondetected) {
             $flags[] = 'injection_pattern_detected';
         }
