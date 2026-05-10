@@ -109,9 +109,13 @@ class provider implements
         // STUDENT-<hash> token (see mod_airoleplay\privacy\anonymizer) before
         // any payload leaves the LMS, but the redacted free text — which the
         // student authored — is still transmitted to OpenAI for inference.
+        // The participant's first name is also transmitted: the avatar needs
+        // it to greet the human naturally; last name, username and email
+        // remain redacted.
         $collection->add_external_location_link(
             'openai',
             [
+                'firstname'           => 'privacy:metadata:openai:firstname',
                 'roleplay_transcript' => 'privacy:metadata:openai:roleplay_transcript',
                 'participant_turn'    => 'privacy:metadata:openai:participant_turn',
                 'scenario'            => 'privacy:metadata:openai:scenario',

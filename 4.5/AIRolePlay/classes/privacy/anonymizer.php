@@ -59,6 +59,13 @@ class anonymizer {
     /**
      * Redacts personal identifiers of a single user from arbitrary text.
      *
+     * The participant's first name is intentionally NOT redacted: the
+     * roleplay_conductor includes it in the system prompt so the avatar
+     * can greet the human naturally, and redacting it here would create
+     * an inconsistent "the AI knows you as Ada / your line shows STUDENT-x"
+     * experience. Last name, full name combinations, username and email
+     * are still redacted because they are more identifying.
+     *
      * @param string $text   Raw text that may contain the user's name/email.
      * @param int    $userid Owner of the data being redacted.
      * @return string Redacted text.
@@ -76,12 +83,11 @@ class anonymizer {
         $candidates = [
             trim($user->firstname . ' ' . $user->lastname),
             trim($user->lastname . ' ' . $user->firstname),
-            trim((string)$user->firstname),
             trim((string)$user->lastname),
             trim((string)$user->username),
             trim((string)$user->email),
         ];
-        // Replace longer matches first so "Ada Lovelace" wins over "Ada".
+        // Replace longer matches first so "Ada Lovelace" wins over "Lovelace".
         $candidates = array_values(array_unique(array_filter($candidates, fn($c) => mb_strlen($c) >= 2)));
         usort($candidates, fn($a, $b) => mb_strlen($b) - mb_strlen($a));
 
