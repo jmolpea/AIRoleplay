@@ -24,8 +24,6 @@
 
 namespace mod_airoleplay\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Replaces a participant's personally identifying tokens with a stable hash
  * before the text leaves the LMS for OpenAI.

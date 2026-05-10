@@ -24,8 +24,6 @@
 
 namespace mod_airoleplay\local;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Centralised whitelist of legal status / workflow_state transitions.
  *
@@ -62,6 +60,8 @@ class submission_state {
     ];
 
     /**
+     * Returns whether the given status transition is allowed by the whitelist.
+     *
      * @param string $from Current status.
      * @param string $to   Desired status.
      * @return bool True if the move is allowed.
@@ -72,6 +72,8 @@ class submission_state {
     }
 
     /**
+     * Returns whether the given workflow_state transition is allowed.
+     *
      * @param string|null $from Current workflow_state (null/empty = unset).
      * @param string      $to   Desired workflow_state.
      * @return bool True if the move is allowed.

@@ -40,6 +40,8 @@ $string['avatar_1']           = 'Avatar 1 (neutro)';
 $string['avatar_2']           = 'Avatar 2 (femenino)';
 $string['avatar_3']           = 'Avatar 3 (masculino)';
 $string['avatar_custom']      = 'Imagen personalizada';
+$string['avatar_custom_upload'] = 'Subir imagen personalizada del avatar';
+
 $string['avatar_header']      = 'Avatar {$a}';
 $string['avatar_name']        = 'Nombre';
 $string['avatar_prompt']      = 'Personalidad y estilo de interacción';
@@ -47,8 +49,6 @@ $string['avatar_prompt_help'] = 'Describe cómo se comporta este avatar, su pers
 $string['avatar_role']        = 'Rol / Título';
 $string['avatar_visual']      = 'Apariencia del avatar';
 $string['avatar_voice']       = 'Voz TTS';
-$string['avatar_custom_upload'] = 'Subir imagen personalizada del avatar';
-
 $string['avatars_header']     = 'Avatares';
 
 $string['col_actions']        = 'Acciones';
@@ -70,10 +70,10 @@ $string['conversation_log']   = 'Registro de la sesión';
 $string['delete_submission']  = 'Eliminar entrega';
 
 $string['dimension_communication']    = 'Comunicación';
-$string['dimension_role_adherence']   = 'Adherencia al rol';
-$string['dimension_scenario_handling'] = 'Manejo del escenario';
 $string['dimension_language_quality'] = 'Calidad del lenguaje';
 
+$string['dimension_role_adherence']   = 'Adherencia al rol';
+$string['dimension_scenario_handling'] = 'Manejo del escenario';
 $string['error_duration_invalid']  = 'La duración debe ser al menos 1 minuto.';
 
 $string['evaluation_complete']  = '✅ Evaluación completada. Redirigiendo…';
@@ -161,6 +161,10 @@ $string['participant_role_help']   = 'Describe el personaje o rol que desempeña
 $string['pluginadministration']    = 'Administración de AI Roleplay';
 $string['pluginname']              = 'AI Roleplay';
 
+$string['privacy:metadata:airoleplay_messages']                     = 'Registro detallado de cada turno en la sesión de juego de roles.';
+$string['privacy:metadata:airoleplay_messages:message_text']        = 'El texto de lo que se dijo.';
+$string['privacy:metadata:airoleplay_messages:speaker']             = 'Quién habló en este turno (avatar o participante).';
+$string['privacy:metadata:airoleplay_messages:timestamp']           = 'Cuándo ocurrió este turno.';
 $string['privacy:metadata:airoleplay_submissions']                  = 'Información sobre la sesión de juego de roles de cada estudiante, incluyendo la transcripción de la conversación y las calificaciones.';
 $string['privacy:metadata:airoleplay_submissions:final_feedback']   = 'El texto de retroalimentación final proporcionado al estudiante.';
 $string['privacy:metadata:airoleplay_submissions:final_grade']      = 'La calificación final otorgada al estudiante.';
@@ -171,10 +175,6 @@ $string['privacy:metadata:airoleplay_submissions:status']           = 'Estado ac
 $string['privacy:metadata:airoleplay_submissions:timecreated']      = 'Cuándo se creó la entrega.';
 $string['privacy:metadata:airoleplay_submissions:timesubmitted']    = 'Cuándo se completó la sesión.';
 $string['privacy:metadata:airoleplay_submissions:userid']           = 'El ID del estudiante que participó.';
-$string['privacy:metadata:airoleplay_messages']                     = 'Registro detallado de cada turno en la sesión de juego de roles.';
-$string['privacy:metadata:airoleplay_messages:message_text']        = 'El texto de lo que se dijo.';
-$string['privacy:metadata:airoleplay_messages:speaker']             = 'Quién habló en este turno (avatar o participante).';
-$string['privacy:metadata:airoleplay_messages:timestamp']           = 'Cuándo ocurrió este turno.';
 $string['privacy:metadata:openai']                                  = 'Las respuestas habladas se envían a la API de OpenAI para la conversación y evaluación por IA. Los datos no se conservan más allá de la solicitud inmediata.';
 $string['privacy:metadata:openai:conversation_turns']               = 'El texto de las respuestas habladas del participante durante la sesión de juego de roles.';
 
@@ -205,12 +205,12 @@ $string['roleplay_thinking']    = 'El avatar está respondiendo…';
 
 $string['safety_extra_prompt']      = 'Restricciones de contenido adicionales (opcional)';
 $string['safety_extra_prompt_help'] = 'Instrucciones de seguridad adicionales que se añaden a cada llamada a la API para esta actividad.';
-$string['security_header']          = 'Seguridad de la actividad';
-
 $string['scenario_description']       = 'Descripción del escenario';
 $string['scenario_description_help']  = 'Describe la situación para el juego de roles. Este contexto se proporciona a los avatares y se muestra al participante antes de iniciar la sesión.';
 $string['scenario_header']            = 'Escenario y rol del participante';
 $string['scenario_label']             = 'Escenario';
+
+$string['security_header']          = 'Seguridad de la actividad';
 
 $string['session_duration']           = 'Duración de la sesión (minutos)';
 $string['session_duration_help']      = 'Duración máxima de la sesión de juego de roles. Cuando se acabe el temporizador, la sesión termina y comienza la evaluación.';

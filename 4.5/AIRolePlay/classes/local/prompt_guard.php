@@ -24,8 +24,6 @@
 
 namespace mod_airoleplay\local;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Stateless helpers used by the evaluator to harden untrusted text.
  *
@@ -43,7 +41,7 @@ class prompt_guard {
         '/(ignore|disregard|forget)\b.{0,40}(previous|above|prior|all|these|the)\b.{0,40}\binstructions?\b/iu',
         '/^\s*(system|assistant|developer|tool)\s*:\s*/imu',
         '/<\|im_(start|end)\|>/iu',
-        '/```\s*(system|json|tool_call)/iu',
+        '/\x60{3}\s*(system|json|tool_call)/iu',
     ];
 
     /**

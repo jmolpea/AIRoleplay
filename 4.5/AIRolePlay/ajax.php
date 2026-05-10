@@ -269,7 +269,12 @@ try {
         // Teacher: Regenerate final evaluation.
         case 'regen_evaluation':
             require_capability('mod/airoleplay:grade', $context);
-            $sub = $DB->get_record('airoleplay_submissions', ['id' => $submissionid, 'airoleplay' => $airoleplay->id], '*', MUST_EXIST);
+            $sub = $DB->get_record(
+                'airoleplay_submissions',
+                ['id' => $submissionid, 'airoleplay' => $airoleplay->id],
+                '*',
+                MUST_EXIST
+            );
             regen_rate_check($USER->id, $sub->id, 'evaluation');
             \core_php_time_limit::raise(600);
             $evaluator = new \mod_airoleplay\api\evaluator();
@@ -278,13 +283,13 @@ try {
             break;
 
         default:
-            // Server-side log records the rejected action; the response stays generic.
-            error_log('[mod_airoleplay] rejected unknown ajax action: ' . $action);
+            // Log the rejected action for the developer; the response stays generic.
+            debugging('mod_airoleplay rejected unknown ajax action: ' . $action, DEBUG_DEVELOPER);
             json_error(get_string('badrequest', 'mod_airoleplay'));
     }
 } catch (\moodle_exception $e) {
-    // moodle_exception messages are already translated language strings
-    // safe to surface to the caller; no internal details leak.
+    // Moodle_exception messages are already translated language strings,
+    // so they are safe to surface to the caller; no internal details leak.
     json_error($e->getMessage());
 } catch (\Throwable $e) {
     airoleplay_log_internal_error('ajax_dispatch', $e, ['cmid' => $cmid]);

@@ -40,6 +40,8 @@ $string['avatar_1']           = 'Avatar 1 (neutro)';
 $string['avatar_2']           = 'Avatar 2 (feminino)';
 $string['avatar_3']           = 'Avatar 3 (masculino)';
 $string['avatar_custom']      = 'Imagem personalizada';
+$string['avatar_custom_upload'] = 'Enviar imagem personalizada do avatar';
+
 $string['avatar_header']      = 'Avatar {$a}';
 $string['avatar_name']        = 'Nome';
 $string['avatar_prompt']      = 'Personalidade e estilo de interação';
@@ -47,8 +49,6 @@ $string['avatar_prompt_help'] = 'Descreva como este avatar se comporta, sua pers
 $string['avatar_role']        = 'Função / Título';
 $string['avatar_visual']      = 'Aparência do avatar';
 $string['avatar_voice']       = 'Voz TTS';
-$string['avatar_custom_upload'] = 'Enviar imagem personalizada do avatar';
-
 $string['avatars_header']     = 'Avatares';
 
 $string['col_actions']        = 'Ações';
@@ -70,10 +70,10 @@ $string['conversation_log']   = 'Registro da sessão';
 $string['delete_submission']  = 'Excluir submissão';
 
 $string['dimension_communication']    = 'Comunicação';
-$string['dimension_role_adherence']   = 'Aderência ao papel';
-$string['dimension_scenario_handling'] = 'Condução do cenário';
 $string['dimension_language_quality'] = 'Qualidade da linguagem';
 
+$string['dimension_role_adherence']   = 'Aderência ao papel';
+$string['dimension_scenario_handling'] = 'Condução do cenário';
 $string['error_duration_invalid']  = 'A duração deve ser de pelo menos 1 minuto.';
 
 $string['evaluation_complete']  = '✅ Avaliação concluída. Redirecionando…';
@@ -161,6 +161,10 @@ $string['participant_role_help']   = 'Descreva o personagem ou papel que o parti
 $string['pluginadministration']    = 'Administração do AI Roleplay';
 $string['pluginname']              = 'AI Roleplay';
 
+$string['privacy:metadata:airoleplay_messages']                     = 'Registro detalhado de cada turno na sessão de roleplay.';
+$string['privacy:metadata:airoleplay_messages:message_text']        = 'O texto do que foi dito.';
+$string['privacy:metadata:airoleplay_messages:speaker']             = 'Quem falou neste turno (avatar ou participante).';
+$string['privacy:metadata:airoleplay_messages:timestamp']           = 'Quando este turno ocorreu.';
 $string['privacy:metadata:airoleplay_submissions']                  = 'Informações sobre a sessão de roleplay de cada estudante, incluindo a transcrição da conversa e as notas.';
 $string['privacy:metadata:airoleplay_submissions:final_feedback']   = 'O texto de feedback final fornecido ao estudante.';
 $string['privacy:metadata:airoleplay_submissions:final_grade']      = 'A nota final atribuída ao estudante.';
@@ -171,10 +175,6 @@ $string['privacy:metadata:airoleplay_submissions:status']           = 'Status at
 $string['privacy:metadata:airoleplay_submissions:timecreated']      = 'Quando a submissão foi criada.';
 $string['privacy:metadata:airoleplay_submissions:timesubmitted']    = 'Quando a sessão foi concluída.';
 $string['privacy:metadata:airoleplay_submissions:userid']           = 'O ID do estudante que participou.';
-$string['privacy:metadata:airoleplay_messages']                     = 'Registro detalhado de cada turno na sessão de roleplay.';
-$string['privacy:metadata:airoleplay_messages:message_text']        = 'O texto do que foi dito.';
-$string['privacy:metadata:airoleplay_messages:speaker']             = 'Quem falou neste turno (avatar ou participante).';
-$string['privacy:metadata:airoleplay_messages:timestamp']           = 'Quando este turno ocorreu.';
 $string['privacy:metadata:openai']                                  = 'As respostas faladas são enviadas para a API da OpenAI para conversação e avaliação por IA. Os dados não são retidos além da solicitação imediata.';
 $string['privacy:metadata:openai:conversation_turns']               = 'O texto das respostas faladas do participante durante a sessão de roleplay.';
 
@@ -205,12 +205,12 @@ $string['roleplay_thinking']    = 'O avatar está respondendo…';
 
 $string['safety_extra_prompt']      = 'Restrições de conteúdo adicionais (opcional)';
 $string['safety_extra_prompt_help'] = 'Instruções de segurança extras adicionadas a cada chamada de API para esta atividade.';
-$string['security_header']          = 'Segurança da atividade';
-
 $string['scenario_description']       = 'Descrição do cenário';
 $string['scenario_description_help']  = 'Descreva a situação para o roleplay. Este contexto é fornecido aos avatares e mostrado ao participante antes do início da sessão.';
 $string['scenario_header']            = 'Cenário e papel do participante';
 $string['scenario_label']             = 'Cenário';
+
+$string['security_header']          = 'Segurança da atividade';
 
 $string['session_duration']           = 'Duração da sessão (minutos)';
 $string['session_duration_help']      = 'Duração máxima da sessão de roleplay. Quando o cronômetro acabar, a sessão encerra e a avaliação começa.';
