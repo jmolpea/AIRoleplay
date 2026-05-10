@@ -208,7 +208,8 @@ $string['rate_limit_exceeded']        = 'You have made too many requests. Please
 $string['rate_limit_exceeded_global'] = 'The site-wide AI Roleplay request limit has been reached. Please try again shortly.';
 
 $string['regen_confirm']       = 'This will replace the current evaluation with a new one. Continue?';
-$string['regen_cooldown']      = 'Please wait before regenerating again. This operation has a cooldown to prevent excessive API usage.';
+$string['regen_cooldown']      = 'Please wait before regenerating again. This operation has a 5-minute cooldown to prevent excessive API usage.';
+$string['regen_daily_cap']     = 'You have reached the daily limit for regenerations on this submission. Try again tomorrow.';
 $string['regen_evaluation']    = 'Recalculate final evaluation';
 $string['regen_heading']       = 'Regenerate AI Evaluation';
 $string['regen_running']       = 'Processing… please wait (may take 1–3 minutes)';
