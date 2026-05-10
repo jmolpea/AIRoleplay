@@ -22,8 +22,6 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 // Concurrency helpers.
 
 /**
@@ -84,12 +82,13 @@ function airoleplay_regen_rate_check(
 // Logging helpers.
 
 /**
- * Records an internal error.
+ * Records an internal error via Moodle's debugging() pipeline.
  *
- * Sends the full message, file/line and stack trace to PHP's error_log
- * (server-side only) and emits a short, identifier-only debugging() line
- * so an admin running with debug display on does not see the raw message,
- * which can contain prompt fragments, request bodies or file paths.
+ * Emits a short identifier-only line at NORMAL level (so it always shows
+ * when admins enable debug logging) plus the full message, file:line and
+ * stack trace at DEVELOPER level. Splitting them lets a production admin
+ * spot a recurring failure without exposing prompt fragments or request
+ * bodies in the user-visible debug display.
  *
  * @param string     $context Short, free-text context (e.g. "ajax dispatch").
  * @param \Throwable $e       The caught exception.
@@ -97,23 +96,23 @@ function airoleplay_regen_rate_check(
  *                            short debug line (submission id, cmid, ...).
  */
 function airoleplay_log_internal_error(string $context, \Throwable $e, array $ids = []): void {
-    error_log(sprintf(
-        '[mod_airoleplay] %s: %s in %s:%d%s%s',
-        $context,
-        $e->getMessage(),
-        $e->getFile(),
-        $e->getLine(),
-        PHP_EOL,
-        $e->getTraceAsString()
-    ));
     $idstr = '';
     foreach ($ids as $key => $value) {
         $idstr .= ' ' . $key . '=' . (int)$value;
     }
     debugging(
         'mod_airoleplay ' . $context . ' error (' . get_class($e) . ')' . $idstr,
-        DEBUG_DEVELOPER
+        DEBUG_NORMAL
     );
+    debugging(sprintf(
+        'mod_airoleplay %s: %s in %s:%d%s%s',
+        $context,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        PHP_EOL,
+        $e->getTraceAsString()
+    ), DEBUG_DEVELOPER);
 }
 
 // Course module API.

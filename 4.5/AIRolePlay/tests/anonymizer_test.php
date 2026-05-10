@@ -27,10 +27,10 @@ namespace mod_airoleplay;
 
 use mod_airoleplay\privacy\anonymizer;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for the PII redactor at the OpenAI boundary.
+ *
+ * @covers \mod_airoleplay\privacy\anonymizer
  */
 final class anonymizer_test extends \advanced_testcase {
 

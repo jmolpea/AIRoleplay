@@ -27,13 +27,18 @@ namespace mod_airoleplay;
 
 use mod_airoleplay\local\submission_state;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for the status / workflow_state transition whitelist.
+ *
+ * @covers \mod_airoleplay\local\submission_state
  */
 final class submission_state_test extends \basic_testcase {
 
+    /**
+     * Provider of (from, to) pairs that must be accepted as legal status transitions.
+     *
+     * @return array<int, array{0:string, 1:string}>
+     */
     public static function valid_status_transitions(): array {
         return [
             ['draft',     'active'],
@@ -47,17 +52,29 @@ final class submission_state_test extends \basic_testcase {
         ];
     }
 
-    /** @dataProvider valid_status_transitions */
+    /**
+     * Each whitelisted status transition must be accepted by both the
+     * predicate and the assert variant.
+     *
+     * @dataProvider valid_status_transitions
+     * @param string $from Current status.
+     * @param string $to   Desired status.
+     */
     public function test_status_transitions_accept_valid_pairs(string $from, string $to): void {
         $this->assertTrue(
             submission_state::can_transition_status($from, $to),
             $from . ' -> ' . $to . ' should be allowed'
         );
-        // assert variant must not throw.
+        // Assert variant must not throw.
         submission_state::assert_status_transition($from, $to);
         $this->addToAssertionCount(1);
     }
 
+    /**
+     * Provider of (from, to) pairs that must be rejected as illegal status transitions.
+     *
+     * @return array<int, array{0:string, 1:string}>
+     */
     public static function invalid_status_transitions(): array {
         return [
             ['draft',     'graded'],
@@ -70,7 +87,13 @@ final class submission_state_test extends \basic_testcase {
         ];
     }
 
-    /** @dataProvider invalid_status_transitions */
+    /**
+     * Each illegal status transition must be rejected; the assert variant must throw.
+     *
+     * @dataProvider invalid_status_transitions
+     * @param string $from Current status.
+     * @param string $to   Desired status.
+     */
     public function test_status_transitions_reject_invalid_pairs(string $from, string $to): void {
         $this->assertFalse(
             submission_state::can_transition_status($from, $to),
@@ -80,6 +103,11 @@ final class submission_state_test extends \basic_testcase {
         submission_state::assert_status_transition($from, $to);
     }
 
+    /**
+     * Provider of (from, to) pairs that must be accepted as legal workflow transitions.
+     *
+     * @return array<int, array{0:?string, 1:string}>
+     */
     public static function valid_workflow_transitions(): array {
         return [
             ['',         'inreview'],
@@ -93,7 +121,13 @@ final class submission_state_test extends \basic_testcase {
         ];
     }
 
-    /** @dataProvider valid_workflow_transitions */
+    /**
+     * Each whitelisted workflow transition must be accepted.
+     *
+     * @dataProvider valid_workflow_transitions
+     * @param string|null $from Current workflow_state (null/empty = unset).
+     * @param string      $to   Desired workflow_state.
+     */
     public function test_workflow_transitions_accept_valid_pairs(?string $from, string $to): void {
         $this->assertTrue(
             submission_state::can_transition_workflow($from, $to),

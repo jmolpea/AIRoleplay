@@ -25,16 +25,18 @@
 defined('MOODLE_INTERNAL') || die();
 
 $definitions = [
-    // Holds three families of counters keyed under a single cache:
-    //   user_<userid>_<minute>            per-user per-minute call quota
-    //   global_<minute>                   site-wide per-minute call quota
-    //   regen_<op>_<userid>_<sub>         last regen timestamp (cooldown)
-    //   regen_day_<op>_<userid>_<sub>_<d> regen daily cap (UTC day bucket)
-    //
-    // TTL must exceed the longest window we care about (the 24h daily cap)
-    // because we read the prior value before deciding whether to throttle.
-    // Per-minute bucketing happens via the key suffix, not via TTL, so
-    // a long TTL only adds a small idle memory cost.
+    /*
+     * Holds these families of counters keyed under a single cache:
+     *   user_<userid>_<minute>            per-user per-minute call quota
+     *   global_<minute>                   site-wide per-minute call quota
+     *   regen_<op>_<userid>_<sub>         last regen timestamp (cooldown)
+     *   regen_day_<op>_<userid>_<sub>_<d> regen daily cap (UTC day bucket)
+     *
+     * TTL must exceed the longest window we care about (the 24h daily cap)
+     * because we read the prior value before deciding whether to throttle.
+     * Per-minute bucketing happens via the key suffix, not via TTL, so
+     * a long TTL only adds a small idle memory cost.
+     */
     'ratelimit' => [
         'mode'       => cache_store::MODE_APPLICATION,
         'ttl'        => 86400,

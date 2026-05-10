@@ -32,6 +32,8 @@ require_once($CFG->dirroot . '/mod/airoleplay/lib.php');
 
 /**
  * Tests the regen cooldown + daily-cap helper.
+ *
+ * @covers ::airoleplay_regen_rate_check
  */
 final class regen_rate_test extends \advanced_testcase {
 
@@ -66,7 +68,7 @@ final class regen_rate_test extends \advanced_testcase {
 
     public function test_zero_cooldown_allows_back_to_back_until_cap(): void {
         $this->resetAfterTest();
-        // cooldown=0 lets us hit the daily cap quickly.
+        // Cooldown=0 lets us hit the daily cap quickly.
         \airoleplay_regen_rate_check(1, 100, 'evaluation', 0, 3);
         \airoleplay_regen_rate_check(1, 100, 'evaluation', 0, 3);
         \airoleplay_regen_rate_check(1, 100, 'evaluation', 0, 3);

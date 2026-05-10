@@ -230,7 +230,8 @@ class mod_airoleplay_mod_form extends moodleform_mod {
         $avatargroup[] = $mform->createElement('radio', "avatar_{$index}_avatar", '', get_string('avatar_1', 'mod_airoleplay'), 1);
         $avatargroup[] = $mform->createElement('radio', "avatar_{$index}_avatar", '', get_string('avatar_2', 'mod_airoleplay'), 2);
         $avatargroup[] = $mform->createElement('radio', "avatar_{$index}_avatar", '', get_string('avatar_3', 'mod_airoleplay'), 3);
-        $avatargroup[] = $mform->createElement('radio', "avatar_{$index}_avatar", '', get_string('avatar_custom', 'mod_airoleplay'), 0);
+        $customlabel   = get_string('avatar_custom', 'mod_airoleplay');
+        $avatargroup[] = $mform->createElement('radio', "avatar_{$index}_avatar", '', $customlabel, 0);
         $mform->addGroup(
             $avatargroup,
             "avatar_{$index}_avatar_group",

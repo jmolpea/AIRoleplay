@@ -69,7 +69,8 @@ class evaluator {
         $feedbacklang = $this->feedback_language();
 
         $systemprompt = <<<PROMPT
-You are an expert evaluator assessing a participant's performance in a roleplay activity designed to train soft skills, language practice, or professional situational competencies.
+You are an expert evaluator assessing a participant's performance in a roleplay activity
+designed to train soft skills, language practice, or professional situational competencies.
 
 You will receive:
 1. The scenario/situation of the roleplay.
@@ -224,13 +225,14 @@ PROMPT;
         );
 
         $now = time();
-        $DB->set_field('airoleplay_submissions', 'final_grade',    $finalgrade,                                  ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'final_feedback', $result['overall_feedback'],                  ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'grade_breakdown', json_encode($breakdown),                     ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'roleplay_analysis', json_encode($result),                      ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'status',         'graded',                                     ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timegraded',     $now,                                         ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timemodified',   $now,                                         ['id' => $submission->id]);
+        $where = ['id' => $submission->id];
+        $DB->set_field('airoleplay_submissions', 'final_grade', $finalgrade, $where);
+        $DB->set_field('airoleplay_submissions', 'final_feedback', $result['overall_feedback'], $where);
+        $DB->set_field('airoleplay_submissions', 'grade_breakdown', json_encode($breakdown), $where);
+        $DB->set_field('airoleplay_submissions', 'roleplay_analysis', json_encode($result), $where);
+        $DB->set_field('airoleplay_submissions', 'status', 'graded', $where);
+        $DB->set_field('airoleplay_submissions', 'timegraded', $now, $where);
+        $DB->set_field('airoleplay_submissions', 'timemodified', $now, $where);
 
         $submission->final_grade     = $finalgrade;
         $submission->final_feedback  = $result['overall_feedback'];

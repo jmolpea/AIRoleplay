@@ -109,7 +109,11 @@ if ($action === 'gdpr_revoke') {
     );
 }
 
-$attemptsused      = (int)$DB->count_records_select('airoleplay_submissions', 'airoleplay = ? AND userid = ?', [$airoleplay->id, $userid]);
+$attemptsused      = (int)$DB->count_records_select(
+    'airoleplay_submissions',
+    'airoleplay = ? AND userid = ?',
+    [$airoleplay->id, $userid]
+);
 $maxattempts       = (int)$airoleplay->max_attempts;
 $cansubmit         = has_capability('mod/airoleplay:submit', $context);
 $attemptsremaining = ($maxattempts === 0) ? PHP_INT_MAX : max(0, $maxattempts - $attemptsused);
@@ -278,7 +282,7 @@ if ($submission && $submission->gdpr_consent) {
         );
         echo html_writer::end_div();
     }
-    echo html_writer::end_div(); // .airoleplay-avatars
+    echo html_writer::end_div(); // End of .airoleplay-avatars.
 
     // Transcript area.
     echo html_writer::div('', 'airoleplay-transcript', ['id' => 'airoleplay_transcript']);
@@ -304,8 +308,8 @@ if ($submission && $submission->gdpr_consent) {
     echo html_writer::div('', 'conversation-log', ['id' => 'airoleplay_conversation_log']);
     echo html_writer::end_div();
 
-    echo html_writer::end_div(); // .airoleplay-room
-    echo html_writer::end_div(); // .airoleplay-roleplay
+    echo html_writer::end_div(); // End of .airoleplay-room.
+    echo html_writer::end_div(); // End of .airoleplay-roleplay.
 
     // Graded state display.
     if ($submission->status === 'graded' && isset($submission->final_grade)) {
@@ -383,6 +387,6 @@ if ($submission && $submission->gdpr_consent) {
     echo html_writer::end_div();
 }
 
-echo html_writer::end_div(); // .airoleplay-container
+echo html_writer::end_div(); // End of .airoleplay-container.
 
 echo $OUTPUT->footer();

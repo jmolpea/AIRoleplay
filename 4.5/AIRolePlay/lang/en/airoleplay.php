@@ -40,6 +40,8 @@ $string['avatar_1']           = 'Avatar 1 (neutral)';
 $string['avatar_2']           = 'Avatar 2 (feminine)';
 $string['avatar_3']           = 'Avatar 3 (masculine)';
 $string['avatar_custom']      = 'Custom image';
+$string['avatar_custom_upload'] = 'Upload custom avatar image';
+
 $string['avatar_header']      = 'Avatar {$a}';
 $string['avatar_name']        = 'Name';
 $string['avatar_prompt']      = 'Personality & interaction style';
@@ -47,9 +49,9 @@ $string['avatar_prompt_help'] = 'Describe how this avatar behaves, their persona
 $string['avatar_role']        = 'Role / Title';
 $string['avatar_visual']      = 'Avatar appearance';
 $string['avatar_voice']       = 'TTS Voice';
-$string['avatar_custom_upload'] = 'Upload custom avatar image';
-
 $string['avatars_header']     = 'Avatars';
+
+$string['badrequest'] = 'The request could not be processed.';
 
 $string['col_actions']        = 'Actions';
 $string['col_grade']          = 'Grade';
@@ -70,10 +72,10 @@ $string['conversation_log']   = 'Session Log';
 $string['delete_submission']  = 'Delete submission';
 
 $string['dimension_communication']    = 'Communication';
-$string['dimension_role_adherence']   = 'Role adherence';
-$string['dimension_scenario_handling'] = 'Scenario handling';
 $string['dimension_language_quality'] = 'Language quality';
 
+$string['dimension_role_adherence']   = 'Role adherence';
+$string['dimension_scenario_handling'] = 'Scenario handling';
 $string['error_duration_invalid']  = 'Duration must be at least 1 minute.';
 
 $string['evaluation_complete']  = '✅ Evaluation complete. Redirecting…';
@@ -117,10 +119,8 @@ $string['grading_workflow_help'] = 'If enabled, grades are held for teacher revi
 $string['groupsubmission']     = 'Group submission';
 $string['groupsubmission_help'] = 'Allow groups to submit together. Requires groups to be configured in the course.';
 
-$string['invalidsubmissionstatus'] = 'This action is not allowed in the current submission state.';
 $string['invalid_state_transition'] = 'Invalid submission state transition.';
-$string['badrequest'] = 'The request could not be processed.';
-
+$string['invalidsubmissionstatus'] = 'This action is not allowed in the current submission state.';
 $string['maxattempts']         = 'Maximum attempts';
 $string['maxattempts_help']    = 'Maximum number of times a student may attempt this activity. Set to 0 for unlimited.';
 $string['maximumgrade']        = 'Maximum grade';
@@ -141,6 +141,7 @@ $string['num_avatars']         = 'Number of avatars';
 $string['num_avatars_help']    = 'Choose how many avatars participate in the roleplay (1, 2, or 3). When multiple avatars are active, they take turns responding, and the participant can address a specific avatar by name.';
 
 $string['openai_api_error']    = 'AI service error: {$a}';
+$string['openai_apikey_missing']      = 'The AI Roleplay plugin has no usable OpenAI API key configured. Ask the site administrator to set it under Site administration > Plugins > Activity modules > AI Roleplay.';
 $string['openai_model_eval']   = 'AI model for final evaluation';
 $string['openai_model_roleplay'] = 'AI model for roleplay conversation';
 
@@ -166,6 +167,18 @@ $string['participant_role_help']   = 'Describe the character or role the partici
 $string['pluginadministration']    = 'AI Roleplay administration';
 $string['pluginname']              = 'AI Roleplay';
 
+$string['privacy:metadata:airoleplay_messages']                          = 'Detailed log of each turn in the roleplay session.';
+$string['privacy:metadata:airoleplay_messages:message_text']             = 'The text of what was said.';
+$string['privacy:metadata:airoleplay_messages:speaker']                  = 'Who spoke in this turn (avatar or participant).';
+$string['privacy:metadata:airoleplay_messages:timestamp']                = 'When this turn occurred.';
+$string['privacy:metadata:airoleplay_overrides']                         = 'Per-user (or per-group) overrides that change the activity\'s availability or attempt limits for specific participants.';
+$string['privacy:metadata:airoleplay_overrides:groupid']                 = 'The group the override applies to (null for user overrides).';
+$string['privacy:metadata:airoleplay_overrides:max_attempts']            = 'Override for the maximum number of attempts.';
+$string['privacy:metadata:airoleplay_overrides:timeclose']               = 'Override for the activity close time.';
+$string['privacy:metadata:airoleplay_overrides:timecreated']             = 'When the override was created.';
+$string['privacy:metadata:airoleplay_overrides:timemodified']            = 'When the override was last modified.';
+$string['privacy:metadata:airoleplay_overrides:timeopen']                = 'Override for the activity open time.';
+$string['privacy:metadata:airoleplay_overrides:userid']                  = 'The user the override applies to (null for group overrides).';
 $string['privacy:metadata:airoleplay_submissions']                       = 'Information about each student\'s roleplay session, including conversation transcript, grades and review workflow state.';
 $string['privacy:metadata:airoleplay_submissions:attempt']               = 'The attempt number for this submission.';
 $string['privacy:metadata:airoleplay_submissions:final_feedback']        = 'The final feedback text provided to the student.';
@@ -184,30 +197,17 @@ $string['privacy:metadata:airoleplay_submissions:timemodified']          = 'When
 $string['privacy:metadata:airoleplay_submissions:timesubmitted']         = 'When the session was completed.';
 $string['privacy:metadata:airoleplay_submissions:userid']                = 'The ID of the student who participated.';
 $string['privacy:metadata:airoleplay_submissions:workflow_state']        = 'Where the submission sits in the review workflow (inreview, readyforrelease, released).';
-$string['privacy:metadata:airoleplay_messages']                          = 'Detailed log of each turn in the roleplay session.';
-$string['privacy:metadata:airoleplay_messages:message_text']             = 'The text of what was said.';
-$string['privacy:metadata:airoleplay_messages:speaker']                  = 'Who spoke in this turn (avatar or participant).';
-$string['privacy:metadata:airoleplay_messages:timestamp']                = 'When this turn occurred.';
-$string['privacy:metadata:airoleplay_overrides']                         = 'Per-user (or per-group) overrides that change the activity\'s availability or attempt limits for specific participants.';
-$string['privacy:metadata:airoleplay_overrides:groupid']                 = 'The group the override applies to (null for user overrides).';
-$string['privacy:metadata:airoleplay_overrides:max_attempts']            = 'Override for the maximum number of attempts.';
-$string['privacy:metadata:airoleplay_overrides:timeclose']               = 'Override for the activity close time.';
-$string['privacy:metadata:airoleplay_overrides:timecreated']             = 'When the override was created.';
-$string['privacy:metadata:airoleplay_overrides:timemodified']            = 'When the override was last modified.';
-$string['privacy:metadata:airoleplay_overrides:timeopen']                = 'Override for the activity open time.';
-$string['privacy:metadata:airoleplay_overrides:userid']                  = 'The user the override applies to (null for group overrides).';
 $string['privacy:metadata:openai']                                       = 'Conversation and evaluation data are sent to OpenAI for inference. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission. The participant\'s first name is sent so the AI avatars can address the human naturally. The redacted free text the student authored is still transmitted. According to OpenAI\'s API terms, content is not used to train models.';
-$string['privacy:metadata:openai:firstname']                             = 'The participant\'s first name is included in the avatar\'s system prompt so the AI greets and addresses them by their real name.';
-$string['privacy:metadata:openai:roleplay_transcript']                   = 'The redacted JSON transcript of the entire roleplay session, sent to the AI evaluator.';
-$string['privacy:metadata:openai:participant_turn']                      = 'The redacted text of each participant turn, sent to the AI in real time during the roleplay.';
-$string['privacy:metadata:openai:scenario']                              = 'The teacher-authored scenario description, sent as context to the AI.';
-$string['privacy:metadata:openai:participant_role']                      = 'The teacher-defined role assigned to the participant, sent as context to the AI.';
 $string['privacy:metadata:openai:evaluation_request']                    = 'The teacher-authored evaluation rubric and the request to score the submission, sent to the AI evaluator.';
 
+$string['privacy:metadata:openai:firstname']                             = 'The participant\'s first name is included in the avatar\'s system prompt so the AI greets and addresses them by their real name.';
+$string['privacy:metadata:openai:participant_role']                      = 'The teacher-defined role assigned to the participant, sent as context to the AI.';
+$string['privacy:metadata:openai:participant_turn']                      = 'The redacted text of each participant turn, sent to the AI in real time during the roleplay.';
+$string['privacy:metadata:openai:roleplay_transcript']                   = 'The redacted JSON transcript of the entire roleplay session, sent to the AI evaluator.';
+$string['privacy:metadata:openai:scenario']                              = 'The teacher-authored scenario description, sent as context to the AI.';
 $string['publish_grade']       = 'Publish grade';
 $string['push_to_talk']        = 'Hold to respond';
 
-$string['openai_apikey_missing']      = 'The AI Roleplay plugin has no usable OpenAI API key configured. Ask the site administrator to set it under Site administration > Plugins > Activity modules > AI Roleplay.';
 $string['rate_limit_exceeded']        = 'You have made too many requests. Please wait a moment before trying again.';
 $string['rate_limit_exceeded_global'] = 'The site-wide AI Roleplay request limit has been reached. Please try again shortly.';
 
@@ -234,12 +234,12 @@ $string['roleplay_thinking']    = 'The avatar is responding…';
 
 $string['safety_extra_prompt']      = 'Additional content restrictions (optional)';
 $string['safety_extra_prompt_help'] = 'Any extra safety instructions appended to every API call for this activity.';
-$string['security_header']          = 'Activity Security';
-
 $string['scenario_description']       = 'Scenario description';
 $string['scenario_description_help']  = 'Describe the situation for the roleplay. This context is given to the avatars and shown to the participant before the session starts.';
 $string['scenario_header']            = 'Scenario & Participant Role';
 $string['scenario_label']             = 'Scenario';
+
+$string['security_header']          = 'Activity Security';
 
 $string['session_duration']           = 'Session duration (minutes)';
 $string['session_duration_help']      = 'Maximum duration of the roleplay session. When the timer runs out, the session ends and evaluation begins.';
