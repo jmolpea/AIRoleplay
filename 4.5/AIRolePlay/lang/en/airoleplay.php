@@ -118,6 +118,7 @@ $string['groupsubmission']     = 'Group submission';
 $string['groupsubmission_help'] = 'Allow groups to submit together. Requires groups to be configured in the course.';
 
 $string['invalidsubmissionstatus'] = 'This action is not allowed in the current submission state.';
+$string['invalid_state_transition'] = 'Invalid submission state transition.';
 
 $string['maxattempts']         = 'Maximum attempts';
 $string['maxattempts_help']    = 'Maximum number of times a student may attempt this activity. Set to 0 for unlimited.';

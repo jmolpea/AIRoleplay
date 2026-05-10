@@ -69,6 +69,10 @@ if ($action && $userid) {
     $submission = airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid);
 
     if ($action === 'publish') {
+        \mod_airoleplay\local\submission_state::assert_workflow_transition(
+            (string)($submission->workflow_state ?? ''),
+            'released'
+        );
         $DB->set_field('airoleplay_submissions', 'workflow_state', 'released', ['id' => $submission->id]);
         $DB->set_field('airoleplay_submissions', 'grader_userid', $USER->id, ['id' => $submission->id]);
         $DB->set_field('airoleplay_submissions', 'timegraded', time(), ['id' => $submission->id]);
@@ -76,6 +80,10 @@ if ($action && $userid) {
         airoleplay_update_grades($airoleplay, $userid);
         airoleplay_notify_student_grade_released($airoleplay, $submission, $course, $cm);
     } else if ($action === 'return') {
+        \mod_airoleplay\local\submission_state::assert_workflow_transition(
+            (string)($submission->workflow_state ?? ''),
+            'inreview'
+        );
         $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
     } else if ($action === 'savegarde') {
         $newgrade = required_param('grade', PARAM_FLOAT);

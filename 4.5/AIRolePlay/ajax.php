@@ -111,6 +111,7 @@ try {
                     MUST_EXIST
                 );
                 if ($current->status === 'draft') {
+                    \mod_airoleplay\local\submission_state::assert_status_transition($current->status, 'active');
                     $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
                     $submission->status = 'active';
                     \mod_airoleplay\event\submission_created::create([
@@ -155,6 +156,7 @@ try {
                     throw new \moodle_exception('invalidsubmissionstatus', 'mod_airoleplay');
                 }
                 if ($current->status === 'draft') {
+                    \mod_airoleplay\local\submission_state::assert_status_transition($current->status, 'active');
                     $DB->set_field('airoleplay_submissions', 'status', 'active', ['id' => $submission->id]);
                 }
                 $submission->status = 'active';
@@ -210,6 +212,7 @@ try {
                     ]);
                     break;
                 }
+                \mod_airoleplay\local\submission_state::assert_status_transition($current->status, 'submitted');
                 $now = time();
                 $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submission->id]);
                 $DB->set_field('airoleplay_submissions', 'timesubmitted', $now, ['id' => $submission->id]);

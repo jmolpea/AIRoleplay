@@ -204,6 +204,11 @@ PROMPT;
         $maxgrade   = max(1, (int)($airoleplay->grade ?? 100));
         $finalgrade = round($gradepct * $maxgrade / 100.0, 5);
 
+        \mod_airoleplay\local\submission_state::assert_status_transition(
+            (string)$submission->status,
+            'graded'
+        );
+
         $now = time();
         $DB->set_field('airoleplay_submissions', 'final_grade',    $finalgrade,                                  ['id' => $submission->id]);
         $DB->set_field('airoleplay_submissions', 'final_feedback', $result['overall_feedback'],                  ['id' => $submission->id]);
@@ -229,9 +234,14 @@ PROMPT;
         // integrity issue surfaced. Any injection signal or formula mismatch
         // forces manual review even when grading_workflow is off.
         $autopublish = !$airoleplay->grading_workflow && empty($flags);
+        $newworkflow = $autopublish ? 'released' : 'inreview';
+        \mod_airoleplay\local\submission_state::assert_workflow_transition(
+            (string)($submission->workflow_state ?? ''),
+            $newworkflow
+        );
+        $DB->set_field('airoleplay_submissions', 'workflow_state', $newworkflow, ['id' => $submission->id]);
+        $submission->workflow_state = $newworkflow;
         if ($autopublish) {
-            $submission->workflow_state = 'released';
-            $DB->set_field('airoleplay_submissions', 'workflow_state', 'released', ['id' => $submission->id]);
             \airoleplay_update_grades($airoleplay, $submission->userid);
             \mod_airoleplay\event\grade_issued::create([
                 'context'  => $context,
@@ -240,8 +250,6 @@ PROMPT;
             ])->trigger();
             \airoleplay_notify_student_grade_released($airoleplay, $submission, $course, $cm);
         } else {
-            $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
-            $submission->workflow_state = 'inreview';
             \airoleplay_notify_teacher_submission_ready($airoleplay, $submission, $course, $cm);
         }
 
