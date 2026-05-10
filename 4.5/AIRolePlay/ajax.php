@@ -66,7 +66,8 @@ if ($isjsonrequest) {
 
 try {
     if ($cmid <= 0) {
-        json_error('Missing or invalid cmid (' . $cmid . ')');
+        // Generic message to avoid confirming the existence of specific cmids.
+        json_error(get_string('badrequest', 'mod_airoleplay'));
     }
     $cm         = get_coursemodule_from_id('airoleplay', $cmid, 0, false, MUST_EXIST);
     $course     = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
@@ -251,9 +252,16 @@ try {
         // Poll evaluation status.
         case 'check_evaluation':
             require_capability('mod/airoleplay:submit', $context);
-            $sub = $DB->get_record('airoleplay_submissions', ['id' => $submissionid, 'airoleplay' => $airoleplay->id], '*', MUST_EXIST);
-            if ($sub->userid !== $USER->id) {
-                json_error('Access denied');
+            // Look up by the full triple (id, airoleplay, userid) so a missing
+            // row and a foreign row produce the same generic 4xx — preventing
+            // an attacker from enumerating submission ids by response shape.
+            $sub = $DB->get_record('airoleplay_submissions', [
+                'id'         => $submissionid,
+                'airoleplay' => $airoleplay->id,
+                'userid'     => $USER->id,
+            ]);
+            if (!$sub) {
+                json_error(get_string('badrequest', 'mod_airoleplay'));
             }
             echo json_encode(['status' => $sub->status]);
             break;
@@ -270,7 +278,9 @@ try {
             break;
 
         default:
-            json_error('Unknown action: ' . s($action));
+            // Server-side log records the rejected action; the response stays generic.
+            error_log('[mod_airoleplay] rejected unknown ajax action: ' . $action);
+            json_error(get_string('badrequest', 'mod_airoleplay'));
     }
 } catch (\moodle_exception $e) {
     // moodle_exception messages are already translated language strings
