@@ -302,11 +302,11 @@ if ($submission && $submission->gdpr_consent) {
     echo html_writer::div('', 'airoleplay-status-message', ['id' => 'airoleplay_status']);
     echo html_writer::end_div();
 
-    // Sidebar: conversation log.
-    echo html_writer::start_div('airoleplay-sidebar', ['id' => 'airoleplay_sidebar']);
-    echo $OUTPUT->heading(get_string('conversation_log', 'mod_airoleplay'), 4);
-    echo html_writer::div('', 'conversation-log', ['id' => 'airoleplay_conversation_log']);
-    echo html_writer::end_div();
+    // The historical right-hand sidebar that mirrored the conversation log
+    // has been removed: the inline transcript above already shows every
+    // turn and the duplicate widget pushed the push-to-talk button out of
+    // view as the conversation grew. The transcript element's overflow
+    // gives access to older turns via internal scroll.
 
     echo html_writer::end_div(); // End of .airoleplay-room.
     echo html_writer::end_div(); // End of .airoleplay-roleplay.

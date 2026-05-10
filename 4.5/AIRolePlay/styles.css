@@ -104,17 +104,16 @@
     color: var(--airoleplay-text-light);
     position: relative;
     /*
-     * Pin the room to the viewport so neither the chat sidebar nor the
-     * live transcript can push the participant controls out of view.
-     * 220px leaves room for the page header, the activity heading and
-     * the global Moodle navigation; 600px keeps the layout usable on
-     * laptops with shallow viewports.
+     * Pin the room to the viewport so the live transcript cannot push
+     * the participant controls out of view. The room is now a single
+     * column (the duplicated chat sidebar was removed), so the rows
+     * are: header, avatars, transcript (1fr, scrolls), controls.
      */
-    min-height: 600px;
+    min-height: 520px;
     max-height: calc(100vh - 220px);
     display: grid;
     grid-template-rows: auto auto 1fr auto;
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 
@@ -237,8 +236,12 @@ video.avatar-video {
     background: rgba(0,0,0,0.3);
     border-radius: 8px;
     padding: 1rem;
-    max-height: 220px;
-    /* min-height: 0 lets the 1fr row collapse so overflow-y can clip. */
+    /*
+     * The transcript is now the only running history widget on the
+     * roleplay screen (the right-hand sidebar was removed), so it gets
+     * the full 1fr row. min-height: 0 lets the row shrink so overflow-y
+     * can clip cleanly when the room is at its max-height.
+     */
     min-height: 0;
     overflow-y: auto;
     font-size: 0.95rem;
@@ -312,46 +315,6 @@ video.avatar-video {
     display: none;
 }
 
-/* Sidebar */
-.airoleplay-sidebar {
-    grid-column: 2;
-    grid-row: 2 / -1;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    /*
-     * Flex column + min-height: 0 lets the conversation log scroll inside
-     * the sidebar instead of stretching the whole grid row, which used to
-     * shove the push-to-talk button below the fold.
-     */
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-    font-size: 0.85rem;
-}
-
-.airoleplay-sidebar h4 {
-    color: rgba(255,255,255,0.8);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.75rem;
-    flex: 0 0 auto;
-}
-
-.airoleplay-sidebar .conversation-log {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-}
-
-.conversation-log .transcript-item {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-}
-
 /* =========================================================================
    Results card
    ========================================================================= */
@@ -417,14 +380,8 @@ video.avatar-video {
    Responsive
    ========================================================================= */
 @media (max-width: 768px) {
-    .airoleplay-room {
-        grid-template-columns: 1fr;
-    }
-    .airoleplay-sidebar {
-        grid-column: 1;
-        grid-row: auto;
-        max-height: 200px;
-    }
+    /* The room is already single-column in the base styles after the
+       sidebar removal; only the avatar density needs tightening here. */
     .airoleplay-avatars {
         gap: 0.5rem;
     }
