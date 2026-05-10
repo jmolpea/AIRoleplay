@@ -22,6 +22,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Defines the XML structure for a mod_airoleplay backup.
  *
@@ -36,7 +38,11 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
     protected function define_structure(): backup_nested_element {
         $includesubmissions = $this->get_setting_value('userinfo');
 
-        // Root element — activity settings (no API keys).
+        // Root element — activity settings (no API keys). Every column in
+        // {airoleplay} is listed here so a course duplicate or a "Restore
+        // into a new course" lands a fully-configured activity that does
+        // not need to be re-set up by hand. Only the encrypted API key is
+        // intentionally excluded.
         $airoleplay = new backup_nested_element('airoleplay', ['id'], [
             'name', 'intro', 'introformat',
             'num_avatars',
@@ -45,14 +51,27 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
             'session_duration',
             'roleplay_prompt_eval',
             'openai_model_roleplay', 'openai_model_eval',
-            'avatar_1_name', 'avatar_1_role', 'avatar_1_prompt', 'avatar_1_voice', 'avatar_1_avatar',
-            'avatar_2_name', 'avatar_2_role', 'avatar_2_prompt', 'avatar_2_voice', 'avatar_2_avatar',
-            'avatar_3_name', 'avatar_3_role', 'avatar_3_prompt', 'avatar_3_voice', 'avatar_3_avatar',
+            'avatar_1_name', 'avatar_1_role', 'avatar_1_prompt',
+            'avatar_1_voice', 'avatar_1_avatar', 'avatar_1_avatar_custom',
+            'avatar_2_name', 'avatar_2_role', 'avatar_2_prompt',
+            'avatar_2_voice', 'avatar_2_avatar', 'avatar_2_avatar_custom',
+            'avatar_3_name', 'avatar_3_role', 'avatar_3_prompt',
+            'avatar_3_voice', 'avatar_3_avatar', 'avatar_3_avatar_custom',
             'max_attempts',
             'grading_workflow', 'group_submission', 'groupingid',
             'notify_student',
-            'safety_extra_prompt',
-            'grade', 'completionsubmit', 'completiongrade',
+            'safety_max_tokens', 'safety_content_filter', 'safety_extra_prompt',
+            'grade', 'completionsubmit', 'completiongrade', 'completionmingradeval',
+            'timecreated', 'timemodified',
+        ]);
+
+        // Per-user / per-group overrides are activity configuration, so we
+        // back them up regardless of userinfo. Restore will skip rows whose
+        // user/group cannot be mapped into the new course.
+        $overrides = new backup_nested_element('overrides');
+        $override  = new backup_nested_element('override', ['id'], [
+            'userid', 'groupid', 'max_attempts',
+            'timeopen', 'timeclose',
             'timecreated', 'timemodified',
         ]);
 
@@ -69,10 +88,12 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
 
         $messages = new backup_nested_element('roleplay_messages');
         $message  = new backup_nested_element('roleplay_message', ['id'], [
-            'turn_number', 'speaker', 'avatar_index', 'message_text', 'timestamp',
+            'turn_number', 'speaker', 'message_text', 'timestamp',
         ]);
 
         // Build the tree.
+        $airoleplay->add_child($overrides);
+        $overrides->add_child($override);
         $airoleplay->add_child($submissions);
         $submissions->add_child($submission);
         $submission->add_child($messages);
@@ -80,6 +101,7 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
 
         // Data sources.
         $airoleplay->set_source_table('airoleplay', ['id' => backup::VAR_ACTIVITYID]);
+        $override->set_source_table('airoleplay_overrides', ['airoleplay' => backup::VAR_PARENTID]);
 
         if ($includesubmissions) {
             $submission->set_source_table('airoleplay_submissions', ['airoleplay' => backup::VAR_PARENTID]);
@@ -87,6 +109,11 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
             $submission->annotate_ids('user', 'userid');
             $submission->annotate_ids('user', 'grader_userid');
         }
+
+        // Annotate ids that need to be remapped on restore.
+        $airoleplay->annotate_ids('grouping', 'groupingid');
+        $override->annotate_ids('user', 'userid');
+        $override->annotate_ids('group', 'groupid');
 
         // File annotations for the activity.
         $airoleplay->annotate_files('mod_airoleplay', 'intro', null);

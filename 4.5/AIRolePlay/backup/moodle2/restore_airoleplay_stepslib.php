@@ -22,6 +22,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Defines the XML structure mapping for restoring a mod_airoleplay backup.
  */
@@ -36,6 +38,12 @@ class restore_airoleplay_activity_structure_step extends restore_activity_struct
         $userinfo = $this->get_setting_value('userinfo');
 
         $paths[] = new restore_path_element('airoleplay', '/activity/airoleplay');
+        // Overrides are activity configuration; restored regardless of userinfo
+        // because group overrides survive even when student data is dropped.
+        $paths[] = new restore_path_element(
+            'airoleplay_override',
+            '/activity/airoleplay/overrides/override'
+        );
 
         if ($userinfo) {
             $paths[] = new restore_path_element(
@@ -66,12 +74,63 @@ class restore_airoleplay_activity_structure_step extends restore_activity_struct
         // Ensure the API key is blank after restore (for security — must be re-entered).
         $data->openai_apikey = '';
 
+        // Remap grouping reference into the new course's grouping set.
+        if (!empty($data->groupingid)) {
+            $data->groupingid = (int)$this->get_mappingid('grouping', $data->groupingid) ?: 0;
+        }
+
         $data->timemodified = $this->apply_date_offset($data->timemodified);
         $data->timecreated  = $this->apply_date_offset($data->timecreated);
 
         $newid = $DB->insert_record('airoleplay', $data);
         $this->apply_activity_instance($newid);
         $this->set_mapping('airoleplay', $oldid, $newid);
+    }
+
+    /**
+     * Processes a restored override element.
+     *
+     * Skips the row when the user or group it pointed at does not exist in
+     * the destination course (e.g. a course-import without users will lose
+     * user overrides but keep group overrides if the group is also imported).
+     *
+     * @param array $data Data from the backup XML.
+     */
+    protected function process_airoleplay_override(array $data): void {
+        global $DB;
+
+        $data             = (object)$data;
+        $data->airoleplay = $this->get_new_parentid('airoleplay');
+
+        if (!empty($data->userid)) {
+            $mappedid = $this->get_mappingid('user', $data->userid);
+            if (!$mappedid) {
+                return;
+            }
+            $data->userid = $mappedid;
+        }
+        if (!empty($data->groupid)) {
+            $mappedid = $this->get_mappingid('group', $data->groupid);
+            if (!$mappedid) {
+                return;
+            }
+            $data->groupid = $mappedid;
+        }
+        if (empty($data->userid) && empty($data->groupid)) {
+            // Neither anchor mapped — nothing to restore.
+            return;
+        }
+
+        $data->timecreated  = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
+        if (!empty($data->timeopen)) {
+            $data->timeopen = $this->apply_date_offset($data->timeopen);
+        }
+        if (!empty($data->timeclose)) {
+            $data->timeclose = $this->apply_date_offset($data->timeclose);
+        }
+
+        $DB->insert_record('airoleplay_overrides', $data);
     }
 
     /**

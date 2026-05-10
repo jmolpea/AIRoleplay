@@ -64,7 +64,7 @@ final class anonymizer_test extends \advanced_testcase {
         $this->assertNotSame(anonymizer::hash_user(1), anonymizer::hash_user(2));
     }
 
-    public function test_redact_text_replaces_full_name_username_and_email(): void {
+    public function test_redact_text_replaces_full_name_lastname_username_and_email(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user([
             'firstname' => 'Ada',
@@ -75,20 +75,31 @@ final class anonymizer_test extends \advanced_testcase {
 
         $hash = anonymizer::hash_user((int)$user->id);
 
+        // Each entry: [text, must-not-contain pattern].
         $cases = [
-            'Hi, I am Ada Lovelace and I love Moodle.',
-            'Lovelace, Ada speaking.',
-            'My handle is ada42 online.',
-            'Reach me at ada@example.org any time.',
+            ['Hi, I am Ada Lovelace and I love Moodle.', 'Ada Lovelace'],
+            ['Lovelace, Ada speaking.',                   'Lovelace'],
+            ['Lovelace alone here.',                      'Lovelace'],
+            ['My handle is ada42 online.',                'ada42'],
+            ['Reach me at ada@example.org any time.',     'ada@example.org'],
         ];
-        foreach ($cases as $case) {
-            $redacted = anonymizer::redact_text($case, (int)$user->id);
-            $this->assertStringNotContainsString('Ada', $redacted, $case);
-            $this->assertStringNotContainsString('Lovelace', $redacted, $case);
-            $this->assertStringNotContainsString('ada42', $redacted, $case);
-            $this->assertStringNotContainsString('ada@example.org', $redacted, $case);
-            $this->assertStringContainsString($hash, $redacted, $case);
+        foreach ($cases as [$text, $forbidden]) {
+            $redacted = anonymizer::redact_text($text, (int)$user->id);
+            $this->assertStringNotContainsString($forbidden, $redacted, $text);
+            $this->assertStringContainsString($hash, $redacted, $text);
         }
+    }
+
+    public function test_redact_text_keeps_first_name_intact(): void {
+        // The first name is shared with the AI via the system prompt so it
+        // can greet the human naturally. Redacting it here would break that.
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Ada',
+            'lastname'  => 'Lovelace',
+        ]);
+        $redacted = anonymizer::redact_text('Hi, my name is Ada and I work at the lab.', (int)$user->id);
+        $this->assertStringContainsString('Ada', $redacted);
     }
 
     public function test_redact_text_returns_input_when_user_missing_or_empty(): void {
@@ -114,7 +125,7 @@ final class anonymizer_test extends \advanced_testcase {
         $decoded  = json_decode($redacted, true);
         $this->assertIsArray($decoded);
         $this->assertSame('Welcome!', $decoded[0]['text']);
-        $this->assertStringNotContainsString('Ada', $decoded[1]['text']);
+        $this->assertStringNotContainsString('Ada Lovelace', $decoded[1]['text']);
         $this->assertStringNotContainsString('Lovelace', $decoded[1]['text']);
         $this->assertStringContainsString(anonymizer::hash_user((int)$user->id), $decoded[1]['text']);
     }
@@ -128,7 +139,8 @@ final class anonymizer_test extends \advanced_testcase {
 
         $notjson  = 'Ada Lovelace says hi.';
         $redacted = anonymizer::redact_transcript_json($notjson, (int)$user->id);
-        $this->assertStringNotContainsString('Ada', $redacted);
+        $this->assertStringNotContainsString('Ada Lovelace', $redacted);
+        $this->assertStringNotContainsString('Lovelace', $redacted);
         $this->assertStringContainsString(anonymizer::hash_user((int)$user->id), $redacted);
     }
 }

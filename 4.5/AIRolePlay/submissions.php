@@ -234,12 +234,13 @@ function airoleplay_fetch_submission(int $airoleplayid, int $userid, int $submis
 /**
  * Renders the detailed view for a single student submission.
  *
- * @param stdClass $airoleplay Airoleplay instance.
- * @param int      $userid     Student user id.
- * @param int      $cmid       Course module id.
- * @param context  $context    Module context.
- * @param stdClass $cm         Course module record.
- * @param stdClass $course     Course record.
+ * @param stdClass $airoleplay   Airoleplay instance.
+ * @param int      $userid       Student user id.
+ * @param int      $cmid         Course module id.
+ * @param context  $context      Module context.
+ * @param stdClass $cm           Course module record.
+ * @param stdClass $course       Course record.
+ * @param int      $submissionid Optional explicit submission id (0 = latest attempt).
  */
 function render_submission_detail(
     stdClass $airoleplay,
