@@ -165,7 +165,7 @@ try {
                 $lock->release();
             }
 
-            $participantinput = substr(trim($jsonbody['response'] ?? ''), 0, 5000);
+            $participantinput = mb_substr(trim($jsonbody['response'] ?? ''), 0, 5000);
             $suggestedavatar  = max(1, min(3, (int)($jsonbody['suggested_avatar'] ?? 1)));
             $preferredavatar  = max(0, min(3, (int)($jsonbody['preferred_avatar'] ?? 0)));
             $turn             = max(1, (int)($jsonbody['turn'] ?? 1));
@@ -301,9 +301,19 @@ function json_error(string $message): never {
     exit;
 }
 
-// regen_rate_check has moved to lib.php as airoleplay_regen_rate_check so it
-// can be unit-tested. The original name is kept as a thin alias for any
-// in-tree caller that still uses it.
+/**
+ * Backwards-compatible alias for {@see airoleplay_regen_rate_check()}.
+ *
+ * The body moved to lib.php so PHPUnit can call it without booting this
+ * AJAX dispatcher; this thin wrapper keeps the historical name.
+ *
+ * @param int    $userid       Teacher's user id.
+ * @param int    $submissionid Submission being regenerated.
+ * @param string $operation    Short operation name for cache key namespacing.
+ * @param int    $cooldownsecs Minimum seconds between calls.
+ * @param int    $dailycap     Max calls per teacher+submission per day.
+ * @throws \moodle_exception if the cooldown has not yet expired or the cap is reached.
+ */
 function regen_rate_check(
     int $userid,
     int $submissionid,
