@@ -301,18 +301,9 @@ function json_error(string $message): never {
     exit;
 }
 
-/**
- * Enforces a per-teacher, per-submission cooldown plus a daily cap on
- * regen operations to prevent runaway OpenAI cost.
- *
- * @param int    $userid       Teacher's user id.
- * @param int    $submissionid Submission being regenerated.
- * @param string $operation    Short operation name for cache key namespacing.
- * @param int    $cooldownsecs Minimum seconds between calls (default 300).
- * @param int    $dailycap     Max calls per teacher+submission per day.
- * @throws \moodle_exception if the cooldown has not yet expired or the cap
- *                           is reached.
- */
+// regen_rate_check has moved to lib.php as airoleplay_regen_rate_check so it
+// can be unit-tested. The original name is kept as a thin alias for any
+// in-tree caller that still uses it.
 function regen_rate_check(
     int $userid,
     int $submissionid,
@@ -320,24 +311,7 @@ function regen_rate_check(
     int $cooldownsecs = 300,
     int $dailycap = 5
 ): void {
-    $cache = \cache::make('mod_airoleplay', 'ratelimit');
-    $now   = time();
-
-    $lastkey = 'regen_' . $operation . '_' . $userid . '_' . $submissionid;
-    $last    = (int)($cache->get($lastkey) ?: 0);
-    if ($last > 0 && ($now - $last) < $cooldownsecs) {
-        throw new \moodle_exception('regen_cooldown', 'mod_airoleplay');
-    }
-
-    // Daily cap, keyed on the UTC day so the counter resets at midnight.
-    $daykey   = 'regen_day_' . $operation . '_' . $userid . '_' . $submissionid . '_' . gmdate('Ymd', $now);
-    $daycount = (int)($cache->get($daykey) ?: 0);
-    if ($daycount >= $dailycap) {
-        throw new \moodle_exception('regen_daily_cap', 'mod_airoleplay');
-    }
-
-    $cache->set($lastkey, $now);
-    $cache->set($daykey, $daycount + 1);
+    airoleplay_regen_rate_check($userid, $submissionid, $operation, $cooldownsecs, $dailycap);
 }
 
 /**

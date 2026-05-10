@@ -44,18 +44,6 @@ class evaluator {
     ];
 
     /**
-     * Patterns commonly seen in prompt-injection payloads. Hits flag the
-     * submission for manual review and bypass auto-publishing.
-     */
-    private const INJECTION_PATTERNS = [
-        '/===\s*(ROLEPLAY|PARTICIPANT|SCENARIO|TEACHER)[^=]{0,40}(START|END)\s*===/iu',
-        '/(ignore|disregard|forget)\b.{0,40}(previous|above|prior|all|these|the)\b.{0,40}\binstructions?\b/iu',
-        '/^\s*(system|assistant|developer|tool)\s*:\s*/imu',
-        '/<\|im_(start|end)\|>/iu',
-        '/```\s*(system|json|tool_call)/iu',
-    ];
-
-    /**
      * Constructor.
      */
     public function __construct() {
@@ -112,7 +100,8 @@ IMPORTANT: Write ALL text fields in {$feedbacklang}. Do not use any other langua
 PROMPT;
 
         $rawtranscript = (string)($submission->roleplay_transcript ?? '');
-        $injectiondetected = $rawtranscript !== '' && self::detect_injection($rawtranscript);
+        $injectiondetected = $rawtranscript !== ''
+            && \mod_airoleplay\local\prompt_guard::detect_injection($rawtranscript);
 
         $transcripttext = '';
         if ($rawtranscript !== '') {
@@ -120,7 +109,9 @@ PROMPT;
                 $rawtranscript,
                 (int)$submission->userid
             );
-            $transcripttext = self::neutralise_delimiters(mb_substr($transcripttext, 0, 8000));
+            $transcripttext = \mod_airoleplay\local\prompt_guard::neutralise_delimiters(
+                mb_substr($transcripttext, 0, 8000)
+            );
         }
 
         $userprompt = implode("\n\n", array_filter([
@@ -197,7 +188,9 @@ PROMPT;
         // strip HTML tags so even a misconfigured renderer downstream cannot
         // execute model-emitted markup.
         $result['overall_feedback'] = clean_param(
-            self::neutralise_delimiters((string)($result['overall_feedback'] ?? '')),
+            \mod_airoleplay\local\prompt_guard::neutralise_delimiters(
+                (string)($result['overall_feedback'] ?? '')
+            ),
             PARAM_NOTAGS
         );
 
@@ -284,41 +277,5 @@ PROMPT;
     private function sanitise_prompt(string $prompt): string {
         $prompt = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $prompt);
         return mb_substr($prompt, 0, 8000);
-    }
-
-    /**
-     * Returns true when the text contains any known prompt-injection pattern.
-     *
-     * @param string $text Untrusted text such as the participant transcript.
-     * @return bool
-     */
-    private static function detect_injection(string $text): bool {
-        if ($text === '') {
-            return false;
-        }
-        foreach (self::INJECTION_PATTERNS as $pattern) {
-            if (preg_match($pattern, $text) === 1) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Replaces literal delimiter strings with a visibly different variant so
-     * a participant cannot fake a section boundary in the assembled prompt.
-     *
-     * @param string $text Possibly hostile text.
-     * @return string Same text with delimiter triplets neutralised.
-     */
-    private static function neutralise_delimiters(string $text): string {
-        if ($text === '') {
-            return $text;
-        }
-        return preg_replace(
-            '/===\s*([A-Za-z][A-Za-z0-9 _-]{0,60})\s*(START|END)\s*===/iu',
-            '[$1 $2]',
-            $text
-        );
     }
 }
