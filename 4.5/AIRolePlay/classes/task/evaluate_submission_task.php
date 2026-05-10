@@ -67,14 +67,21 @@ class evaluate_submission_task extends \core\task\adhoc_task {
         $course     = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
         $airoleplay = $DB->get_record('airoleplay', ['id' => $cm->instance], '*', MUST_EXIST);
 
+        \mod_airoleplay\local\submission_state::assert_status_transition(
+            (string)$submission->status,
+            'grading'
+        );
         $DB->set_field('airoleplay_submissions', 'status', 'grading', ['id' => $submissionid]);
+        $submission->status = 'grading';
 
         try {
             $evaluator = new \mod_airoleplay\api\evaluator();
             $evaluator->evaluate($submission, $airoleplay, $course, $cm);
             mtrace('airoleplay evaluate_submission_task: completed for submission ' . $submissionid);
         } catch (\moodle_exception $e) {
-            mtrace('airoleplay evaluate_submission_task error: ' . $e->getMessage());
+            \airoleplay_log_internal_error('evaluate_submission_task', $e, ['submissionid' => $submissionid]);
+            mtrace('airoleplay evaluate_submission_task: failed for submission ' . $submissionid . ' (see error log)');
+            \mod_airoleplay\local\submission_state::assert_status_transition('grading', 'submitted');
             $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submissionid]);
         }
     }

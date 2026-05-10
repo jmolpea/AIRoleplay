@@ -61,14 +61,22 @@ class provider implements
             'airoleplay_submissions',
             [
                 'userid'                 => 'privacy:metadata:airoleplay_submissions:userid',
+                'groupid'                => 'privacy:metadata:airoleplay_submissions:groupid',
+                'attempt'                => 'privacy:metadata:airoleplay_submissions:attempt',
                 'status'                 => 'privacy:metadata:airoleplay_submissions:status',
+                'workflow_state'         => 'privacy:metadata:airoleplay_submissions:workflow_state',
                 'gdpr_consent'           => 'privacy:metadata:airoleplay_submissions:gdpr_consent',
                 'gdpr_consent_time'      => 'privacy:metadata:airoleplay_submissions:gdpr_consent_time',
                 'roleplay_transcript'    => 'privacy:metadata:airoleplay_submissions:roleplay_transcript',
+                'roleplay_analysis'      => 'privacy:metadata:airoleplay_submissions:roleplay_analysis',
+                'grade_breakdown'        => 'privacy:metadata:airoleplay_submissions:grade_breakdown',
                 'final_grade'            => 'privacy:metadata:airoleplay_submissions:final_grade',
                 'final_feedback'         => 'privacy:metadata:airoleplay_submissions:final_feedback',
+                'grader_userid'          => 'privacy:metadata:airoleplay_submissions:grader_userid',
                 'timecreated'            => 'privacy:metadata:airoleplay_submissions:timecreated',
+                'timemodified'           => 'privacy:metadata:airoleplay_submissions:timemodified',
                 'timesubmitted'          => 'privacy:metadata:airoleplay_submissions:timesubmitted',
+                'timegraded'             => 'privacy:metadata:airoleplay_submissions:timegraded',
             ],
             'privacy:metadata:airoleplay_submissions'
         );
@@ -83,11 +91,32 @@ class provider implements
             'privacy:metadata:airoleplay_messages'
         );
 
-        // External service: OpenAI.
+        $collection->add_database_table(
+            'airoleplay_overrides',
+            [
+                'userid'       => 'privacy:metadata:airoleplay_overrides:userid',
+                'groupid'      => 'privacy:metadata:airoleplay_overrides:groupid',
+                'max_attempts' => 'privacy:metadata:airoleplay_overrides:max_attempts',
+                'timeopen'     => 'privacy:metadata:airoleplay_overrides:timeopen',
+                'timeclose'    => 'privacy:metadata:airoleplay_overrides:timeclose',
+                'timecreated'  => 'privacy:metadata:airoleplay_overrides:timecreated',
+                'timemodified' => 'privacy:metadata:airoleplay_overrides:timemodified',
+            ],
+            'privacy:metadata:airoleplay_overrides'
+        );
+
+        // External service: OpenAI. Personal identifiers are replaced with a
+        // STUDENT-<hash> token (see mod_airoleplay\privacy\anonymizer) before
+        // any payload leaves the LMS, but the redacted free text — which the
+        // student authored — is still transmitted to OpenAI for inference.
         $collection->add_external_location_link(
             'openai',
             [
-                'conversation_turns' => 'privacy:metadata:openai:conversation_turns',
+                'roleplay_transcript' => 'privacy:metadata:openai:roleplay_transcript',
+                'participant_turn'    => 'privacy:metadata:openai:participant_turn',
+                'scenario'            => 'privacy:metadata:openai:scenario',
+                'participant_role'    => 'privacy:metadata:openai:participant_role',
+                'evaluation_request'  => 'privacy:metadata:openai:evaluation_request',
             ],
             'privacy:metadata:openai'
         );
@@ -155,17 +184,29 @@ class provider implements
 
             foreach ($submissions as $submission) {
                 $data = [
-                    'attempt'           => $submission->attempt,
-                    'status'            => $submission->status,
-                    'gdpr_consent'      => transform::yesno($submission->gdpr_consent),
-                    'gdpr_consent_time' => $submission->gdpr_consent_time
+                    'attempt'             => $submission->attempt,
+                    'status'              => $submission->status,
+                    'workflow_state'      => $submission->workflow_state,
+                    'groupid'             => $submission->groupid,
+                    'gdpr_consent'        => transform::yesno($submission->gdpr_consent),
+                    'gdpr_consent_time'   => $submission->gdpr_consent_time
                         ? transform::datetime($submission->gdpr_consent_time)
                         : '-',
-                    'final_grade'       => $submission->final_grade,
-                    'final_feedback'    => $submission->final_feedback,
-                    'timecreated'       => transform::datetime($submission->timecreated),
-                    'timesubmitted'     => $submission->timesubmitted
+                    'roleplay_transcript' => $submission->roleplay_transcript,
+                    'roleplay_analysis'   => $submission->roleplay_analysis,
+                    'grade_breakdown'     => $submission->grade_breakdown,
+                    'final_grade'         => $submission->final_grade,
+                    'final_feedback'      => $submission->final_feedback,
+                    'grader_userid'       => $submission->grader_userid,
+                    'timecreated'         => transform::datetime($submission->timecreated),
+                    'timemodified'        => $submission->timemodified
+                        ? transform::datetime($submission->timemodified)
+                        : '-',
+                    'timesubmitted'       => $submission->timesubmitted
                         ? transform::datetime($submission->timesubmitted)
+                        : '-',
+                    'timegraded'          => $submission->timegraded
+                        ? transform::datetime($submission->timegraded)
                         : '-',
                 ];
 
@@ -198,6 +239,27 @@ class provider implements
                     );
                 }
             }
+
+            // Per-user overrides for this activity.
+            $overrides = $DB->get_records('airoleplay_overrides', [
+                'airoleplay' => $cm->instance,
+                'userid'     => $userid,
+            ]);
+            if ($overrides) {
+                $overridedata = array_values(array_map(static function ($o) {
+                    return [
+                        'max_attempts' => $o->max_attempts,
+                        'timeopen'     => $o->timeopen ? transform::datetime($o->timeopen) : '-',
+                        'timeclose'    => $o->timeclose ? transform::datetime($o->timeclose) : '-',
+                        'timecreated'  => transform::datetime($o->timecreated),
+                        'timemodified' => $o->timemodified ? transform::datetime($o->timemodified) : '-',
+                    ];
+                }, $overrides));
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'mod_airoleplay'), get_string('overrides_heading', 'mod_airoleplay')],
+                    (object)['overrides' => $overridedata]
+                );
+            }
         }
     }
 
@@ -223,6 +285,7 @@ class provider implements
             $DB->delete_records('airoleplay_messages', ['submission_id' => $submission->id]);
         }
         $DB->delete_records('airoleplay_submissions', ['airoleplay' => $cm->instance]);
+        $DB->delete_records('airoleplay_overrides', ['airoleplay' => $cm->instance]);
     }
 
     /**
@@ -254,6 +317,7 @@ class provider implements
             }
 
             $DB->delete_records('airoleplay_submissions', ['airoleplay' => $cm->instance, 'userid' => $userid]);
+            $DB->delete_records('airoleplay_overrides', ['airoleplay' => $cm->instance, 'userid' => $userid]);
         }
     }
 
@@ -294,6 +358,11 @@ class provider implements
 
         $DB->delete_records_select(
             'airoleplay_submissions',
+            "airoleplay = :airoleplay AND userid {$insql}",
+            $params
+        );
+        $DB->delete_records_select(
+            'airoleplay_overrides',
             "airoleplay = :airoleplay AND userid {$insql}",
             $params
         );

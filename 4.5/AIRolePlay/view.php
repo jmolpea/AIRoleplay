@@ -28,7 +28,7 @@ require_once($CFG->dirroot . '/mod/airoleplay/lib.php');
 $id     = required_param('id', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
 
-if ($action === 'gdpr_consent') {
+if ($action === 'gdpr_consent' || $action === 'gdpr_revoke') {
     require_sesskey();
 }
 
@@ -85,6 +85,28 @@ if ($action === 'gdpr_consent') {
         }
     }
     redirect(new moodle_url('/mod/airoleplay/view.php', ['id' => $id]));
+}
+
+// Handle GDPR consent withdrawal (Art. 7(3) RGPD).
+if ($action === 'gdpr_revoke') {
+    $usersubs = $DB->get_records('airoleplay_submissions', [
+        'airoleplay' => $airoleplay->id,
+        'userid'     => $userid,
+    ]);
+    foreach ($usersubs as $usersub) {
+        $DB->delete_records('airoleplay_messages', ['submission_id' => $usersub->id]);
+    }
+    $DB->delete_records('airoleplay_submissions', [
+        'airoleplay' => $airoleplay->id,
+        'userid'     => $userid,
+    ]);
+    \airoleplay_update_grades($airoleplay, $userid);
+    redirect(
+        new moodle_url('/mod/airoleplay/view.php', ['id' => $id]),
+        get_string('gdpr_revoked_notice', 'mod_airoleplay'),
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
 }
 
 $attemptsused      = (int)$DB->count_records_select('airoleplay_submissions', 'airoleplay = ? AND userid = ?', [$airoleplay->id, $userid]);
@@ -299,9 +321,13 @@ if ($submission && $submission->gdpr_consent) {
             );
 
             if ($submission->final_feedback) {
+                // Feedback comes from the AI evaluator (or from a teacher
+                // override saved through submissions.php). Render as plain
+                // text so a hostile transcript that survived prompt-injection
+                // checks cannot smuggle HTML into the student's screen.
                 echo html_writer::div(
                     html_writer::tag('h5', get_string('feedback', 'mod_airoleplay')) .
-                    format_text($submission->final_feedback, FORMAT_HTML),
+                    format_text($submission->final_feedback, FORMAT_PLAIN, ['context' => $context]),
                     'airoleplay-feedback mt-3'
                 );
             }
@@ -309,15 +335,18 @@ if ($submission && $submission->gdpr_consent) {
             // Show grade breakdown if available.
             if ($submission->grade_breakdown) {
                 $breakdown = json_decode($submission->grade_breakdown, true);
-                if ($breakdown) {
+                if (is_array($breakdown) && !empty($breakdown)) {
                     echo html_writer::tag('h5', get_string('grade_breakdown', 'mod_airoleplay'), ['class' => 'mt-4']);
                     echo html_writer::start_tag('ul', ['class' => 'list-group']);
                     foreach ($breakdown as $dimension => $data) {
+                        if (!is_string($dimension) || !is_array($data)) {
+                            continue;
+                        }
                         $label = get_string('dimension_' . $dimension, 'mod_airoleplay', $dimension);
                         echo html_writer::tag('li',
                             html_writer::tag('strong', $label) . ': ' .
                             (int)($data['score'] ?? 0) . '/100 — ' .
-                            s($data['feedback'] ?? ''),
+                            s((string)($data['feedback'] ?? '')),
                             ['class' => 'list-group-item']
                         );
                     }
@@ -334,6 +363,24 @@ if ($submission && $submission->gdpr_consent) {
         echo html_writer::end_div();
         echo html_writer::end_div();
     }
+
+    // GDPR Art. 7(3): the participant must be able to withdraw consent
+    // at any time and trigger deletion of their data on this activity.
+    $revokeurl = new moodle_url('/mod/airoleplay/view.php', [
+        'id'      => $id,
+        'action'  => 'gdpr_revoke',
+        'sesskey' => sesskey(),
+    ]);
+    echo html_writer::start_div('airoleplay-gdpr-revoke mt-4 text-end');
+    echo html_writer::link(
+        $revokeurl,
+        get_string('gdpr_revoke_button', 'mod_airoleplay'),
+        [
+            'class'   => 'btn btn-sm btn-outline-secondary',
+            'onclick' => 'return confirm(' . json_encode(get_string('gdpr_revoke_confirm', 'mod_airoleplay')) . ');',
+        ]
+    );
+    echo html_writer::end_div();
 }
 
 echo html_writer::end_div(); // .airoleplay-container

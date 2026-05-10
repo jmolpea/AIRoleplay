@@ -22,6 +22,98 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// Concurrency helpers.
+
+/**
+ * Acquires a per-submission lock so concurrent ajax workers cannot duplicate
+ * state transitions or trigger the evaluator twice.
+ *
+ * @param int $submissionid The airoleplay_submissions.id to guard.
+ * @param int $timeoutsecs  How long to wait before giving up.
+ * @return \core\lock\lock|null Acquired lock, or null on timeout.
+ */
+function airoleplay_acquire_submission_lock(int $submissionid, int $timeoutsecs = 10): ?\core\lock\lock {
+    $factory = \core\lock\lock_config::get_lock_factory('mod_airoleplay');
+    $lock    = $factory->get_lock('submission_' . $submissionid, $timeoutsecs);
+    return $lock ?: null;
+}
+
+// Rate-limit helpers.
+
+/**
+ * Enforces a per-teacher, per-submission cooldown plus a daily cap on
+ * regen operations to prevent runaway OpenAI cost.
+ *
+ * @param int    $userid       Teacher's user id.
+ * @param int    $submissionid Submission being regenerated.
+ * @param string $operation    Short operation name for cache key namespacing.
+ * @param int    $cooldownsecs Minimum seconds between calls (default 300).
+ * @param int    $dailycap     Max calls per teacher+submission per day.
+ * @throws \moodle_exception if the cooldown has not yet expired or the cap
+ *                           is reached.
+ */
+function airoleplay_regen_rate_check(
+    int $userid,
+    int $submissionid,
+    string $operation,
+    int $cooldownsecs = 300,
+    int $dailycap = 5
+): void {
+    $cache = \cache::make('mod_airoleplay', 'ratelimit');
+    $now   = time();
+
+    $lastkey = 'regen_' . $operation . '_' . $userid . '_' . $submissionid;
+    $last    = (int)($cache->get($lastkey) ?: 0);
+    if ($last > 0 && ($now - $last) < $cooldownsecs) {
+        throw new \moodle_exception('regen_cooldown', 'mod_airoleplay');
+    }
+
+    // Daily cap, keyed on the UTC day so the counter resets at midnight.
+    $daykey   = 'regen_day_' . $operation . '_' . $userid . '_' . $submissionid . '_' . gmdate('Ymd', $now);
+    $daycount = (int)($cache->get($daykey) ?: 0);
+    if ($daycount >= $dailycap) {
+        throw new \moodle_exception('regen_daily_cap', 'mod_airoleplay');
+    }
+
+    $cache->set($lastkey, $now);
+    $cache->set($daykey, $daycount + 1);
+}
+
+// Logging helpers.
+
+/**
+ * Records an internal error.
+ *
+ * Sends the full message, file/line and stack trace to PHP's error_log
+ * (server-side only) and emits a short, identifier-only debugging() line
+ * so an admin running with debug display on does not see the raw message,
+ * which can contain prompt fragments, request bodies or file paths.
+ *
+ * @param string     $context Short, free-text context (e.g. "ajax dispatch").
+ * @param \Throwable $e       The caught exception.
+ * @param array      $ids     Optional integer identifiers to include in the
+ *                            short debug line (submission id, cmid, ...).
+ */
+function airoleplay_log_internal_error(string $context, \Throwable $e, array $ids = []): void {
+    error_log(sprintf(
+        '[mod_airoleplay] %s: %s in %s:%d%s%s',
+        $context,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        PHP_EOL,
+        $e->getTraceAsString()
+    ));
+    $idstr = '';
+    foreach ($ids as $key => $value) {
+        $idstr .= ' ' . $key . '=' . (int)$value;
+    }
+    debugging(
+        'mod_airoleplay ' . $context . ' error (' . get_class($e) . ')' . $idstr,
+        DEBUG_DEVELOPER
+    );
+}
+
 // Course module API.
 
 /**
@@ -114,7 +206,7 @@ function airoleplay_process_form_data(stdClass $data): void {
         try {
             $data->openai_apikey = \core\encryption::encrypt($data->openai_apikey);
         } catch (\moodle_exception $e) {
-            debugging('airoleplay: could not encrypt API key: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            airoleplay_log_internal_error('apikey_encrypt', $e);
         }
     }
 

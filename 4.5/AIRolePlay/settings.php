@@ -34,20 +34,18 @@ if ($ADMIN->fulltree) {
         get_string('settings_apikeys_heading_desc', 'mod_airoleplay')
     ));
 
-    // Primary OpenAI API Key.
-    $settings->add(new admin_setting_configpasswordunmask(
+    // Primary OpenAI API Key. Stored encrypted via \core\encryption.
+    $settings->add(new admin_setting_encryptedpassword(
         'mod_airoleplay/openai_apikey',
         get_string('settings_openai_apikey', 'mod_airoleplay'),
-        get_string('settings_openai_apikey_desc', 'mod_airoleplay'),
-        ''
+        get_string('settings_openai_apikey_desc', 'mod_airoleplay')
     ));
 
-    // Secondary API Key (optional, for TTS separation).
-    $settings->add(new admin_setting_configpasswordunmask(
+    // Secondary API Key (optional, for TTS separation). Stored encrypted.
+    $settings->add(new admin_setting_encryptedpassword(
         'mod_airoleplay/openai_apikey_secondary',
         get_string('settings_openai_apikey_secondary', 'mod_airoleplay'),
-        get_string('settings_openai_apikey_secondary_desc', 'mod_airoleplay'),
-        ''
+        get_string('settings_openai_apikey_secondary_desc', 'mod_airoleplay')
     ));
 
     // Section: Available Models.
@@ -111,13 +109,15 @@ if ($ADMIN->fulltree) {
         get_string('settings_anonymize_desc', 'mod_airoleplay')
     ));
 
-    // Salt for anonymisation hash.
+    // Salt for anonymisation hash. Empty values are allowed and will be
+    // auto-generated on upgrade with random_bytes(32). Manual values must
+    // be at least 32 characters of [A-Za-z0-9_-] for predictability.
     $settings->add(new admin_setting_configtext(
         'mod_airoleplay/anonymize_salt',
         get_string('settings_anonymize_salt', 'mod_airoleplay'),
         get_string('settings_anonymize_salt_desc', 'mod_airoleplay'),
         '',
-        PARAM_TEXT
+        '/^([A-Za-z0-9_\-]{32,128})?$/'
     ));
 
     // Section: GDPR notice text.
@@ -157,6 +157,15 @@ if ($ADMIN->fulltree) {
         get_string('settings_api_rate_limit', 'mod_airoleplay'),
         get_string('settings_api_rate_limit_desc', 'mod_airoleplay'),
         10,
+        PARAM_INT
+    ));
+
+    // Max API calls per minute across the whole installation (global backstop).
+    $settings->add(new admin_setting_configtext(
+        'mod_airoleplay/api_rate_limit_global',
+        get_string('settings_api_rate_limit_global', 'mod_airoleplay'),
+        get_string('settings_api_rate_limit_global_desc', 'mod_airoleplay'),
+        60,
         PARAM_INT
     ));
 }

@@ -33,6 +33,17 @@ class evaluator {
     private openai_client $client;
 
     /**
+     * Component weights used by the rubric. Kept here so the server can
+     * recompute the grade independently of whatever the model returns.
+     */
+    private const GRADE_WEIGHTS = [
+        'communication'     => 0.30,
+        'role_adherence'    => 0.25,
+        'scenario_handling' => 0.25,
+        'language_quality'  => 0.20,
+    ];
+
+    /**
      * Constructor.
      */
     public function __construct() {
@@ -88,6 +99,21 @@ Be objective, constructive, and base your assessment solely on the evidence prov
 IMPORTANT: Write ALL text fields in {$feedbacklang}. Do not use any other language.
 PROMPT;
 
+        $rawtranscript = (string)($submission->roleplay_transcript ?? '');
+        $injectiondetected = $rawtranscript !== ''
+            && \mod_airoleplay\local\prompt_guard::detect_injection($rawtranscript);
+
+        $transcripttext = '';
+        if ($rawtranscript !== '') {
+            $transcripttext = \mod_airoleplay\privacy\anonymizer::redact_transcript_json(
+                $rawtranscript,
+                (int)$submission->userid
+            );
+            $transcripttext = \mod_airoleplay\local\prompt_guard::neutralise_delimiters(
+                mb_substr($transcripttext, 0, 8000)
+            );
+        }
+
         $userprompt = implode("\n\n", array_filter([
             $airoleplay->roleplay_prompt_eval
                 ? "Teacher's evaluation instructions:\n" . $this->sanitise_prompt($airoleplay->roleplay_prompt_eval)
@@ -104,9 +130,9 @@ PROMPT;
                   mb_substr($airoleplay->participant_role, 0, 1000) .
                   "\n=== PARTICIPANT ROLE END ==="
                 : "[Participant Role]\nNot specified.",
-            $submission->roleplay_transcript
+            $transcripttext !== ''
                 ? "=== ROLEPLAY TRANSCRIPT START ===\n" .
-                  mb_substr($submission->roleplay_transcript, 0, 8000) .
+                  $transcripttext .
                   "\n=== ROLEPLAY TRANSCRIPT END ==="
                 : "[Roleplay Transcript]\nNot available.",
         ]));
@@ -120,7 +146,7 @@ PROMPT;
             $messages,
             $model,
             ['response_format' => ['type' => 'json_object']],
-            0
+            (int)$submission->userid
         );
 
         $jsontext = $response['choices'][0]['message']['content'] ?? '{}';
@@ -130,22 +156,64 @@ PROMPT;
             throw new \moodle_exception('evaluator_invalid_response', 'mod_airoleplay');
         }
 
-        $gradepct   = max(0.0, min(100.0, (float)$result['grade_percentage']));
+        // Recompute the grade from the components so the model can never
+        // return a percentage that disagrees with its own breakdown.
+        $breakdown  = is_array($result['grade_breakdown'] ?? null) ? $result['grade_breakdown'] : [];
+        $recomputed = 0.0;
+        foreach (self::GRADE_WEIGHTS as $dim => $weight) {
+            $score = (float)($breakdown[$dim]['score'] ?? 0);
+            $recomputed += max(0.0, min(100.0, $score)) * $weight;
+        }
+        $recomputed = round($recomputed, 2);
+        $reported   = round(max(0.0, min(100.0, (float)$result['grade_percentage'])), 2);
+
+        $flags = [];
+        if (isset($result['academic_integrity_flags']) && is_array($result['academic_integrity_flags'])) {
+            $flags = array_values(array_filter($result['academic_integrity_flags'], 'is_string'));
+        }
+        if (abs($recomputed - $reported) > 1.0) {
+            $flags[]  = 'formula_mismatch';
+            $gradepct = $recomputed;
+        } else {
+            $gradepct = $reported;
+        }
+        if ($injectiondetected) {
+            $flags[] = 'injection_pattern_detected';
+        }
+        $flags = array_values(array_unique($flags));
+        $result['academic_integrity_flags'] = $flags;
+
+        // Strip any of our delimiter strings from free-text fields the model
+        // produced so they cannot be reused to attack the next render, then
+        // strip HTML tags so even a misconfigured renderer downstream cannot
+        // execute model-emitted markup.
+        $result['overall_feedback'] = clean_param(
+            \mod_airoleplay\local\prompt_guard::neutralise_delimiters(
+                (string)($result['overall_feedback'] ?? '')
+            ),
+            PARAM_NOTAGS
+        );
+
         $maxgrade   = max(1, (int)($airoleplay->grade ?? 100));
         $finalgrade = round($gradepct * $maxgrade / 100.0, 5);
 
+        \mod_airoleplay\local\submission_state::assert_status_transition(
+            (string)$submission->status,
+            'graded'
+        );
+
         $now = time();
-        $DB->set_field('airoleplay_submissions', 'final_grade',    $finalgrade,                        ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'final_feedback', $result['overall_feedback'] ?? '',  ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'grade_breakdown', json_encode($result['grade_breakdown'] ?? []), ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'roleplay_analysis', $jsontext,                       ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'status',         'graded',                           ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timegraded',     $now,                               ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timemodified',   $now,                               ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'final_grade',    $finalgrade,                                  ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'final_feedback', $result['overall_feedback'],                  ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'grade_breakdown', json_encode($breakdown),                     ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'roleplay_analysis', json_encode($result),                      ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'status',         'graded',                                     ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'timegraded',     $now,                                         ['id' => $submission->id]);
+        $DB->set_field('airoleplay_submissions', 'timemodified',   $now,                                         ['id' => $submission->id]);
 
         $submission->final_grade     = $finalgrade;
-        $submission->final_feedback  = $result['overall_feedback'] ?? '';
-        $submission->grade_breakdown = json_encode($result['grade_breakdown'] ?? []);
+        $submission->final_feedback  = $result['overall_feedback'];
+        $submission->grade_breakdown = json_encode($breakdown);
         $submission->status          = 'graded';
 
         $context = \context_module::instance($cm->id);
@@ -155,9 +223,18 @@ PROMPT;
             'userid'   => $submission->userid,
         ])->trigger();
 
-        if (!$airoleplay->grading_workflow) {
-            $submission->workflow_state = 'released';
-            $DB->set_field('airoleplay_submissions', 'workflow_state', 'released', ['id' => $submission->id]);
+        // Auto-publish only when the teacher disabled the workflow AND no
+        // integrity issue surfaced. Any injection signal or formula mismatch
+        // forces manual review even when grading_workflow is off.
+        $autopublish = !$airoleplay->grading_workflow && empty($flags);
+        $newworkflow = $autopublish ? 'released' : 'inreview';
+        \mod_airoleplay\local\submission_state::assert_workflow_transition(
+            (string)($submission->workflow_state ?? ''),
+            $newworkflow
+        );
+        $DB->set_field('airoleplay_submissions', 'workflow_state', $newworkflow, ['id' => $submission->id]);
+        $submission->workflow_state = $newworkflow;
+        if ($autopublish) {
             \airoleplay_update_grades($airoleplay, $submission->userid);
             \mod_airoleplay\event\grade_issued::create([
                 'context'  => $context,
@@ -166,8 +243,6 @@ PROMPT;
             ])->trigger();
             \airoleplay_notify_student_grade_released($airoleplay, $submission, $course, $cm);
         } else {
-            $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
-            $submission->workflow_state = 'inreview';
             \airoleplay_notify_teacher_submission_ready($airoleplay, $submission, $course, $cm);
         }
 

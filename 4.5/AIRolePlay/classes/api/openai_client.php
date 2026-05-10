@@ -37,6 +37,9 @@ class openai_client {
     /** @var int Maximum retry attempts. */
     private const MAX_RETRIES = 3;
 
+    /** @var int Connection-establishment timeout (seconds). */
+    private const CONNECT_TIMEOUT = 10;
+
     /** @var string Primary API key (decrypted). */
     private string $apikey;
 
@@ -55,6 +58,9 @@ class openai_client {
     /** @var int Max calls per minute per user. */
     private int $ratelimit;
 
+    /** @var int Max calls per minute across the whole installation (global backstop). */
+    private int $globalratelimit;
+
     /**
      * Private constructor — use {@see self::get_instance()}.
      */
@@ -67,10 +73,11 @@ class openai_client {
         $encryptedsecondary = $config->openai_apikey_secondary ?? '';
         $this->apikeysecondary = $encryptedsecondary ? $this->decrypt_key($encryptedsecondary) : null;
 
-        $this->timeout       = max(30, (int)($config->api_timeout ?? 120));
-        $this->maxtokens     = max(256, (int)($config->safety_max_tokens ?? 4096));
-        $this->contentfilter = !empty($config->safety_content_filter);
-        $this->ratelimit     = max(1, (int)($config->api_rate_limit ?? 10));
+        $this->timeout         = max(30, (int)($config->api_timeout ?? 120));
+        $this->maxtokens       = max(256, (int)($config->safety_max_tokens ?? 4096));
+        $this->contentfilter   = !empty($config->safety_content_filter);
+        $this->ratelimit       = max(1, (int)($config->api_rate_limit ?? 10));
+        $this->globalratelimit = max(1, (int)($config->api_rate_limit_global ?? 60));
     }
 
     /**
@@ -145,30 +152,47 @@ class openai_client {
      * @throws \moodle_exception on failure after all retries.
      */
     private function request(string $method, string $path, array $body, ?string $key = null): array {
-        $key = $key ?? $this->apikey;
-        $url = self::BASE_URL . $path;
-        $attempt = 0;
-        $lasterr = '';
+        $key       = $key ?? $this->apikey;
+        $url       = self::BASE_URL . $path;
+        $deadline  = microtime(true) + $this->timeout;
+        $attempt   = 0;
+        $lasterr   = '';
+
+        $encoded = null;
+        if ($method === 'POST') {
+            $encoded = json_encode($body, JSON_UNESCAPED_UNICODE);
+            if ($encoded === false) {
+                throw new \moodle_exception(
+                    'openai_api_error',
+                    'mod_airoleplay',
+                    '',
+                    'Failed to encode request as JSON: ' . json_last_error_msg()
+                );
+            }
+        }
 
         while ($attempt < self::MAX_RETRIES) {
             $attempt++;
+
+            $remaining = (int)max(1, ceil($deadline - microtime(true)));
+            if ($remaining <= 0) {
+                $lasterr = $lasterr !== '' ? $lasterr : 'request deadline exceeded';
+                break;
+            }
+
             $curl = new \curl();
             $curl->setHeader([
                 'Authorization: Bearer ' . $key,
                 'Content-Type: application/json',
             ]);
-            $options = ['CURLOPT_TIMEOUT' => $this->timeout];
+            $options = [
+                'CURLOPT_TIMEOUT'        => $remaining,
+                'CURLOPT_CONNECTTIMEOUT' => min(self::CONNECT_TIMEOUT, $remaining),
+                'CURLOPT_SSL_VERIFYPEER' => true,
+                'CURLOPT_SSL_VERIFYHOST' => 2,
+            ];
 
             if ($method === 'POST') {
-                $encoded = json_encode($body, JSON_UNESCAPED_UNICODE);
-                if ($encoded === false) {
-                    throw new \moodle_exception(
-                        'openai_api_error',
-                        'mod_airoleplay',
-                        '',
-                        'Failed to encode request as JSON: ' . json_last_error_msg()
-                    );
-                }
                 $raw = $curl->post($url, $encoded, $options);
             } else {
                 $raw = $curl->delete($url, [], $options);
@@ -176,12 +200,14 @@ class openai_client {
 
             if ($curl->get_errno()) {
                 $lasterr = $curl->error;
-                $this->sleep_backoff($attempt);
+                if (!$this->sleep_within_deadline($attempt, $deadline)) {
+                    break;
+                }
                 continue;
             }
 
-            $info   = $curl->get_info();
-            $status = (int)($info['http_code'] ?? 0);
+            $info    = $curl->get_info();
+            $status  = (int)($info['http_code'] ?? 0);
             $decoded = json_decode($raw, true);
 
             if ($status >= 200 && $status < 300) {
@@ -192,7 +218,9 @@ class openai_client {
             $lasterr = $decoded['error']['message'] ?? "HTTP {$status}";
 
             if ($status === 429 || $status >= 500) {
-                $this->sleep_backoff($attempt);
+                if (!$this->sleep_within_deadline($attempt, $deadline)) {
+                    break;
+                }
                 continue;
             }
 
@@ -221,7 +249,12 @@ class openai_client {
             'Authorization: Bearer ' . $key,
             'Content-Type: application/json',
         ]);
-        $raw = $curl->post($url, json_encode($body), ['CURLOPT_TIMEOUT' => $this->timeout]);
+        $raw = $curl->post($url, json_encode($body), [
+            'CURLOPT_TIMEOUT'        => $this->timeout,
+            'CURLOPT_CONNECTTIMEOUT' => self::CONNECT_TIMEOUT,
+            'CURLOPT_SSL_VERIFYPEER' => true,
+            'CURLOPT_SSL_VERIFYHOST' => 2,
+        ]);
 
         if ($curl->get_errno()) {
             throw new \moodle_exception('openai_api_error', 'mod_airoleplay', '', $curl->error);
@@ -269,40 +302,66 @@ class openai_client {
             if ($e->errorcode === 'content_flagged') {
                 throw $e;
             }
-            debugging('airoleplay: moderation endpoint failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            \airoleplay_log_internal_error('moderation_endpoint', $e);
         }
     }
 
     /**
-     * Checks per-user rate limit using Moodle application cache.
+     * Enforces both a global (per-installation) and a per-user rate limit.
      *
-     * @param int $userid Moodle user id (0 = skip).
-     * @throws \moodle_exception if rate limit exceeded.
+     * The global limit is always applied and acts as a backstop against
+     * runaway cost when the per-user limit is bypassed (e.g. cron tasks
+     * that legitimately omit a user id).
+     *
+     * @param int $userid Moodle user id (0 skips the per-user check only).
+     * @throws \moodle_exception if either rate limit is exceeded.
      */
     private function check_rate_limit(int $userid): void {
+        $cache  = \cache::make('mod_airoleplay', 'ratelimit');
+        $window = floor(time() / 60);
+
+        // Global per-installation backstop, always enforced.
+        $globalkey   = 'global_' . $window;
+        $globalcount = (int)($cache->get($globalkey) ?? 0);
+        if ($globalcount >= $this->globalratelimit) {
+            throw new \moodle_exception('rate_limit_exceeded_global', 'mod_airoleplay');
+        }
+        $cache->set($globalkey, $globalcount + 1);
+
         if (!$userid) {
             return;
         }
 
-        $cache = \cache::make('mod_airoleplay', 'ratelimit');
-        $key   = 'user_' . $userid . '_' . floor(time() / 60);
+        $key   = 'user_' . $userid . '_' . $window;
         $count = (int)($cache->get($key) ?? 0);
-
         if ($count >= $this->ratelimit) {
             throw new \moodle_exception('rate_limit_exceeded', 'mod_airoleplay');
         }
-
         $cache->set($key, $count + 1);
     }
 
     /**
-     * Sleeps for an exponentially increasing duration between retries.
+     * Sleeps an exponential back-off, but never past the request deadline.
      *
-     * @param int $attempt Current attempt number (1-based).
+     * Returns false when there is no time left to retry, so callers can stop
+     * looping instead of blocking the PHP worker indefinitely.
+     *
+     * @param int   $attempt  Current attempt number (1-based).
+     * @param float $deadline Absolute unix timestamp (microtime).
+     * @return bool True if there is time left to retry; false otherwise.
      */
-    private function sleep_backoff(int $attempt): void {
-        $seconds = min(30, 2 ** ($attempt - 1));
-        sleep($seconds);
+    private function sleep_within_deadline(int $attempt, float $deadline): bool {
+        $backoff   = min(30, 2 ** max(0, $attempt - 1));
+        $remaining = $deadline - microtime(true);
+        if ($remaining <= 0) {
+            return false;
+        }
+        // Never burn more than half of the remaining budget on a sleep.
+        $sleep = (int)max(0, min($backoff, floor($remaining / 2)));
+        if ($sleep > 0) {
+            sleep($sleep);
+        }
+        return ($deadline - microtime(true)) > 0;
     }
 
     /**
@@ -322,12 +381,14 @@ class openai_client {
     }
 
     /**
-     * Decrypts a stored API key.
+     * Decrypts a stored API key. Fails closed — never falls back to plaintext.
      *
-     * Supports both encrypted values (admin_setting_encryptedpassword) and
-     * plain-text values (admin_setting_configpasswordunmask) for compatibility.
+     * The plugin stores API keys via admin_setting_encryptedpassword, which
+     * always encrypts on save. If decryption fails, we refuse to use the value:
+     * leaking a plaintext key from a misconfigured config column would be far
+     * worse than the OpenAI calls failing loudly.
      *
-     * @param string $value Possibly-encrypted value from config.
+     * @param string $value Encrypted value from config.
      * @return string Plaintext API key, or empty string if unavailable.
      */
     private function decrypt_key(string $value): string {
@@ -336,10 +397,20 @@ class openai_client {
         }
         try {
             $decrypted = \core\encryption::decrypt($value);
-            return $decrypted !== false ? $decrypted : $value;
         } catch (\Throwable $e) {
-            // Not encrypted — return as-is (plain text storage).
-            return $value;
+            debugging(
+                'airoleplay: API key decryption raised an exception; refusing to use raw value',
+                DEBUG_DEVELOPER
+            );
+            return '';
         }
+        if ($decrypted === false || $decrypted === null || $decrypted === '') {
+            debugging(
+                'airoleplay: API key could not be decrypted; refusing to use raw value',
+                DEBUG_DEVELOPER
+            );
+            return '';
+        }
+        return $decrypted;
     }
 }
