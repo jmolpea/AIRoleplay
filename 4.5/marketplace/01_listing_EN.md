@@ -14,10 +14,10 @@ mod_airoleplay
 Activity module
 
 ## Short description (1–2 sentences)
-Voice roleplay simulations with AI characters, graded automatically. Students talk with one to three AI avatars in a scenario you write, and get a grade and personal feedback the moment the session ends.
+Voice roleplay simulations with AI characters and AI-assisted grading. Students talk with one to three AI avatars in a scenario you write, and get a grade and personal feedback as soon as the session ends, or once a teacher has reviewed it.
 
 ## Tagline (if a shorter one is requested)
-Practise real conversations with AI characters. Get graded instantly.
+Practise real conversations with AI characters. Get AI feedback in minutes.
 
 ---
 
@@ -33,7 +33,7 @@ Teachers write the scenario in plain language. There are no dialogue trees to bu
 
 - **Real practice, not multiple choice.** Students speak, listen and think on their feet, the way they will at work or in an exam.
 - **Instant, specific feedback.** A grade out of your chosen maximum, a rubric breakdown (communication, role adherence, scenario handling, language quality), strengths and areas for improvement, all quoting what the student actually said.
-- **Teachers stay in control.** Read every transcript, regenerate an evaluation, adjust the grade and feedback, and publish when ready. Optional review workflow holds every grade until a teacher releases it.
+- **Teachers stay in control.** Read every transcript, regenerate an evaluation, adjust the grade and feedback, and publish when ready. By default every AI grade waits for a teacher to review and release it; administrators can switch the site to automatic publishing, and can lock either choice for every activity.
 - **Fair by design.** Only the student's words are graded. If a student said nothing (for example, a broken microphone), the attempt is not passed on the avatars' lines: it scores 0 and is sent to the teacher with an explanation.
 - **Works for every student.** Push-to-talk with mouse, touch or keyboard. If the browser cannot recognise speech or the microphone is blocked, the page explains why and the student replies by typing. Reloading the page resumes the session with the time really left.
 
@@ -53,7 +53,8 @@ Teachers write the scenario in plain language. There are no dialogue trees to bu
 - Students can address an avatar by name to make it answer
 - Server-kept session timer (5–30 minutes), resume after reload, automatic closing of abandoned sessions
 - Automatic AI grading with a four-part rubric plus optional teacher instructions
-- Grading workflow, teacher review page with transcripts and integrity flags, regenerate evaluation, manual grade override
+- Teacher review before release or automatic publishing, set per activity or imposed site-wide by the administrator; evaluations with integrity warnings always wait for a teacher
+- Teacher review page with transcripts and integrity flags, regenerate evaluation, manual grade override
 - Multiple attempts (best grade to the gradebook), user and group overrides, availability dates
 - Activity completion: "complete a roleplay session" and standard grade conditions
 - Gradebook, backup/restore, course reset, Privacy API (export and deletion), groups and groupings
@@ -79,6 +80,7 @@ Typical AI cost of a 10-minute session with the recommended models: about US$0.0
 - Student surname, username and email are replaced by an anonymous token before any text is sent to the AI provider.
 - Consent notice before the first session (text editable by the administrator); students can withdraw consent and delete their conversations.
 - Encrypted API keys, per-user and site-wide rate limits, protection against prompt manipulation, provider errors never shown to students.
+- Optional OpenAI content moderation of student replies (on by default when OpenAI is the chat provider).
 - Built-in "Test AI connection" page for administrators.
 
 ---
@@ -106,14 +108,22 @@ English, Spanish, Portuguese (Brazil)
 3. Paste the licence key you received after purchase. The status must read *Valid*.
 4. Paste the API key of your AI provider and select it as *Chat provider*. The recommended models are preselected.
 5. Choose how the avatars speak (OpenAI or Gemini voices, browser voices, or text only).
-6. Click **Run connection test**: every line must show *OK*.
-7. In a course: **Add an activity → AI Roleplay**, write the scenario and the student's role, configure the avatars and save.
+6. Under **Grading**, decide whether AI grades wait for teacher review (default) or are published automatically, and whether to lock that choice for every activity.
+7. Click **Run connection test**: every line must show *OK*.
+8. In a course: **Add an activity → AI Roleplay**, write the scenario and the student's role, configure the avatars and save.
 
 The licence key is bound to the exact site URL (wwwroot). Need a key for a test or staging site? Contact support.
 
 ---
 
-## What's new in 1.0.0 (release notes field)
+## What's new in 1.0.1 (release notes field)
+
+- Faster, more reliable conversations: a stalled voice response can no longer hold a turn for two minutes. Speech is retried within seconds, live turns have a strict time limit, and moderation runs only on student replies.
+- New site setting *Teacher review before release*: choose teacher review (default) or automatic publishing for new activities, and optionally lock the choice for every activity.
+- All pages rebuilt on Moodle templates; security and accessibility refinements to user/group overrides; SVG images are no longer accepted as custom avatars.
+- Completion is updated when a session is closed by the scheduled task; backup/restore and privacy edge cases fixed.
+
+## What's new in 1.0.0
 
 First stable release.
 - New model catalogue: GPT-6, Claude Sonnet 5 / Opus 5.5 / Haiku 4.5, Gemini 3.8, DeepSeek V4.
@@ -145,6 +155,12 @@ No. Only the student's own words are graded. A silent session scores 0 and is fl
 
 **Can teachers change a grade?**
 Yes. Teachers can edit the grade and feedback, regenerate the evaluation, and choose when grades are released.
+
+**Are grades published automatically?**
+Your choice. By default each AI grade waits for a teacher to review and publish it. An administrator can make automatic publishing the default, or lock either option for every activity. Evaluations with integrity warnings (no or very little participation, suspected manipulation) always wait for a teacher.
+
+**What does the OpenAI content moderation do?**
+When OpenAI is the chat provider, each student reply is checked with OpenAI's free moderation service before the avatar answers; flagged replies (harassment, hate, violence, sexual content, self-harm) get no answer and the student sees a notice. It adds about one second per turn and can be switched off by the administrator; the other providers rely on their built-in safety systems.
 
 **Is student data sent to the AI provider?**
 Only what is needed to run the conversation: the student's first name (so the avatar can greet them) and what they say. Surname, username and email are replaced by an anonymous token. See the privacy statement.

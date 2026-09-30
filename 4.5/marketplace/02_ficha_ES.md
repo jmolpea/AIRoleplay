@@ -3,7 +3,7 @@
 > Para tu web, materiales comerciales o si el Marketplace permite descripciones traducidas. La ficha oficial debe ir en inglés (ver `01_listing_EN.md`).
 
 ## Descripción corta
-Simulaciones de rol habladas con personajes de IA y evaluación automática. El alumno conversa en voz alta con uno a tres avatares en un escenario que escribe el profesor, y recibe nota y retroalimentación personalizada al terminar.
+Simulaciones de rol habladas con personajes de IA y evaluación asistida por IA. El alumno conversa en voz alta con uno a tres avatares en un escenario que escribe el profesor, y recibe nota y retroalimentación personalizada al terminar o cuando el profesor la revisa.
 
 ## Descripción larga
 
@@ -16,7 +16,7 @@ El profesor escribe el escenario en lenguaje natural. Sin árboles de diálogo n
 ### Por qué lo eligen los docentes
 - **Práctica real, no tipo test.** El alumno habla, escucha y piensa en el momento.
 - **Retroalimentación inmediata y concreta**: nota, rúbrica (comunicación, adecuación al rol, manejo del escenario, calidad lingüística), puntos fuertes y aspectos a mejorar, citando lo que el alumno dijo.
-- **El profesor mantiene el control**: transcripciones, regenerar evaluación, ajustar nota y publicar cuando quiera.
+- **El profesor mantiene el control**: transcripciones, regenerar evaluación, ajustar nota y publicar cuando quiera. Por defecto cada nota de la IA espera a que el profesor la revise; el administrador puede activar la publicación automática y bloquear la opción para todas las actividades.
 - **Justo por diseño**: solo se evalúan las palabras del alumno. Si no dijo nada (p. ej. un micrófono averiado), no aprueba con las frases de los avatares: obtiene 0 y el profesor recibe el caso para revisarlo.
 - **Para todos los alumnos**: pulsar para hablar con ratón, táctil o teclado; si el navegador no reconoce voz o el micrófono está bloqueado, se explica el motivo y el alumno escribe. Recargar la página reanuda la sesión con el tiempo real restante.
 
@@ -27,7 +27,12 @@ Atención al cliente · Ventas y negociación · Entrevistas de trabajo · Comun
 OpenAI (GPT‑6 Sol recomendado), Anthropic (Claude Sonnet 5), Google (Gemini 3.8 Flash) o DeepSeek (V4.1 Flash / V4 Pro). Voces de OpenAI o Gemini, voces del navegador gratuitas o solo texto. Coste típico de IA por sesión de 10 minutos: 0,01–0,15 USD.
 
 ### Privacidad
-Apellido, usuario y correo se sustituyen por un identificador anónimo antes de enviar nada a la IA. Aviso de consentimiento editable; el alumno puede retirarlo y borrar sus conversaciones. Claves API cifradas, límites de uso y protección contra manipulación del evaluador.
+Apellido, usuario y correo se sustituyen por un identificador anónimo antes de enviar nada a la IA. Aviso de consentimiento editable; el alumno puede retirarlo y borrar sus conversaciones. Claves API cifradas, límites de uso y protección contra manipulación del evaluador. Moderación opcional de OpenAI sobre las respuestas del alumno.
 
 ### Requisitos
 Moodle 4.5 a 5.3 · HTTPS · clave API de un proveedor · cron activo · clave de licencia para la URL del sitio · voz en Chrome, Edge o Safari (en otros navegadores, respuesta escrita).
+
+### Novedades de la 1.0.1
+- Conversaciones más rápidas y fiables: una respuesta de voz colgada ya no bloquea el turno dos minutos; se reintenta en segundos y cada turno tiene un límite de tiempo.
+- Nuevo ajuste de sitio «Revisión del profesor antes de publicar»: revisión (por defecto) o publicación automática, con opción de bloquearlo para todas las actividades.
+- Páginas reconstruidas con plantillas de Moodle y mejoras de seguridad en las excepciones de usuario/grupo.

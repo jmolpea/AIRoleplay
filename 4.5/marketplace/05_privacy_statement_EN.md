@@ -20,7 +20,7 @@ Before sending, the student's **surname, full name, username and email** are rep
 Students must accept a notice (text editable by the administrator) before their first session. They can withdraw consent at any time from the activity page: their transcripts, message logs and AI feedback are deleted. The attempt count and any grade already recorded are kept as the institution's assessment record; administrators can erase everything through Moodle's privacy tools.
 
 ## Security measures
-Encrypted API keys (Moodle encryption), sesskey and capability checks on every action, per-user and site-wide rate limits, cooldown and daily cap on teacher regenerations, prompt-injection detection and delimiting, AI output stored as plain text (no HTML), provider error details only in the server log, optional OpenAI moderation of student replies.
+Encrypted API keys (Moodle encryption), sesskey and capability checks on every action, per-user and site-wide rate limits, cooldown and daily cap on teacher regenerations, prompt-injection detection and delimiting, AI output stored as plain text (no HTML), provider error details only in the server log, optional OpenAI moderation of student replies (when OpenAI is the chat provider, each reply is also sent to OpenAI's moderation endpoint before the avatar answers).
 
 ## Provider choice note
 DeepSeek processes data on servers in China. Institutions subject to GDPR should review this before selecting it. OpenAI, Anthropic and Google offer data-processing agreements for API customers; the institution should sign the one that applies.
