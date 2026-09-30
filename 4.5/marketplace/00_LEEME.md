@@ -1,9 +1,9 @@
-# AI Roleplay 1.0.0 — Paquete para el Moodle Marketplace
+# AI Roleplay 1.0.1 — Paquete para el Moodle Marketplace
 
 ## Contenido
 | Fichero | Para qué |
 |---|---|
-| `../mod_airoleplay_1.0.0.zip` | El ZIP que se sube (validado con el instalador oficial en Moodle 5.0–5.3) |
+| `../mod_airoleplay_1.0.1.zip` | El ZIP que se sube (validado con el instalador oficial en Moodle 5.0–5.3) |
 | `01_listing_EN.md` | Textos listos para pegar en la ficha (inglés): nombre, descripciones, requisitos, instalación, novedades, FAQ, etiquetas |
 | `02_ficha_ES.md` | Versión en español para tu web y comerciales |
 | `03_precio_y_estrategia.md` | Modelo de precios, planes, argumentos y riesgos |
@@ -13,7 +13,7 @@
 
 ## Pasos para publicar
 1. Entra en **marketplace.moodle.com** con la misma cuenta de moodle.org → *Submit a plugin* → **Paid**.
-2. Sube `mod_airoleplay_1.0.0.zip`. Deben pasar la validación del archivo y los tests de moodle-plugin-ci.
+2. Sube `mod_airoleplay_1.0.1.zip`. Deben pasar la validación del archivo y los tests de moodle-plugin-ci.
 3. Completa la ficha con `01_listing_EN.md` y las capturas.
 4. Configura precio y Stripe Connect (ver `03_precio_y_estrategia.md`).
 5. Espera la revisión (2–4 semanas en plugins de pago; se repite cada año).
