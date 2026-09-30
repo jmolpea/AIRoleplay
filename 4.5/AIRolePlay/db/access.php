@@ -34,6 +34,7 @@ $capabilities = [
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
         ],
+        'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
 
     'mod/airoleplay:view' => [
@@ -89,15 +90,6 @@ $capabilities = [
         'archetypes'   => [
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
-        ],
-    ],
-
-    'mod/airoleplay:manageplugin' => [
-        'riskbitmask'  => RISK_CONFIG | RISK_DATALOSS,
-        'captype'      => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
         ],
     ],
 ];

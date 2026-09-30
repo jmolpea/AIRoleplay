@@ -39,7 +39,7 @@ require_capability('mod/airoleplay:manageoverrides', $context);
 
 $baseurl = new moodle_url('/mod/airoleplay/overrides.php', ['id' => $id]);
 
-// Delete action.
+// Delete action (POST from a confirmed single_button).
 if ($action === 'delete' && $overrideid) {
     require_sesskey();
     $DB->delete_records('airoleplay_overrides', ['id' => $overrideid, 'airoleplay' => $airoleplay->id]);
@@ -53,8 +53,6 @@ if ($action === 'delete' && $overrideid) {
 
 // Add/Edit form.
 if ($action === 'add' || ($action === 'edit' && $overrideid)) {
-    require_once($CFG->dirroot . '/mod/airoleplay/classes/form/override_form.php');
-
     $formurl = new moodle_url(
         '/mod/airoleplay/overrides.php',
         ['id' => $id, 'action' => $action, 'overrideid' => $overrideid]
@@ -63,7 +61,6 @@ if ($action === 'add' || ($action === 'edit' && $overrideid)) {
     $PAGE->set_title(get_string('overrides_heading', 'mod_airoleplay') . ': ' . format_string($airoleplay->name));
     $PAGE->set_heading(format_string($course->fullname));
     $PAGE->set_context($context);
-    $PAGE->requires->css('/mod/airoleplay/styles.css');
 
     $override = null;
     if ($action === 'edit' && $overrideid) {
@@ -79,10 +76,13 @@ if ($action === 'add' || ($action === 'edit' && $overrideid)) {
         'cmid'       => $cm->id,
         'airoleplay' => $airoleplay,
         'context'    => $context,
+        'overrideid' => $override ? (int)$override->id : 0,
     ]);
 
     if ($override) {
         $formdata = clone $override;
+        // The form's 'id' is the course module, not the override.
+        $formdata->id = $cm->id;
         $formdata->overridetype = $override->userid ? 'user' : 'group';
         $form->set_data($formdata);
     }
@@ -133,7 +133,6 @@ $PAGE->set_url('/mod/airoleplay/overrides.php', ['id' => $id]);
 $PAGE->set_title(get_string('overrides_heading', 'mod_airoleplay') . ': ' . format_string($airoleplay->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
-$PAGE->requires->css('/mod/airoleplay/styles.css');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($airoleplay->name) . ' — ' . get_string('overrides_heading', 'mod_airoleplay'));
@@ -167,7 +166,7 @@ foreach ($overrides as $ov) {
     if ($ov->userid) {
         $typestr = get_string('override_type_user', 'mod_airoleplay');
         $who     = '';
-        $user    = $DB->get_record('user', ['id' => $ov->userid]);
+        $user    = core_user::get_user($ov->userid);
         if ($user) {
             $who = fullname($user);
         }
@@ -176,7 +175,7 @@ foreach ($overrides as $ov) {
         $who     = '';
         $group   = $DB->get_record('groups', ['id' => $ov->groupid]);
         if ($group) {
-            $who = format_string($group->name);
+            $who = format_string($group->name, true, ['context' => $context]);
         }
     }
 
@@ -188,17 +187,19 @@ foreach ($overrides as $ov) {
         '/mod/airoleplay/overrides.php',
         ['id' => $id, 'action' => 'edit', 'overrideid' => $ov->id]
     );
-    $deleteurl = new moodle_url(
-        '/mod/airoleplay/overrides.php',
-        ['id' => $id, 'action' => 'delete', 'overrideid' => $ov->id, 'sesskey' => sesskey()]
+    $deletebutton = new single_button(
+        new moodle_url(
+            '/mod/airoleplay/overrides.php',
+            ['id' => $id, 'action' => 'delete', 'overrideid' => $ov->id, 'sesskey' => sesskey()]
+        ),
+        get_string('delete'),
+        'post'
     );
+    $deletebutton->add_confirm_action(get_string('override_confirm_delete', 'mod_airoleplay'));
+    $deletebutton->class = 'd-inline-block';
 
     $actions = html_writer::link($editurl, get_string('edit'), ['class' => 'btn btn-sm btn-outline-primary me-1']) .
-               html_writer::link($deleteurl, get_string('delete'), [
-                   'class'   => 'btn btn-sm btn-outline-danger',
-                   'onclick' => 'return confirm(' .
-                       json_encode(get_string('override_confirm_delete', 'mod_airoleplay')) . ');',
-               ]);
+               $OUTPUT->render($deletebutton);
 
     $table->data[] = [$typestr, $who, $maxattempts, $timeopen, $timeclose, $actions];
 }

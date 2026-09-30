@@ -25,6 +25,8 @@
 require_once('../../config.php');
 require_once($CFG->dirroot . '/mod/airoleplay/lib.php');
 
+use mod_airoleplay\local\submission_state;
+
 $id           = required_param('id', PARAM_INT);  // Course module id.
 $userid       = optional_param('userid', 0, PARAM_INT);
 $action       = optional_param('action', '', PARAM_ALPHA);
@@ -38,98 +40,143 @@ require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/airoleplay:viewallsubmissions', $context);
 
+$baseurl = new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id]);
+
 // Handle delete action.
 if ($action === 'delete' && $submissionid) {
     require_sesskey();
     require_capability('mod/airoleplay:grade', $context);
-    $sub = $DB->get_record(
-        'airoleplay_submissions',
-        ['id' => $submissionid, 'airoleplay' => $airoleplay->id],
-        '*',
-        MUST_EXIST
-    );
+    $sub = $DB->get_record('airoleplay_submissions', ['id' => $submissionid, 'airoleplay' => $airoleplay->id], '*', MUST_EXIST);
+    airoleplay_require_user_access($cm, $context, (int)$sub->userid);
     $DB->delete_records('airoleplay_messages', ['submission_id' => $sub->id]);
     $DB->delete_records('airoleplay_submissions', ['id' => $sub->id]);
-    redirect(
-        new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id]),
-        get_string('submission_deleted', 'mod_airoleplay'),
-        null,
-        \core\output\notification::NOTIFY_SUCCESS
-    );
+    // Another attempt may now be the best grade, or none may be left.
+    airoleplay_update_grades($airoleplay, (int)$sub->userid);
+    redirect($baseurl, get_string('submission_deleted', 'mod_airoleplay'), null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
-// Handle workflow/grade actions.
-if ($action && $userid) {
+// Handle grading actions on one attempt.
+if (in_array($action, ['savegrade', 'publish', 'return'], true) && $userid) {
     require_sesskey();
     require_capability('mod/airoleplay:grade', $context);
-    if (!is_enrolled($context, $userid)) {
-        throw new \moodle_exception('nopermissions', 'error', '', 'view submission');
-    }
+    airoleplay_require_user_access($cm, $context, $userid);
 
     $submission = airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid);
-
-    if ($action === 'publish') {
-        \mod_airoleplay\local\submission_state::assert_workflow_transition(
-            (string)($submission->workflow_state ?? ''),
-            'released'
-        );
-        $DB->set_field('airoleplay_submissions', 'workflow_state', 'released', ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'grader_userid', $USER->id, ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timegraded', time(), ['id' => $submission->id]);
-        $submission->workflow_state = 'released';
-        airoleplay_update_grades($airoleplay, $userid);
-        airoleplay_notify_student_grade_released($airoleplay, $submission, $course, $cm);
-    } else if ($action === 'return') {
-        \mod_airoleplay\local\submission_state::assert_workflow_transition(
-            (string)($submission->workflow_state ?? ''),
-            'inreview'
-        );
-        $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
-    } else if ($action === 'savegarde') {
-        $newgrade = required_param('grade', PARAM_FLOAT);
-        // Teacher feedback is shown to students with FORMAT_PLAIN, so we
-        // only need printable text. PARAM_NOTAGS strips any markup the
-        // teacher (or a CSRF-tricked browser) might have submitted.
-        $newfeedback = optional_param('feedback', '', PARAM_NOTAGS);
-        $DB->set_field('airoleplay_submissions', 'final_grade', $newgrade, ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'final_feedback', $newfeedback, ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'grader_userid', $USER->id, ['id' => $submission->id]);
-        $DB->set_field('airoleplay_submissions', 'timemodified', time(), ['id' => $submission->id]);
+    $detailurl  = new moodle_url($baseurl, ['userid' => $userid, 'submissionid' => $submission->id]);
+    if ($submission->status !== 'graded') {
         redirect(
-            new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id, 'userid' => $userid]),
-            get_string('grade_override_saved', 'mod_airoleplay'),
+            $detailurl,
+            get_string('invalidsubmissionstatus', 'mod_airoleplay'),
             null,
-            \core\output\notification::NOTIFY_SUCCESS
+            \core\output\notification::NOTIFY_ERROR
         );
     }
 
-    redirect(new moodle_url('/mod/airoleplay/submissions.php', ['id' => $id, 'userid' => $userid]));
+    if ($action === 'savegrade' || $action === 'publish') {
+        $maxgrade = (float)$airoleplay->grade;
+        $newgrade = unformat_float(optional_param('grade', '', PARAM_RAW_TRIMMED), true);
+        if ($newgrade === false || $newgrade === null || $newgrade < 0 || $newgrade > $maxgrade) {
+            redirect(
+                $detailurl,
+                get_string('grade_out_of_range', 'mod_airoleplay', format_float($maxgrade, 2)),
+                null,
+                \core\output\notification::NOTIFY_ERROR
+            );
+        }
+        // Teacher feedback is shown to students with FORMAT_PLAIN, so only
+        // printable text is kept.
+        $newfeedback = optional_param('feedback', '', PARAM_NOTAGS);
+        $DB->update_record('airoleplay_submissions', (object)[
+            'id'             => $submission->id,
+            'final_grade'    => round((float)$newgrade, 5),
+            'final_feedback' => $newfeedback,
+            'grader_userid'  => $USER->id,
+            'timemodified'   => time(),
+        ]);
+        $submission->final_grade    = round((float)$newgrade, 5);
+        $submission->final_feedback = $newfeedback;
+    }
+
+    if ($action === 'publish') {
+        submission_state::assert_workflow_transition((string)($submission->workflow_state ?? ''), 'released');
+        $DB->update_record('airoleplay_submissions', (object)[
+            'id'             => $submission->id,
+            'workflow_state' => 'released',
+            'timegraded'     => time(),
+        ]);
+        $submission->workflow_state = 'released';
+        \mod_airoleplay\event\grade_issued::create([
+            'context'       => $context,
+            'objectid'      => $submission->id,
+            'relateduserid' => $userid,
+        ])->trigger();
+        airoleplay_notify_student_grade_released($airoleplay, $submission, $course, $cm);
+    } else if ($action === 'return') {
+        submission_state::assert_workflow_transition((string)($submission->workflow_state ?? ''), 'inreview');
+        $DB->set_field('airoleplay_submissions', 'workflow_state', 'inreview', ['id' => $submission->id]);
+    }
+
+    // Keep the gradebook in step with whatever changed (released grades only).
+    airoleplay_update_grades($airoleplay, $userid);
+
+    $messages = [
+        'savegrade' => 'grade_override_saved',
+        'publish'   => 'grade_published',
+        'return'    => 'grade_returned',
+    ];
+    redirect($detailurl, get_string($messages[$action], 'mod_airoleplay'), null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
-$PAGE->set_url('/mod/airoleplay/submissions.php', ['id' => $id]);
+$PAGE->set_url($baseurl);
 $PAGE->set_title(get_string('submissions_heading', 'mod_airoleplay') . ': ' . format_string($airoleplay->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
-$PAGE->requires->css('/mod/airoleplay/styles.css');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($airoleplay->name) . ' — ' . get_string('submissions_heading', 'mod_airoleplay'));
 
 // Detail view for a single submission.
 if ($userid) {
-    render_submission_detail($airoleplay, $userid, $id, $context, $cm, $course, $submissionid);
+    airoleplay_require_user_access($cm, $context, $userid);
+    $PAGE->requires->js_call_amd('mod_airoleplay/submissions', 'init');
+    echo $OUTPUT->render(new \mod_airoleplay\output\submission_detail(
+        $airoleplay,
+        core_user::get_user($userid, '*', MUST_EXIST),
+        airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid),
+        $context,
+        has_capability('mod/airoleplay:grade', $context)
+    ));
     echo $OUTPUT->footer();
     exit;
 }
 
+// Group selector, honouring separate groups.
+$groupmode = groups_get_activity_groupmode($cm);
+$groupid   = 0;
+if ($groupmode) {
+    groups_print_activity_menu($cm, $baseurl);
+    $groupid = (int)groups_get_activity_group($cm, true);
+}
+
 // Summary table of all submissions.
 $userfields = \core_user\fields::for_name()->get_sql('u', false, '', '', false)->selects;
-$sql = "SELECT s.*, $userfields, u.email
+$params     = ['airoleplay' => $airoleplay->id];
+$groupjoin  = '';
+if ($groupid) {
+    $groupjoin = 'JOIN {groups_members} gm ON gm.userid = s.userid AND gm.groupid = :groupid';
+    $params['groupid'] = $groupid;
+} else if ($groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
+    // A teacher without access to all groups and not in any group sees nobody.
+    $groupjoin = 'JOIN {groups_members} gm ON gm.userid = s.userid AND gm.groupid = -1';
+}
+$sql = "SELECT s.id, s.userid, s.attempt, s.status, s.workflow_state, s.final_grade, s.timesubmitted,
+               s.roleplay_analysis, {$userfields}
           FROM {airoleplay_submissions} s
           JOIN {user} u ON u.id = s.userid
+               {$groupjoin}
          WHERE s.airoleplay = :airoleplay
       ORDER BY u.lastname ASC, u.firstname ASC, s.attempt ASC";
-$submissions = $DB->get_records_sql($sql, ['airoleplay' => $airoleplay->id]);
+$submissions = $DB->get_records_sql($sql, $params);
 
 if (empty($submissions)) {
     echo $OUTPUT->notification(get_string('no_submissions_yet', 'mod_airoleplay'), 'info');
@@ -137,10 +184,11 @@ if (empty($submissions)) {
     exit;
 }
 
-// Table output.
+$cangrade = has_capability('mod/airoleplay:grade', $context);
 $table = new html_table();
 $table->head = [
     get_string('col_student', 'mod_airoleplay'),
+    get_string('col_attempt', 'mod_airoleplay'),
     get_string('col_status', 'mod_airoleplay'),
     get_string('col_submitted', 'mod_airoleplay'),
     get_string('col_grade', 'mod_airoleplay'),
@@ -150,44 +198,38 @@ $table->head = [
 $table->attributes['class'] = 'generaltable airoleplay-submissions-table';
 
 foreach ($submissions as $sub) {
-    $detailparams = ['id' => $id, 'userid' => $sub->userid, 'submissionid' => $sub->id];
-    $studentlink = html_writer::link(
-        new moodle_url('/mod/airoleplay/submissions.php', $detailparams),
-        fullname($sub)
-    );
-    $submitted     = $sub->timesubmitted ? userdate($sub->timesubmitted) : '—';
-    $grade         = isset($sub->final_grade) ? format_float($sub->final_grade, 2) : '—';
+    $detailurl   = new moodle_url($baseurl, ['userid' => $sub->userid, 'submissionid' => $sub->id]);
+    $studentlink = html_writer::link($detailurl, fullname($sub));
+    $grade       = $sub->final_grade !== null ? format_float($sub->final_grade, 2) : '—';
+    $flags       = \mod_airoleplay\output\submission_detail::flags($sub);
+    if ($flags) {
+        $grade .= ' ' . html_writer::span(get_string('flagged', 'mod_airoleplay'), 'badge bg-warning text-dark');
+    }
     $workflowbadge = '';
     if ($sub->workflow_state) {
         $workflowbadge = html_writer::span(
             get_string('workflow_' . $sub->workflow_state, 'mod_airoleplay'),
-            'badge badge-' . $sub->workflow_state
+            'badge ' . ($sub->workflow_state === 'released' ? 'bg-success' : 'bg-secondary')
         );
     }
 
-    $deleteurl = new moodle_url('/mod/airoleplay/submissions.php', [
-        'id' => $id, 'submissionid' => $sub->id, 'action' => 'delete', 'sesskey' => sesskey(),
-    ]);
-    $actions = html_writer::link(
-        new moodle_url('/mod/airoleplay/submissions.php', $detailparams),
-        get_string('view'),
-        ['class' => 'btn btn-sm btn-outline-primary me-1']
-    );
-    if (has_capability('mod/airoleplay:grade', $context)) {
-        $actions .= html_writer::link(
-            $deleteurl,
+    $actions = html_writer::link($detailurl, get_string('view'), ['class' => 'btn btn-sm btn-outline-primary me-1']);
+    if ($cangrade) {
+        $deletebutton = new single_button(
+            new moodle_url($baseurl, ['submissionid' => $sub->id, 'action' => 'delete', 'sesskey' => sesskey()]),
             get_string('delete'),
-            [
-                'class'   => 'btn btn-sm btn-outline-danger',
-                'onclick' => 'return confirm(' . json_encode(get_string('confirm_delete_submission', 'mod_airoleplay')) . ');',
-            ]
+            'post'
         );
+        $deletebutton->add_confirm_action(get_string('confirm_delete_submission', 'mod_airoleplay'));
+        $deletebutton->class = 'd-inline-block';
+        $actions .= $OUTPUT->render($deletebutton);
     }
 
     $table->data[] = [
         $studentlink,
-        s($sub->status),
-        $submitted,
+        (int)$sub->attempt,
+        get_string('status_' . $sub->status, 'mod_airoleplay'),
+        $sub->timesubmitted ? userdate($sub->timesubmitted) : '—',
         $grade,
         $workflowbadge,
         $actions,
@@ -196,268 +238,3 @@ foreach ($submissions as $sub) {
 
 echo html_writer::table($table);
 echo $OUTPUT->footer();
-
-/**
- * Fetches a single submission, preferring an explicit submissionid to
- * avoid ambiguity when a student has more than one attempt.
- *
- * @param int $airoleplayid Activity instance id.
- * @param int $userid       Student user id.
- * @param int $submissionid Specific submission id (0 = latest attempt).
- * @return stdClass Submission record.
- * @throws \dml_exception when no submission exists.
- */
-function airoleplay_fetch_submission(int $airoleplayid, int $userid, int $submissionid = 0): stdClass {
-    global $DB;
-    if ($submissionid > 0) {
-        return $DB->get_record(
-            'airoleplay_submissions',
-            ['id' => $submissionid, 'airoleplay' => $airoleplayid, 'userid' => $userid],
-            '*',
-            MUST_EXIST
-        );
-    }
-    $records = $DB->get_records(
-        'airoleplay_submissions',
-        ['airoleplay' => $airoleplayid, 'userid' => $userid],
-        'attempt DESC, id DESC',
-        '*',
-        0,
-        1
-    );
-    if (empty($records)) {
-        throw new \dml_missing_record_exception('airoleplay_submissions');
-    }
-    return reset($records);
-}
-
-/**
- * Renders the detailed view for a single student submission.
- *
- * @param stdClass $airoleplay   Airoleplay instance.
- * @param int      $userid       Student user id.
- * @param int      $cmid         Course module id.
- * @param context  $context      Module context.
- * @param stdClass $cm           Course module record.
- * @param stdClass $course       Course record.
- * @param int      $submissionid Optional explicit submission id (0 = latest attempt).
- */
-function render_submission_detail(
-    stdClass $airoleplay,
-    int $userid,
-    int $cmid,
-    context $context,
-    stdClass $cm,
-    stdClass $course,
-    int $submissionid = 0
-): void {
-    global $DB, $OUTPUT, $USER;
-
-    $student    = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-    $submission = airoleplay_fetch_submission($airoleplay->id, $userid, $submissionid);
-    $submissionid = (int)$submission->id;
-
-    echo $OUTPUT->heading(fullname($student), 3);
-
-    // Breadcrumb + delete button.
-    echo html_writer::start_div('d-flex justify-content-between align-items-center mb-3');
-    echo html_writer::link(
-        new moodle_url('/mod/airoleplay/submissions.php', ['id' => $cmid]),
-        '← ' . get_string('submissions_heading', 'mod_airoleplay'),
-        ['class' => 'btn btn-sm btn-outline-secondary']
-    );
-    if (has_capability('mod/airoleplay:grade', $context)) {
-        $deleteurl = new moodle_url('/mod/airoleplay/submissions.php', [
-            'id'           => $cmid,
-            'submissionid' => $submission->id,
-            'action'       => 'delete',
-            'sesskey'      => sesskey(),
-        ]);
-        echo html_writer::link(
-            $deleteurl,
-            get_string('delete_submission', 'mod_airoleplay'),
-            [
-                'class'   => 'btn btn-sm btn-danger',
-                'onclick' => 'return confirm(' . json_encode(get_string('confirm_delete_submission', 'mod_airoleplay')) . ');',
-            ]
-        );
-    }
-    echo html_writer::end_div();
-
-    // Roleplay transcript.
-    if ($submission->roleplay_transcript) {
-        $transcript = json_decode($submission->roleplay_transcript, true);
-        if (is_array($transcript) && !empty($transcript)) {
-            echo html_writer::start_div('card card-body mb-3');
-            echo html_writer::tag('h5', get_string('conversation_log', 'mod_airoleplay'));
-            echo html_writer::start_div('airoleplay-log-detail');
-            foreach ($transcript as $turn) {
-                if (!is_array($turn)) {
-                    continue;
-                }
-                $speakerraw = (string)($turn['speaker'] ?? '');
-                $speaker    = s($speakerraw);
-                $text       = s((string)($turn['text'] ?? ''));
-                $cssclass   = ($speakerraw === 'participant') ? 'participant-turn' : 'avatar-turn';
-                echo html_writer::div(
-                    html_writer::tag('strong', $speaker . ': ') . $text,
-                    'transcript-item ' . $cssclass
-                );
-            }
-            echo html_writer::end_div();
-            echo html_writer::end_div();
-        }
-    }
-
-    // Grade breakdown.
-    if ($submission->grade_breakdown) {
-        $breakdown = json_decode($submission->grade_breakdown, true);
-        if (is_array($breakdown) && !empty($breakdown)) {
-            echo html_writer::start_div('card card-body mb-3');
-            echo html_writer::tag('h5', get_string('grade_breakdown', 'mod_airoleplay'));
-            foreach ($breakdown as $dimension => $data) {
-                if (!is_string($dimension) || !is_array($data)) {
-                    continue;
-                }
-                $label = get_string('dimension_' . $dimension, 'mod_airoleplay', $dimension);
-                echo html_writer::div(
-                    html_writer::tag('strong', $label) .
-                    ' — Score: ' . (int)($data['score'] ?? 0) . '/100' .
-                    ' (weight: ' . (float)($data['weight'] ?? 0) . ')<br/>' .
-                    s((string)($data['feedback'] ?? '')),
-                    'mb-2'
-                );
-            }
-            echo html_writer::end_div();
-        }
-    }
-
-    // Regenerate AI evaluation section.
-    if (has_capability('mod/airoleplay:grade', $context)) {
-        $ajaxurl    = (new moodle_url('/mod/airoleplay/ajax.php'))->out(false);
-        $sesskey    = sesskey();
-        $confirmmsg = get_string('regen_confirm', 'mod_airoleplay');
-        $runningmsg = get_string('regen_running', 'mod_airoleplay');
-        $successmsg = get_string('regen_success', 'mod_airoleplay');
-
-        echo html_writer::start_div('card card-body mb-3 border-warning');
-        echo html_writer::tag('h5', get_string('regen_heading', 'mod_airoleplay'));
-
-        echo html_writer::tag('button', get_string('regen_evaluation', 'mod_airoleplay'), [
-            'type'              => 'button',
-            'class'             => 'btn btn-sm btn-outline-warning airoleplay-regen-btn',
-            'data-action'       => 'regen_evaluation',
-            'data-submissionid' => $submission->id,
-            'data-cmid'         => $cmid,
-            'data-sesskey'      => $sesskey,
-            'data-ajaxurl'      => $ajaxurl,
-            'data-confirm'      => $confirmmsg,
-            'data-running'      => $runningmsg,
-            'data-success'      => $successmsg,
-        ]);
-
-        echo html_writer::tag('div', '', ['id' => 'airoleplay-regen-status', 'class' => 'mt-2']);
-        echo html_writer::end_div();
-
-        // Inline JS.
-        echo html_writer::script(<<<JS
-(function() {
-    function makeAlert(level, message) {
-        var div = document.createElement('div');
-        div.className = 'alert alert-' + level;
-        div.textContent = message;
-        return div;
-    }
-    document.querySelectorAll('.airoleplay-regen-btn').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-            if (!window.confirm(btn.dataset.confirm)) return;
-            var statusEl = document.getElementById('airoleplay-regen-status');
-            document.querySelectorAll('.airoleplay-regen-btn').forEach(function(b) { b.disabled = true; });
-            statusEl.replaceChildren(makeAlert('info', btn.dataset.running));
-            try {
-                var resp = await fetch(btn.dataset.ajaxurl, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        action:       btn.dataset.action,
-                        cmid:         parseInt(btn.dataset.cmid),
-                        submissionid: parseInt(btn.dataset.submissionid),
-                        sesskey:      btn.dataset.sesskey
-                    })
-                });
-                var data = await resp.json();
-                if (data.success) {
-                    statusEl.replaceChildren(makeAlert('success', btn.dataset.success));
-                    setTimeout(function() { window.location.reload(); }, 1000);
-                } else {
-                    statusEl.replaceChildren(makeAlert('danger', data.error || 'Unknown error'));
-                    document.querySelectorAll('.airoleplay-regen-btn').forEach(function(b) { b.disabled = false; });
-                }
-            } catch (e) {
-                statusEl.replaceChildren(makeAlert('danger', e.message));
-                document.querySelectorAll('.airoleplay-regen-btn').forEach(function(b) { b.disabled = false; });
-            }
-        });
-    });
-})();
-JS);
-    }
-
-    // Grade & feedback override form.
-    if (has_capability('mod/airoleplay:grade', $context)) {
-        echo html_writer::start_tag('form', [
-            'method' => 'post',
-            'action' => new moodle_url('/mod/airoleplay/submissions.php'),
-        ]);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cmid]);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'userid', 'value' => $userid]);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'submissionid', 'value' => $submissionid]);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'savegarde']);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-        echo html_writer::start_div('card card-body mb-3');
-        echo html_writer::tag('h5', get_string('grading_header', 'mod_airoleplay'));
-        echo html_writer::div(
-            html_writer::label(get_string('maximumgrade', 'mod_airoleplay'), 'grade_input') .
-            html_writer::empty_tag('input', [
-                'type'  => 'number',
-                'id'    => 'grade_input',
-                'name'  => 'grade',
-                'value' => format_float($submission->final_grade ?? 0, 2),
-                'class' => 'form-control d-inline-block w-auto ms-2',
-                'min'   => 0,
-                'max'   => $airoleplay->grade,
-                'step'  => '0.01',
-            ]),
-            'mb-2'
-        );
-        echo html_writer::div(
-            html_writer::label(get_string('feedback', 'mod_airoleplay'), 'feedback_input') .
-            html_writer::tag('textarea', s($submission->final_feedback ?? ''), [
-                'id'    => 'feedback_input',
-                'name'  => 'feedback',
-                'class' => 'form-control mt-2',
-                'rows'  => 5,
-            ]),
-            'mb-2'
-        );
-
-        // Workflow action buttons.
-        if ($airoleplay->grading_workflow && $submission->workflow_state !== 'released') {
-            echo html_writer::tag(
-                'button',
-                get_string('publish_grade', 'mod_airoleplay'),
-                ['type' => 'submit', 'class' => 'btn btn-success me-2',
-                    'formaction' => new moodle_url('/mod/airoleplay/submissions.php', [
-                        'id'           => $cmid,
-                        'userid'       => $userid,
-                        'submissionid' => $submissionid,
-                        'action'       => 'publish',
-                        'sesskey'      => sesskey(),
-                    ])]
-            );
-        }
-        echo html_writer::tag('button', get_string('savechanges'), ['type' => 'submit', 'class' => 'btn btn-primary']);
-        echo html_writer::end_div();
-        echo html_writer::end_tag('form');
-    }
-}

@@ -27,13 +27,13 @@ namespace mod_airoleplay;
 
 use mod_airoleplay\local\submission_state;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_airoleplay\local\submission_state::class)]
 /**
  * Tests for the status / workflow_state transition whitelist.
  *
  * @covers \mod_airoleplay\local\submission_state
  */
 final class submission_state_test extends \basic_testcase {
-
     /**
      * Provider of (from, to) pairs that must be accepted as legal status transitions.
      *
@@ -41,14 +41,14 @@ final class submission_state_test extends \basic_testcase {
      */
     public static function valid_status_transitions(): array {
         return [
-            ['draft',     'active'],
-            ['draft',     'submitted'],
-            ['active',    'submitted'],
+            ['draft', 'active'],
+            ['draft', 'submitted'],
+            ['active', 'submitted'],
             ['submitted', 'grading'],
             ['submitted', 'graded'],
-            ['grading',   'graded'],
-            ['grading',   'submitted'],
-            ['graded',    'graded'],
+            ['grading', 'graded'],
+            ['grading', 'submitted'],
+            ['graded', 'graded'],
         ];
     }
 
@@ -60,6 +60,7 @@ final class submission_state_test extends \basic_testcase {
      * @param string $from Current status.
      * @param string $to   Desired status.
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('valid_status_transitions')]
     public function test_status_transitions_accept_valid_pairs(string $from, string $to): void {
         $this->assertTrue(
             submission_state::can_transition_status($from, $to),
@@ -77,13 +78,13 @@ final class submission_state_test extends \basic_testcase {
      */
     public static function invalid_status_transitions(): array {
         return [
-            ['draft',     'graded'],
-            ['active',    'graded'],
-            ['active',    'draft'],
+            ['draft', 'graded'],
+            ['active', 'graded'],
+            ['active', 'draft'],
             ['submitted', 'draft'],
-            ['graded',    'submitted'],
-            ['graded',    'draft'],
-            ['unknown',   'active'],
+            ['graded', 'submitted'],
+            ['graded', 'draft'],
+            ['unknown', 'active'],
         ];
     }
 
@@ -94,6 +95,7 @@ final class submission_state_test extends \basic_testcase {
      * @param string $from Current status.
      * @param string $to   Desired status.
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalid_status_transitions')]
     public function test_status_transitions_reject_invalid_pairs(string $from, string $to): void {
         $this->assertFalse(
             submission_state::can_transition_status($from, $to),
@@ -110,10 +112,10 @@ final class submission_state_test extends \basic_testcase {
      */
     public static function valid_workflow_transitions(): array {
         return [
-            ['',         'inreview'],
-            ['',         'released'],
-            [null,       'inreview'],
-            [null,       'released'],
+            ['', 'inreview'],
+            ['', 'released'],
+            [null, 'inreview'],
+            [null, 'released'],
             ['inreview', 'released'],
             ['inreview', 'inreview'],
             ['released', 'inreview'],
@@ -128,6 +130,7 @@ final class submission_state_test extends \basic_testcase {
      * @param string|null $from Current workflow_state (null/empty = unset).
      * @param string      $to   Desired workflow_state.
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('valid_workflow_transitions')]
     public function test_workflow_transitions_accept_valid_pairs(?string $from, string $to): void {
         $this->assertTrue(
             submission_state::can_transition_workflow($from, $to),

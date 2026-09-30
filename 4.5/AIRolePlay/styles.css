@@ -103,10 +103,17 @@
     padding: 1.5rem;
     color: var(--airoleplay-text-light);
     position: relative;
-    min-height: 600px;
+    /*
+     * Pin the room to the viewport so the live transcript cannot push
+     * the participant controls out of view. The room is now a single
+     * column (the duplicated chat sidebar was removed), so the rows
+     * are: header, avatars, transcript (1fr, scrolls), controls.
+     */
+    min-height: 520px;
+    /* No max-height: on laptop screens it squeezed the transcript to nothing. */
     display: grid;
     grid-template-rows: auto auto 1fr auto;
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 
@@ -158,7 +165,7 @@
     cursor: default;
 }
 
-.avatar-glow {
+.airoleplay-container .avatar-glow {
     width: 130px;
     height: 130px;
     border-radius: 50%;
@@ -171,13 +178,13 @@
     background: rgba(255,255,255,0.05);
 }
 
-.avatar-glow svg {
+.airoleplay-container .avatar-glow svg {
     width: 100%;
     height: 100%;
     display: block;
 }
 
-video.avatar-video {
+.airoleplay-container video.avatar-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -185,17 +192,17 @@ video.avatar-video {
     display: block;
 }
 
-.avatar-info {
+.airoleplay-container .avatar-info {
     text-align: center;
 }
 
-.avatar-info strong {
+.airoleplay-container .avatar-info strong {
     display: block;
     color: #fff;
     font-size: 0.95rem;
 }
 
-.avatar-info .avatar-role {
+.airoleplay-container .avatar-info .avatar-role {
     display: block;
     font-size: 0.78rem;
     color: rgba(255,255,255,0.6);
@@ -218,7 +225,7 @@ video.avatar-video {
     50%     { transform: scaleY(1.4); }
 }
 
-.speaking .mouth {
+.airoleplay-container .speaking .mouth {
     animation: lipSync 0.15s ease-in-out infinite;
     transform-origin: center;
 }
@@ -229,7 +236,13 @@ video.avatar-video {
     background: rgba(0,0,0,0.3);
     border-radius: 8px;
     padding: 1rem;
-    max-height: 220px;
+    /*
+     * The transcript is now the only running history widget on the
+     * roleplay screen (the right-hand sidebar was removed), so it gets
+     * the full 1fr row. min-height: 0 lets the row shrink so overflow-y
+     * can clip cleanly when the room is at its max-height.
+     */
+    height: clamp(200px, 38vh, 460px);
     overflow-y: auto;
     font-size: 0.95rem;
     line-height: 1.6;
@@ -242,21 +255,21 @@ video.avatar-video {
     border-radius: 6px;
 }
 
-.transcript-item.participant-turn {
+.airoleplay-container .transcript-item.participant-turn {
     background: rgba(0, 130, 202, 0.2);
     border-left: 3px solid var(--airoleplay-primary);
 }
 
-.transcript-item.avatar-turn {
+.airoleplay-container .transcript-item.avatar-turn {
     background: rgba(255,255,255,0.07);
     border-left: 3px solid rgba(255,255,255,0.3);
 }
 
-.transcript-item.avatar-1 { border-left-color: #e74c3c; }
-.transcript-item.avatar-2 { border-left-color: #2ecc71; }
-.transcript-item.avatar-3 { border-left-color: #f39c12; }
+.airoleplay-container .transcript-item.avatar-1 { border-left-color: #e74c3c; }
+.airoleplay-container .transcript-item.avatar-2 { border-left-color: #2ecc71; }
+.airoleplay-container .transcript-item.avatar-3 { border-left-color: #f39c12; }
 
-.speaker-label {
+.airoleplay-container .speaker-label {
     display: block;
     font-size: 0.75rem;
     font-weight: 700;
@@ -266,7 +279,7 @@ video.avatar-video {
     margin-bottom: 0.25rem;
 }
 
-.message-text {
+.airoleplay-container .message-text {
     color: var(--airoleplay-text-light);
 }
 
@@ -280,7 +293,7 @@ video.avatar-video {
     padding: 0.5rem;
 }
 
-.push-to-talk {
+.airoleplay-container .push-to-talk {
     padding: 1rem 2.5rem;
     font-size: 1.1rem;
     border-radius: 50px;
@@ -288,42 +301,18 @@ video.avatar-video {
     user-select: none;
 }
 
-.push-to-talk.active {
+.airoleplay-container .push-to-talk.active {
     transform: scale(0.96);
     box-shadow: 0 0 0 6px rgba(0, 130, 202, 0.4);
 }
 
 /* Waveform visualiser */
-.participant-waveform {
+.airoleplay-container .participant-waveform {
     width: 100%;
     height: 40px;
     background: rgba(0,0,0,0.3);
     border-radius: 4px;
     display: none;
-}
-
-/* Sidebar */
-.airoleplay-sidebar {
-    grid-column: 2;
-    grid-row: 2 / -1;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    overflow-y: auto;
-    font-size: 0.85rem;
-}
-
-.airoleplay-sidebar h4 {
-    color: rgba(255,255,255,0.8);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.75rem;
-}
-
-.conversation-log .transcript-item {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
 }
 
 /* =========================================================================
@@ -365,9 +354,6 @@ video.avatar-video {
 }
 
 /* Workflow badges */
-.badge-inreview        { background: #6c757d; color: #fff; }
-.badge-readyforrelease { background: var(--airoleplay-warning); color: #000; }
-.badge-released        { background: var(--airoleplay-success); color: #fff; }
 
 /* Detail view transcript */
 .airoleplay-log-detail .transcript-item {
@@ -391,18 +377,12 @@ video.avatar-video {
    Responsive
    ========================================================================= */
 @media (max-width: 768px) {
-    .airoleplay-room {
-        grid-template-columns: 1fr;
-    }
-    .airoleplay-sidebar {
-        grid-column: 1;
-        grid-row: auto;
-        max-height: 200px;
-    }
+    /* The room is already single-column in the base styles after the
+       sidebar removal; only the avatar density needs tightening here. */
     .airoleplay-avatars {
         gap: 0.5rem;
     }
-    .avatar-glow {
+    .airoleplay-container .avatar-glow {
         width: 90px;
         height: 90px;
     }
@@ -412,8 +392,31 @@ video.avatar-video {
     .airoleplay-container {
         max-width: 1140px;
     }
-    .avatar-glow {
+    .airoleplay-container .avatar-glow {
         width: 160px;
         height: 160px;
     }
+}
+
+/* Custom avatar image, typed replies and mode notice. */
+.airoleplay-container .avatar-glow img.avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.airoleplay-container .airoleplay-text-reply {
+    width: 100%;
+    max-width: 640px;
+}
+
+.airoleplay-container .airoleplay-mode-notice {
+    margin: 0;
+    max-width: 640px;
+}
+
+/* Links inside the dark room need a light colour to stay readable. */
+.airoleplay-container .airoleplay-room .btn-link {
+    color: #9fd3ff;
 }

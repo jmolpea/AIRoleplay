@@ -30,13 +30,13 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/airoleplay/lib.php');
 
+#[\PHPUnit\Framework\Attributes\CoversFunction('airoleplay_regen_rate_check')]
 /**
  * Tests the regen cooldown + daily-cap helper.
  *
  * @covers ::airoleplay_regen_rate_check
  */
 final class regen_rate_test extends \advanced_testcase {
-
     public function test_first_call_succeeds(): void {
         $this->resetAfterTest();
         // Should not throw.

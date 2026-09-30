@@ -53,7 +53,7 @@ class assessment_completed extends \core\event\base {
      */
     public function get_description(): string {
         return "AI assessment was completed for submission with id '{$this->objectid}' " .
-               "by user with id '$this->userid' in airoleplay module with course module id '{$this->contextinstanceid}'.";
+               "of user with id '$this->relateduserid' in airoleplay module with course module id '{$this->contextinstanceid}'.";
     }
 
     /**
@@ -63,8 +63,28 @@ class assessment_completed extends \core\event\base {
      */
     public function get_url(): \moodle_url {
         return new \moodle_url('/mod/airoleplay/submissions.php', [
-            'id'     => $this->contextinstanceid,
-            'userid' => $this->userid,
+            'id'           => $this->contextinstanceid,
+            'userid'       => $this->relateduserid,
+            'submissionid' => $this->objectid,
         ]);
+    }
+
+    /**
+     * Maps the object id when course logs are restored.
+     *
+     * @return array
+     */
+    public static function get_objectid_mapping(): array {
+        return ['db' => 'airoleplay_submissions', 'restore' => 'airoleplay_submission'];
+    }
+
+    /**
+     * Validates the event data.
+     */
+    protected function validate_data(): void {
+        parent::validate_data();
+        if (!isset($this->relateduserid)) {
+            throw new \coding_exception('The \'relateduserid\' must be set.');
+        }
     }
 }

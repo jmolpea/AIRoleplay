@@ -17,9 +17,8 @@
 /**
  * Scheduled tasks for mod_airoleplay.
  *
- * Note: evaluate_submission_task is an ad-hoc task used only as a fallback
- * when the synchronous evaluation in ajax.php fails. Ad-hoc tasks must NOT
- * be listed here — Moodle registers them automatically when queued.
+ * Note: evaluate_submission_task is an ad-hoc task; ad-hoc tasks are not
+ * listed here — Moodle registers them automatically when queued.
  *
  * @package    mod_airoleplay
  * @copyright  2025 Pluginia
@@ -28,4 +27,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$tasks = [];
+$tasks = [
+    [
+        'classname' => 'mod_airoleplay\task\close_expired_sessions',
+        'blocking'  => 0,
+        'minute'    => '*/5',
+        'hour'      => '*',
+        'day'       => '*',
+        'month'     => '*',
+        'dayofweek' => '*',
+    ],
+];

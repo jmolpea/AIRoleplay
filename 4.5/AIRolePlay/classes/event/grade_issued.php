@@ -53,7 +53,26 @@ class grade_issued extends \core\event\base {
      */
     public function get_description(): string {
         return "Grade was issued for submission with id '{$this->objectid}' " .
-               "to user with id '$this->userid'.";
+               "to user with id '$this->relateduserid'.";
+    }
+
+    /**
+     * Maps the object id when course logs are restored.
+     *
+     * @return array
+     */
+    public static function get_objectid_mapping(): array {
+        return ['db' => 'airoleplay_submissions', 'restore' => 'airoleplay_submission'];
+    }
+
+    /**
+     * Validates the event data.
+     */
+    protected function validate_data(): void {
+        parent::validate_data();
+        if (!isset($this->relateduserid)) {
+            throw new \coding_exception('The \'relateduserid\' must be set.');
+        }
     }
 
     /**

@@ -1,0 +1,50 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_airoleplay/consent
+
+    Data-processing notice and consent form shown before the first attempt.
+
+    Context variables required for this template:
+    * notice - Formatted notice text (HTML).
+    * actionurl - URL the form posts to.
+    * sesskey - Session key.
+
+    Example context (json):
+    {
+        "notice": "<p>Your replies are sent to an AI provider.</p>",
+        "actionurl": "https://example.com/mod/airoleplay/view.php?id=1",
+        "sesskey": "abc123"
+    }
+}}
+<div class="airoleplay-gdpr-notice card mb-3">
+    <div class="card-body">
+        <h4>{{#str}}gdpr_notice_title, mod_airoleplay{{/str}}</h4>
+        {{{notice}}}
+    </div>
+    <form method="post" action="{{actionurl}}">
+        <input type="hidden" name="action" value="gdpr_consent">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <div class="card-footer">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="consent" value="1" id="airoleplay_gdpr_consent" required>
+                <label class="form-check-label" for="airoleplay_gdpr_consent">{{#str}}gdpr_consent_label, mod_airoleplay{{/str}}</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg mt-3" id="airoleplay_consent_btn">{{#str}}start_activity, mod_airoleplay{{/str}}</button>
+        </div>
+    </form>
+</div>

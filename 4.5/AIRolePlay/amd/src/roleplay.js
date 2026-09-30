@@ -14,657 +14,1008 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * AI Roleplay UI: TTS playback, STT capture, avatar animations, avatar addressing detection.
+ * AI Roleplay session UI: speech capture, typed fallback, avatar playback and the session lifecycle.
  *
  * @module     mod_airoleplay/roleplay
  * @copyright  2025 Pluginia
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['mod_airoleplay/utils', 'core/str'], function(utils, str) {
-    'use strict';
 
-    var cfg              = {};
-    var sessionActive    = false;
-    var currentTurn      = 0;
-    var sessionTimer     = null;
-    var remainingSeconds = 0;
-    var recognition      = null;
-    var isRecognising    = false;
-    var currentTranscript = '';
-    var audioCtx         = null;
-    var pttSetupDone     = false;
-    var pendingSubmit    = false;
-    var rotationIndex    = 0;
+import {getStrings} from 'core/str';
+import * as utils from 'mod_airoleplay/utils';
 
-    // ------------------------------------------------------------------
-    // Public init
-    // ------------------------------------------------------------------
+/** Keys of the language strings used by this module. */
+const STRING_KEYS = [
+    'roleplay_ready_title', 'roleplay_ready_notice', 'roleplay_start_btn', 'roleplay_resume_btn',
+    'roleplay_loading', 'roleplay_thinking', 'roleplay_ending', 'roleplay_finished',
+    'evaluation_complete', 'evaluation_delayed', 'warning_1min', 'you_label', 'listening',
+    'stt_unsupported', 'mic_denied', 'mic_unavailable', 'mic_insecure', 'stt_network',
+    'stt_nospeech', 'stt_empty', 'typed_reply_toggle', 'error_generic', 'mic_checking',
+];
 
-    /**
-     * Initialises the roleplay module.
-     *
-     * @param {Object} config
-     * @param {number} config.cmid              Course module id.
-     * @param {string} config.sesskey           Moodle session key.
-     * @param {number} config.submissionid      Submission id (0 if not yet created).
-     * @param {number} config.durationmins      Session duration in minutes.
-     * @param {number} config.numavatars        Number of active avatars (1-3).
-     * @param {Array}  config.avatarnames       [{index, name}, ...] for addressing detection.
-     * @param {string} config.speechlang        BCP-47 language code for Web Speech API.
-     * @param {string} config.submissionstatus  Current submission status.
-     */
-    var init = function(config) {
-        cfg = config;
+/** Seconds between two evaluation status checks. */
+const POLL_INTERVAL_MS = 5000;
 
-        var roleplayPanel = document.getElementById('airoleplay_roleplay_panel');
-        if (!roleplayPanel) {
-            return;
-        }
+/** Give up polling after this many checks (10 minutes). */
+const POLL_MAX_CHECKS = 120;
 
-        if (!roleplayPanel.classList.contains('d-none') && !sessionActive) {
-            showReadyScreen(roleplayPanel);
-        } else {
-            var observer = new MutationObserver(function() {
-                if (!roleplayPanel.classList.contains('d-none') && !sessionActive) {
-                    observer.disconnect();
-                    showReadyScreen(roleplayPanel);
-                }
-            });
-            observer.observe(roleplayPanel, {attributes: true, attributeFilter: ['class']});
-        }
+/** Wait this long for the recogniser to deliver its last result after release. */
+const STT_FLUSH_MS = 1500;
 
-        // If evaluation already pending (page reload after session ends), start polling.
-        if (cfg.submissionstatus === 'submitted' || cfg.submissionstatus === 'grading') {
-            var evalEl = document.getElementById('airoleplay_eval_status');
-            pollEvaluationStatus(evalEl);
-        }
-    };
+let cfg = {};
+let strings = {};
+const state = {
+    sessionActive: false,
+    ending: false,
+    remaining: 0,
+    timer: null,
+    busy: false,
+    rotation: 0,
+    textMode: false,
+    failedCaptures: 0,
+    audioCtx: null,
+    recognition: null,
+    listening: false,
+    pendingSubmit: false,
+    finalText: '',
+    interimText: '',
+    flushTimer: null,
+};
 
-    // ------------------------------------------------------------------
-    // Ready screen
-    // ------------------------------------------------------------------
+/**
+ * Returns a translated string loaded at start-up.
+ *
+ * @param {string} key String key.
+ * @returns {string}
+ */
+const t = (key) => strings[key] || key;
 
-    /**
-     * Renders the "ready to start" screen inside the roleplay panel.
-     * @param {HTMLElement} roleplayPanel
-     */
-    var showReadyScreen = function(roleplayPanel) {
-        var room = roleplayPanel.querySelector('.airoleplay-room');
-        if (room) {
-            room.style.display = 'none';
-        }
+/**
+ * Shorthand for document.getElementById.
+ *
+ * @param {string} id Element id.
+ * @returns {HTMLElement|null}
+ */
+const $ = (id) => document.getElementById(id);
 
-        str.get_strings([
-            {key: 'roleplay_ready_title', component: 'mod_airoleplay'},
-            {key: 'roleplay_ready_notice', component: 'mod_airoleplay'},
-            {key: 'roleplay_start_btn',    component: 'mod_airoleplay'}
-        ]).then(function(strings) {
-            var title   = strings[0];
-            var notice  = strings[1];
-            var btnText = strings[2];
+/**
+ * Shows a message in the session status area.
+ *
+ * @param {string} message Text to show.
+ * @param {string} type Bootstrap alert type.
+ */
+const status = (message, type = 'info') => utils.showStatus($('airoleplay_status'), message, type);
 
-            var screen = document.createElement('div');
-            screen.id = 'airoleplay_ready_screen';
-            screen.className = 'text-center p-4 my-4';
-            screen.innerHTML =
-                '<h3 class="mb-3">' + escapeHtml(title) + '</h3>' +
-                '<div class="alert alert-warning d-inline-block text-start mb-4" style="max-width:600px">' +
-                '<strong>&#9888;&#65039;</strong> ' + escapeHtml(notice) +
-                '</div><br>' +
-                '<button type="button" class="btn btn-primary btn-lg" id="airoleplay_start_btn">' +
-                '&#127917; ' + escapeHtml(btnText) +
-                '</button>';
+/**
+ * The browser's speech recognition constructor, if any.
+ *
+ * @returns {Function|null}
+ */
+const speechRecognitionCtor = () => window.SpeechRecognition || window.webkitSpeechRecognition || null;
 
-            roleplayPanel.insertBefore(screen, room || roleplayPanel.firstChild);
+/**
+ * Posts an action to the plugin's AJAX endpoint.
+ *
+ * @param {string} action Action name.
+ * @param {Object} data Extra payload.
+ * @returns {Promise<Object>}
+ */
+const call = (action, data = {}) => utils.ajaxPost(
+    M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
+    Object.assign({action: action, cmid: cfg.cmid, submissionid: cfg.submissionid}, data),
+    M.cfg.sesskey
+);
 
-            document.getElementById('airoleplay_start_btn').addEventListener('click', function() {
-                screen.remove();
-                if (room) {
-                    room.style.display = '';
-                }
-                // Unlock AudioContext on user gesture.
-                if (!audioCtx) {
-                    try {
-                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    } catch (e) {
-                        // ignore
-                    }
-                }
-                startSession();
-            });
-        }).catch(function() {
-            // Fallback if lang strings unavailable.
-            var screen = document.createElement('div');
-            screen.id = 'airoleplay_ready_screen';
-            screen.className = 'text-center p-4 my-4';
-            screen.innerHTML =
-                '<button type="button" class="btn btn-primary btn-lg" id="airoleplay_start_btn">' +
-                '&#127917; Start Roleplay</button>';
-            roleplayPanel.insertBefore(screen, room || roleplayPanel.firstChild);
-            document.getElementById('airoleplay_start_btn').addEventListener('click', function() {
-                screen.remove();
-                if (room) { room.style.display = ''; }
-                startSession();
-            });
+/**
+ * Initialises the roleplay module.
+ *
+ * @param {Object} config Configuration from view.php.
+ * @param {number} config.cmid Course module id.
+ * @param {number} config.submissionid Current attempt id.
+ * @param {number} config.remaining Seconds left in the session.
+ * @param {number} config.numavatars Number of active avatars (1-3).
+ * @param {Array} config.avatarnames [{index, name}, ...] for addressing detection.
+ * @param {string} config.speechlang BCP-47 language code for the Web Speech API.
+ * @param {string} config.submissionstatus Current attempt status.
+ * @param {string} config.ttsmode 'openai' | 'gemini' | 'browser' | 'none'.
+ */
+export const init = async(config) => {
+    cfg = config;
+    try {
+        const values = await getStrings(STRING_KEYS.map((key) => ({key: key, component: 'mod_airoleplay'})));
+        STRING_KEYS.forEach((key, i) => {
+            strings[key] = values[i];
         });
-    };
+    } catch (e) {
+        // Keys are shown instead of the texts; the session still works.
+    }
 
-    // ------------------------------------------------------------------
-    // Session lifecycle
-    // ------------------------------------------------------------------
+    if (cfg.submissionstatus === 'submitted' || cfg.submissionstatus === 'grading') {
+        finalise();
+        return;
+    }
+    const panel = $('airoleplay_roleplay_panel');
+    if (panel) {
+        showReadyScreen(panel);
+    }
+};
 
-    var startSession = function() {
-        sessionActive    = true;
-        currentTurn      = 0;
-        rotationIndex    = 0;
-        remainingSeconds = cfg.durationmins * 60;
+// ---------------------------------------------------------------------------
+// Ready screen and start-up checks.
+// ---------------------------------------------------------------------------
 
-        startSessionTimer();
-        setupSpeechRecognition();
+/**
+ * Renders the "ready to start" screen inside the roleplay panel.
+ *
+ * @param {HTMLElement} panel Roleplay panel.
+ */
+const showReadyScreen = (panel) => {
+    const room = panel.querySelector('.airoleplay-room');
+    room.classList.add('d-none');
 
-        var statusEl = document.getElementById('airoleplay_status');
-        str.get_string('roleplay_loading', 'mod_airoleplay').then(function(msg) {
-            utils.showStatus(statusEl, msg, 'info');
-        }).catch(function() {});
+    const screen = document.createElement('div');
+    screen.id = 'airoleplay_ready_screen';
+    screen.className = 'text-center p-4 my-4';
 
-        utils.ajaxPost(
-            M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
-            {action: 'roleplay_opening', submissionid: cfg.submissionid, cmid: cfg.cmid},
-            cfg.sesskey
-        ).then(function(data) {
-            if (data.success) {
-                return deliverAvatarTurn(data.avatar, data.text, data.audio_base64).then(function() {
-                    showPushToTalk();
-                });
-            } else {
-                utils.showStatus(document.getElementById('airoleplay_status'), data.error || 'Failed to start roleplay', 'danger');
-            }
-        }).catch(function(e) {
-            utils.showStatus(document.getElementById('airoleplay_status'), e.message, 'danger');
-        });
-    };
+    const title = document.createElement('h3');
+    title.className = 'mb-3';
+    title.textContent = t('roleplay_ready_title');
 
-    var startSessionTimer = function() {
-        var timerEl = document.getElementById('airoleplay_timer');
-        updateTimerDisplay(timerEl);
+    const notice = document.createElement('div');
+    notice.className = 'alert alert-warning d-inline-block text-start mb-3 airoleplay-ready-notice';
+    notice.textContent = t('roleplay_ready_notice');
 
-        sessionTimer = setInterval(function() {
-            remainingSeconds--;
-            updateTimerDisplay(timerEl);
+    const check = document.createElement('div');
+    check.id = 'airoleplay_ready_check';
+    check.className = 'mb-3';
+    check.setAttribute('role', 'status');
 
-            if (remainingSeconds <= 0) {
-                clearInterval(sessionTimer);
-                endSession();
-            } else if (remainingSeconds === 60) {
-                utils.playBeep(660, 400, 0.3);
-                str.get_string('warning_1min', 'mod_airoleplay').then(function(msg) {
-                    utils.showStatus(document.getElementById('airoleplay_status'), msg, 'warning');
-                }).catch(function() {});
-            }
-        }, 1000);
-    };
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-primary btn-lg';
+    button.id = 'airoleplay_start_btn';
+    button.textContent = cfg.submissionstatus === 'active' ? t('roleplay_resume_btn') : t('roleplay_start_btn');
 
-    var updateTimerDisplay = function(timerEl) {
+    screen.append(title, notice, document.createElement('br'), check, button);
+    panel.insertBefore(screen, room);
+
+    if (!speechRecognitionCtor()) {
+        utils.showStatus(check, t('stt_unsupported'), 'warning');
+    }
+
+    button.addEventListener('click', async() => {
+        button.disabled = true;
+        unlockAudio();
+        await checkMicrophone(check);
+        screen.remove();
+        room.classList.remove('d-none');
+        startSession();
+    });
+};
+
+/**
+ * Creates/resumes the audio context inside the user gesture so later avatar
+ * audio is allowed to play, and primes speech synthesis on browsers that need it.
+ */
+const unlockAudio = () => {
+    try {
+        if (!state.audioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            state.audioCtx = Ctx ? new Ctx() : null;
+        }
+        if (state.audioCtx && state.audioCtx.state === 'suspended') {
+            state.audioCtx.resume();
+        }
+    } catch (e) {
+        state.audioCtx = null;
+    }
+    if (cfg.ttsmode === 'browser' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
+};
+
+/**
+ * Asks for microphone permission before the clock starts, so the permission
+ * prompt never eats into the session time. Any failure switches the session
+ * to typed replies with an explanation, instead of a silent dead button.
+ *
+ * @param {HTMLElement} checkEl Element where the result is reported.
+ * @returns {Promise<void>}
+ */
+const checkMicrophone = async(checkEl) => {
+    if (!speechRecognitionCtor()) {
+        enableTextMode(t('stt_unsupported'));
+        return;
+    }
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        enableTextMode(t('mic_insecure'));
+        return;
+    }
+    utils.showStatus(checkEl, t('mic_checking'), 'info');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        // Recognition opens its own capture; this stream only proved access.
+        stream.getTracks().forEach((track) => track.stop());
+    } catch (e) {
+        const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+        enableTextMode(denied ? t('mic_denied') : t('mic_unavailable'));
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Session lifecycle.
+// ---------------------------------------------------------------------------
+
+/**
+ * Starts (or resumes) the session on the server and delivers the opening line.
+ */
+const startSession = async() => {
+    state.sessionActive = true;
+    status(t('roleplay_loading'));
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+
+    let data;
+    try {
+        data = await call('roleplay_opening');
+    } catch (e) {
+        status(t('error_generic'), 'danger');
+        state.sessionActive = false;
+        return;
+    }
+    if (!data.success) {
+        status(data.error || t('error_generic'), 'danger');
+        state.sessionActive = false;
+        return;
+    }
+    cfg.submissionid = data.submissionid || cfg.submissionid;
+    if (data.expired) {
+        endSession();
+        return;
+    }
+    startTimer(data.remaining);
+
+    if (data.resume) {
+        (data.transcript || []).forEach((turn) => appendTurn(turn.speaker === 'participant' ? 0 : turn.avatar, turn.text));
+        clearStatus();
+        showControls();
+        return;
+    }
+    await deliverAvatarTurn(data);
+    clearStatus();
+    if (state.sessionActive) {
+        showControls();
+    }
+};
+
+/**
+ * Starts the visible countdown from the server's remaining time.
+ *
+ * @param {number} seconds Seconds left.
+ */
+const startTimer = (seconds) => {
+    state.remaining = Math.max(0, parseInt(seconds, 10) || 0);
+    const timerEl = $('airoleplay_timer');
+    const render = () => {
         if (timerEl) {
-            timerEl.textContent = utils.formatTime(remainingSeconds);
-            timerEl.className   = 'airoleplay-timer' + (remainingSeconds <= 60 ? ' urgent' : '');
+            timerEl.textContent = utils.formatTime(state.remaining);
+            timerEl.classList.toggle('urgent', state.remaining <= 60);
         }
     };
-
-    var endSession = function() {
-        sessionActive = false;
-        hidePushToTalk();
-
-        var statusEl = document.getElementById('airoleplay_status');
-        str.get_string('roleplay_ending', 'mod_airoleplay').then(function(msg) {
-            utils.showStatus(statusEl, msg, 'info');
-        }).catch(function() {});
-
-        utils.ajaxPost(
-            M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
-            {action: 'roleplay_closing', submissionid: cfg.submissionid, cmid: cfg.cmid, turn: currentTurn},
-            cfg.sesskey
-        ).then(function(data) {
-            if (data.success) {
-                return deliverAvatarTurn(data.avatar, data.text, data.audio_base64).then(function() {
-                    if (data.evaluation_status === 'graded') {
-                        str.get_string('evaluation_complete', 'mod_airoleplay').then(function(msg) {
-                            utils.showStatus(statusEl, msg, 'success');
-                        }).catch(function() {});
-                        setTimeout(function() { window.location.reload(); }, 2000);
-                    } else {
-                        str.get_string('roleplay_finished', 'mod_airoleplay').then(function(msg) {
-                            utils.showStatus(statusEl, msg, 'info');
-                        }).catch(function() {});
-                        pollEvaluationStatus(statusEl);
-                    }
-                });
-            } else {
-                str.get_string('roleplay_finished', 'mod_airoleplay').then(function(msg) {
-                    utils.showStatus(statusEl, msg, 'info');
-                }).catch(function() {});
-                pollEvaluationStatus(statusEl);
+    render();
+    clearInterval(state.timer);
+    state.timer = setInterval(() => {
+        state.remaining--;
+        render();
+        if (state.remaining === 60) {
+            utils.playBeep(660, 400, 0.3);
+            status(t('warning_1min'), 'warning');
+        }
+        if (state.remaining <= 0) {
+            clearInterval(state.timer);
+            // Let an avatar reply in progress finish before closing.
+            if (!state.busy) {
+                endSession();
             }
-        }).catch(function() {
-            str.get_string('roleplay_finished', 'mod_airoleplay').then(function(msg) {
-                utils.showStatus(document.getElementById('airoleplay_status'), msg, 'info');
-            }).catch(function() {});
-            pollEvaluationStatus(document.getElementById('airoleplay_status'));
-        });
-    };
+        }
+    }, 1000);
+};
 
-    // ------------------------------------------------------------------
-    // Avatar turn delivery (TTS + animation)
-    // ------------------------------------------------------------------
+/**
+ * Closes the session: stops capture, plays the closing line and evaluates.
+ */
+const endSession = async() => {
+    if (state.ending) {
+        return;
+    }
+    state.ending = true;
+    state.sessionActive = false;
+    clearInterval(state.timer);
+    hideControls();
+    abortRecognition();
+    status(t('roleplay_ending'));
 
-    var setAvatarTalking = function(avatarNum, talking) {
-        var video = document.getElementById('avatar_video_' + avatarNum);
-        if (!video) {
+    try {
+        const data = await call('roleplay_closing');
+        if (data.success && data.text) {
+            await deliverAvatarTurn(data);
+        }
+    } catch (e) {
+        // The attempt is closed server-side by the background task anyway.
+    }
+    window.removeEventListener('beforeunload', warnBeforeLeaving);
+    finalise();
+};
+
+/**
+ * Evaluates the attempt, then reloads to show the results (or polls while
+ * the evaluation runs in the background).
+ */
+const finalise = async() => {
+    const room = document.querySelector('#airoleplay_roleplay_panel');
+    if (room) {
+        room.classList.add('d-none');
+    }
+    const panel = $('airoleplay_evaluating_panel');
+    if (panel) {
+        panel.classList.remove('d-none');
+    }
+    const evalStatus = $('airoleplay_eval_status');
+
+    try {
+        const data = await call('roleplay_finalise');
+        if (data.success && data.evaluation_status === 'graded') {
+            utils.showStatus(evalStatus, t('evaluation_complete'), 'success');
+            setTimeout(() => window.location.reload(), 1500);
             return;
         }
-        var newSrc = talking ? video.dataset.talking : video.dataset.idle;
-        if (video.getAttribute('src') !== newSrc) {
-            video.src  = newSrc;
-            video.loop = true;
-            video.play().catch(function() {});
+    } catch (e) {
+        // Fall through to polling: the background task will evaluate.
+    }
+    pollEvaluation(evalStatus, 0);
+};
+
+/**
+ * Polls the attempt status until it is graded.
+ *
+ * @param {HTMLElement} evalStatus Status element.
+ * @param {number} checks Checks done so far.
+ */
+const pollEvaluation = (evalStatus, checks) => {
+    if (checks >= POLL_MAX_CHECKS) {
+        utils.showStatus(evalStatus, t('evaluation_delayed'), 'info');
+        return;
+    }
+    setTimeout(async() => {
+        try {
+            const data = await call('check_evaluation');
+            if (data.status === 'graded') {
+                utils.showStatus(evalStatus, t('evaluation_complete'), 'success');
+                setTimeout(() => window.location.reload(), 1500);
+                return;
+            }
+        } catch (e) {
+            // Transient network error: keep polling.
         }
-    };
+        pollEvaluation(evalStatus, checks + 1);
+    }, POLL_INTERVAL_MS);
+};
 
-    var deliverAvatarTurn = function(avatar, text, audioBase64) {
-        currentTurn++;
-        appendToTranscript('avatar_' + avatar, text, avatar);
-        setActiveAvatar(avatar);
+/**
+ * Warns before leaving the page while the session runs.
+ *
+ * @param {Event} e beforeunload event.
+ */
+const warnBeforeLeaving = (e) => {
+    if (state.sessionActive) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+};
 
-        var done;
-        if (audioBase64) {
-            done = playAudioBase64(audioBase64, avatar);
+// ---------------------------------------------------------------------------
+// Participant input: push-to-talk and typed replies.
+// ---------------------------------------------------------------------------
+
+let controlsBound = false;
+
+/**
+ * Shows the reply controls (push-to-talk and/or the typed reply form).
+ */
+const showControls = () => {
+    bindControls();
+    const ptt = $('airoleplay_ptt_btn');
+    if (ptt && !state.textMode) {
+        ptt.classList.remove('d-none');
+        ptt.disabled = false;
+    }
+    const toggle = $('airoleplay_text_toggle');
+    if (toggle) {
+        toggle.classList.toggle('d-none', state.textMode);
+    }
+    const form = $('airoleplay_text_form');
+    if (form && state.textMode) {
+        form.classList.remove('d-none');
+        $('airoleplay_text_input').disabled = false;
+        $('airoleplay_text_send').disabled = false;
+    }
+};
+
+/**
+ * Hides/disables the reply controls while an avatar is answering.
+ */
+const hideControls = () => {
+    const ptt = $('airoleplay_ptt_btn');
+    if (ptt) {
+        ptt.classList.add('d-none');
+        ptt.classList.remove('active');
+        ptt.setAttribute('aria-pressed', 'false');
+    }
+    const input = $('airoleplay_text_input');
+    if (input) {
+        input.disabled = true;
+        $('airoleplay_text_send').disabled = true;
+    }
+};
+
+/**
+ * Switches the session to typed replies.
+ *
+ * @param {string} reason Explanation shown to the participant.
+ */
+const enableTextMode = (reason) => {
+    state.textMode = true;
+    abortRecognition();
+    if (reason) {
+        // Persistent notice: the status line is overwritten on every turn.
+        const notice = $('airoleplay_mode_notice');
+        if (notice) {
+            utils.showStatus(notice, reason, 'warning');
+            notice.classList.remove('d-none');
         } else {
-            // No TTS: animate for an estimated duration based on text length.
-            setAvatarTalking(avatar, true);
-            done = new Promise(function(resolve) {
-                setTimeout(resolve, Math.min(5000, text.length * 60));
-            }).then(function() {
-                setAvatarTalking(avatar, false);
-            });
+            status(reason, 'warning');
         }
+    }
+    const ptt = $('airoleplay_ptt_btn');
+    if (ptt) {
+        ptt.classList.add('d-none');
+    }
+    if (state.sessionActive && !state.busy) {
+        showControls();
+        const input = $('airoleplay_text_input');
+        if (input) {
+            input.focus();
+        }
+    }
+};
 
-        return done.then(function() {
-            clearActiveAvatar();
+/**
+ * Wires the push-to-talk button, the keyboard and the typed reply form (once).
+ */
+const bindControls = () => {
+    if (controlsBound) {
+        return;
+    }
+    controlsBound = true;
+
+    const ptt = $('airoleplay_ptt_btn');
+    if (ptt) {
+        ptt.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (ptt.setPointerCapture && e.pointerId !== undefined) {
+                try {
+                    ptt.setPointerCapture(e.pointerId);
+                } catch (err) {
+                    // Capture is an optimisation only.
+                }
+            }
+            startListening();
         });
-    };
-
-    var playAudioBase64 = function(base64, avatar) {
-        return new Promise(function(resolve) {
-            try {
-                var binary = atob(base64);
-                var bytes  = new Uint8Array(binary.length);
-                for (var i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-
-                var avatarEl = document.getElementById('airoleplay_avatar_' + avatar);
-                setAvatarTalking(avatar, true);
-                if (avatarEl) {
-                    avatarEl.classList.add('speaking');
-                }
-
-                if (!audioCtx) {
-                    // AudioContext not yet created — use plain Audio element.
-                    var blob  = new Blob([bytes], {type: 'audio/mpeg'});
-                    var url   = URL.createObjectURL(blob);
-                    var audio = new Audio(url);
-                    var cleanup = function() {
-                        if (avatarEl) { avatarEl.classList.remove('speaking'); }
-                        setAvatarTalking(avatar, false);
-                        URL.revokeObjectURL(url);
-                        resolve();
-                    };
-                    audio.onended = cleanup;
-                    audio.onerror = cleanup;
-                    audio.play().catch(cleanup);
-                    return;
-                }
-
-                audioCtx.decodeAudioData(bytes.buffer.slice(0), function(audioBuffer) {
-                    var source   = audioCtx.createBufferSource();
-                    var analyser = audioCtx.createAnalyser();
-                    analyser.fftSize = 256;
-                    source.buffer = audioBuffer;
-                    source.connect(analyser);
-                    analyser.connect(audioCtx.destination);
-
-                    source.onended = function() {
-                        if (avatarEl) { avatarEl.classList.remove('speaking'); }
-                        setAvatarTalking(avatar, false);
-                        resolve();
-                    };
-                    source.start(0);
-                }, function() {
-                    // decodeAudioData failed — just resolve.
-                    if (avatarEl) { avatarEl.classList.remove('speaking'); }
-                    setAvatarTalking(avatar, false);
-                    resolve();
-                });
-            } catch (e) {
-                resolve();
+        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((type) => {
+            ptt.addEventListener(type, () => stopListening());
+        });
+        ptt.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Keyboard: hold Space or Enter while the button has focus.
+        ptt.addEventListener('keydown', (e) => {
+            if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
+                e.preventDefault();
+                startListening();
             }
         });
-    };
-
-    var setActiveAvatar = function(avatar) {
-        var n = cfg.numavatars || 1;
-        for (var i = 1; i <= n; i++) {
-            var el = document.getElementById('airoleplay_avatar_' + i);
-            if (el) {
-                el.classList.toggle('active-speaker',   i === avatar);
-                el.classList.toggle('inactive-speaker', i !== avatar);
+        ptt.addEventListener('keyup', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                stopListening();
             }
-        }
-    };
+        });
 
-    var clearActiveAvatar = function() {
-        var n = cfg.numavatars || 1;
-        for (var i = 1; i <= n; i++) {
-            var el = document.getElementById('airoleplay_avatar_' + i);
-            if (el) {
-                el.classList.remove('active-speaker', 'inactive-speaker');
+        // "Type instead" link under the button.
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.id = 'airoleplay_text_toggle';
+        toggle.className = 'btn btn-link btn-sm mt-1';
+        toggle.textContent = t('typed_reply_toggle');
+        toggle.addEventListener('click', () => enableTextMode(''));
+        ptt.insertAdjacentElement('afterend', toggle);
+    }
+
+    const form = $('airoleplay_text_form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = $('airoleplay_text_input');
+            const text = input.value.trim();
+            if (text) {
+                input.value = '';
+                submitResponse(text);
             }
-        }
-    };
+        });
+    }
+};
 
-    // ------------------------------------------------------------------
-    // Speech recognition (STT)
-    // ------------------------------------------------------------------
+/**
+ * Starts capturing speech (a fresh recogniser per utterance avoids the
+ * InvalidStateError some browsers raise when one instance is restarted).
+ */
+const startListening = () => {
+    if (!state.sessionActive || state.busy || state.listening || state.textMode) {
+        return;
+    }
+    const Ctor = speechRecognitionCtor();
+    if (!Ctor) {
+        enableTextMode(t('stt_unsupported'));
+        return;
+    }
+    const recognition = new Ctor();
+    recognition.lang = cfg.speechlang || document.documentElement.lang || 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
-    var setupSpeechRecognition = function() {
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            return;
-        }
+    state.recognition = recognition;
+    state.listening = true;
+    state.pendingSubmit = false;
+    state.finalText = '';
+    state.interimText = '';
 
-        recognition = new SR();
-        recognition.continuous     = true;
-        recognition.interimResults = true;
-        recognition.lang           = cfg.speechlang || document.documentElement.lang || 'en-US';
-
-        recognition.onresult = function(e) {
-            var interim = '';
-            var final   = '';
-            for (var i = e.resultIndex; i < e.results.length; i++) {
-                var t = e.results[i][0].transcript;
-                if (e.results[i].isFinal) {
-                    final += t;
-                } else {
-                    interim += t;
-                }
-            }
-            currentTranscript += final;
-
-            // Show live transcription in the transcript area.
-            var transcriptEl = document.getElementById('airoleplay_transcript');
-            if (transcriptEl) {
-                var liveEl = transcriptEl.querySelector('.live-transcript');
-                if (!liveEl) {
-                    liveEl = document.createElement('div');
-                    liveEl.className = 'live-transcript participant-turn';
-                    transcriptEl.appendChild(liveEl);
-                }
-                liveEl.textContent = currentTranscript + (interim ? ' ' + interim : '');
-            }
-        };
-
-        recognition.onerror = function(e) {
-            if (e.error !== 'no-speech') {
-                // Non-critical errors — silently ignore.
-            }
-        };
-
-        recognition.onend = function() {
-            if (pendingSubmit) {
-                pendingSubmit = false;
-                var transcript = currentTranscript;
-                if (!transcript.trim()) {
-                    var liveEl = document.querySelector('#airoleplay_transcript .live-transcript');
-                    transcript = liveEl ? liveEl.textContent.trim() : '';
-                }
-                submitParticipantResponse(transcript);
-            }
-        };
-    };
-
-    var showPushToTalk = function() {
-        var btn = document.getElementById('airoleplay_ptt_btn');
-        if (btn) { btn.classList.remove('d-none'); }
-        if (!pttSetupDone) {
-            pttSetupDone = true;
-            setupPTT();
-        }
-    };
-
-    var hidePushToTalk = function() {
-        var btn = document.getElementById('airoleplay_ptt_btn');
-        if (btn) { btn.classList.add('d-none'); }
-        if (recognition && isRecognising) {
-            recognition.stop();
-        }
-    };
-
-    var setupPTT = function() {
-        var pttBtn = document.getElementById('airoleplay_ptt_btn');
-        if (!pttBtn) {
-            return;
-        }
-
-        var startListening = function() {
-            if (!sessionActive) { return; }
-            currentTranscript = '';
-            isRecognising     = true;
-            pttBtn.classList.add('active');
-            if (recognition) {
-                try { recognition.start(); } catch (e) {}
-            }
-        };
-
-        var stopListening = function() {
-            if (!isRecognising) { return; }
-            isRecognising = false;
-            pttBtn.classList.remove('active');
-
-            if (recognition) {
-                pendingSubmit = true;
-                recognition.stop();
-                // Fallback: if onend fires before stopListening's timeout, onend handles submission.
-                setTimeout(function() {
-                    if (pendingSubmit) {
-                        pendingSubmit = false;
-                        var transcript = currentTranscript;
-                        if (!transcript.trim()) {
-                            var liveEl = document.querySelector('#airoleplay_transcript .live-transcript');
-                            transcript = liveEl ? liveEl.textContent.trim() : '';
-                        }
-                        submitParticipantResponse(transcript);
-                    }
-                }, 1000);
+    recognition.onresult = (e) => {
+        let finalText = '';
+        let interimText = '';
+        for (let i = 0; i < e.results.length; i++) {
+            const piece = e.results[i][0].transcript;
+            if (e.results[i].isFinal) {
+                finalText += piece;
             } else {
-                submitParticipantResponse(currentTranscript);
+                interimText += piece;
             }
-        };
-
-        pttBtn.addEventListener('mousedown',  startListening);
-        pttBtn.addEventListener('mouseup',    stopListening);
-        pttBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startListening(); }, {passive: false});
-        pttBtn.addEventListener('touchend',   function(e) { e.preventDefault(); stopListening(); },  {passive: false});
+        }
+        state.finalText = finalText;
+        state.interimText = interimText;
+        showLiveTranscript((finalText + ' ' + interimText).trim());
+    };
+    recognition.onerror = (e) => handleRecognitionError(e.error);
+    recognition.onend = () => {
+        state.listening = false;
+        if (state.pendingSubmit) {
+            flushCapture();
+        }
     };
 
-    // ------------------------------------------------------------------
-    // Participant response submission
-    // ------------------------------------------------------------------
+    const ptt = $('airoleplay_ptt_btn');
+    ptt.classList.add('active');
+    ptt.setAttribute('aria-pressed', 'true');
+    status(t('listening'));
+    try {
+        recognition.start();
+    } catch (e) {
+        state.listening = false;
+        handleRecognitionError('start-failed');
+    }
+};
 
-    var submitParticipantResponse = function(transcript) {
-        if (!sessionActive || !transcript.trim()) {
+/**
+ * Stops capturing and submits what was heard once the recogniser flushes.
+ */
+const stopListening = () => {
+    const ptt = $('airoleplay_ptt_btn');
+    if (ptt) {
+        ptt.classList.remove('active');
+        ptt.setAttribute('aria-pressed', 'false');
+    }
+    if (!state.recognition || state.pendingSubmit) {
+        return;
+    }
+    state.pendingSubmit = true;
+    try {
+        state.recognition.stop();
+    } catch (e) {
+        // Already stopped.
+    }
+    // Some browsers never fire onend after an error; do not wait forever.
+    state.flushTimer = setTimeout(flushCapture, STT_FLUSH_MS);
+};
+
+/**
+ * Submits the captured text (final plus any trailing interim result).
+ */
+const flushCapture = () => {
+    clearTimeout(state.flushTimer);
+    if (!state.pendingSubmit) {
+        return;
+    }
+    state.pendingSubmit = false;
+    state.recognition = null;
+    const text = (state.finalText + ' ' + state.interimText).trim();
+    removeLiveTranscript();
+    if (!text) {
+        state.failedCaptures++;
+        // After two empty captures, offer typing prominently.
+        status(t('stt_empty'), 'warning');
+        if (state.failedCaptures >= 2) {
+            const form = $('airoleplay_text_form');
+            if (form) {
+                form.classList.remove('d-none');
+                $('airoleplay_text_input').disabled = false;
+                $('airoleplay_text_send').disabled = false;
+            }
+        }
+        return;
+    }
+    state.failedCaptures = 0;
+    submitResponse(text);
+};
+
+/**
+ * Explains a speech recognition failure and, when speech cannot work on this
+ * device or network, switches to typed replies.
+ *
+ * @param {string} error SpeechRecognitionErrorEvent.error code.
+ */
+const handleRecognitionError = (error) => {
+    switch (error) {
+        case 'not-allowed':
+        case 'service-not-allowed':
+            enableTextMode(t('mic_denied'));
+            break;
+        case 'audio-capture':
+            enableTextMode(t('mic_unavailable'));
+            break;
+        case 'network':
+        case 'language-not-supported':
+        case 'start-failed':
+            enableTextMode(t('stt_network'));
+            break;
+        case 'no-speech':
+            status(t('stt_nospeech'), 'warning');
+            break;
+        default:
+            // 'aborted' and unknown codes: nothing useful to tell the user.
+            break;
+    }
+};
+
+/**
+ * Cancels any capture in progress without submitting it.
+ */
+const abortRecognition = () => {
+    clearTimeout(state.flushTimer);
+    state.pendingSubmit = false;
+    state.listening = false;
+    if (state.recognition) {
+        try {
+            state.recognition.abort();
+        } catch (e) {
+            // Already stopped.
+        }
+        state.recognition = null;
+    }
+    removeLiveTranscript();
+};
+
+/**
+ * Sends the participant's reply and delivers the avatar's answer.
+ *
+ * @param {string} text Participant reply.
+ */
+const submitResponse = async(text) => {
+    if (!state.sessionActive || state.busy) {
+        return;
+    }
+    state.busy = true;
+    hideControls();
+    appendTurn(0, text);
+    status(t('roleplay_thinking'));
+
+    const numavatars = cfg.numavatars || 1;
+    const suggested = (state.rotation % numavatars) + 1;
+    state.rotation++;
+
+    try {
+        const data = await call('roleplay_turn', {
+            response: text,
+            // eslint-disable-next-line camelcase
+            suggested_avatar: suggested,
+            // eslint-disable-next-line camelcase
+            preferred_avatar: detectAddressedAvatar(text),
+        });
+        if (data.success && data.timeup) {
+            state.busy = false;
+            endSession();
             return;
         }
-
-        hidePushToTalk();
-        appendToTranscript('participant', transcript, 0);
-
-        var statusEl = document.getElementById('airoleplay_status');
-        str.get_string('roleplay_thinking', 'mod_airoleplay').then(function(msg) {
-            utils.showStatus(statusEl, msg, 'info');
-        }).catch(function() {});
-
-        var numavatars      = cfg.numavatars || 1;
-        var suggestedAvatar = (rotationIndex % numavatars) + 1;
-        rotationIndex++;
-
-        var preferredAvatar = detectAddressedAvatar(transcript);
-
-        utils.ajaxPost(
-            M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
-            {
-                action:           'roleplay_turn',
-                submissionid:     cfg.submissionid,
-                cmid:             cfg.cmid,
-                response:         transcript,
-                suggested_avatar: suggestedAvatar,
-                preferred_avatar: preferredAvatar,
-                turn:             currentTurn + 1
-            },
-            cfg.sesskey
-        ).then(function(data) {
-            if (data.success) {
-                return deliverAvatarTurn(data.avatar, data.text, data.audio_base64).then(function() {
-                    if (sessionActive) { showPushToTalk(); }
-                });
-            } else {
-                utils.showStatus(statusEl, data.error || 'Error processing response', 'danger');
-                if (sessionActive) { showPushToTalk(); }
+        if (data.success) {
+            if (typeof data.remaining === 'number') {
+                state.remaining = data.remaining;
             }
-        }).catch(function(e) {
-            utils.showStatus(statusEl, 'Error: ' + e.message, 'danger');
-            if (sessionActive) { showPushToTalk(); }
-        });
-    };
+            await deliverAvatarTurn(data);
+            clearStatus();
+        } else if (data.errorcode === 'invalidsubmissionstatus') {
+            window.location.reload();
+            return;
+        } else {
+            status(data.error || t('error_generic'), 'danger');
+        }
+    } catch (e) {
+        status(t('error_generic'), 'danger');
+    }
+    state.busy = false;
+    if (state.remaining <= 0) {
+        endSession();
+    } else if (state.sessionActive) {
+        showControls();
+    }
+};
 
-    /**
-     * Detects if the participant addressed a specific avatar by name at the start of their message.
-     * @param {string} transcript
-     * @returns {number} Avatar index (1-3) or 0 if no avatar addressed.
-     */
-    var detectAddressedAvatar = function(transcript) {
-        if (!cfg.avatarnames || cfg.avatarnames.length <= 1) {
-            return 0;
-        }
-        var lower = transcript.toLowerCase().trim();
-
-        // Check for name at start of message (e.g. "Alex, ..." or "Alex: ...").
-        for (var i = 0; i < cfg.avatarnames.length; i++) {
-            var name = cfg.avatarnames[i].name.toLowerCase();
-            if (lower.indexOf(name) === 0 ||
-                lower.indexOf(name + ',') === 0 ||
-                lower.indexOf(name + ':') === 0) {
-                return cfg.avatarnames[i].index;
-            }
-        }
-        // Check for name anywhere in the message.
-        for (var j = 0; j < cfg.avatarnames.length; j++) {
-            if (lower.indexOf(cfg.avatarnames[j].name.toLowerCase()) !== -1) {
-                return cfg.avatarnames[j].index;
-            }
-        }
+/**
+ * Detects the avatar the participant addressed by name (0 = none).
+ *
+ * @param {string} transcript Participant reply.
+ * @returns {number}
+ */
+const detectAddressedAvatar = (transcript) => {
+    const names = cfg.avatarnames || [];
+    if (names.length <= 1) {
         return 0;
+    }
+    const lower = transcript.toLowerCase().trim();
+    const match = (predicate) => {
+        const hit = names.find((a) => a.name && predicate(a.name.toLowerCase()));
+        return hit ? hit.index : 0;
     };
+    return match((name) => lower.startsWith(name)) || match((name) => lower.includes(name));
+};
 
-    // ------------------------------------------------------------------
-    // Transcript UI
-    // ------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Avatar playback.
+// ---------------------------------------------------------------------------
 
-    var appendToTranscript = function(speaker, text, avatar) {
-        var transcriptEl = document.getElementById('airoleplay_transcript');
-        var logEl        = document.getElementById('airoleplay_conversation_log');
-
-        var isParticipant = (speaker === 'participant');
-        var itemClass     = isParticipant ? 'participant-turn' : ('avatar-turn avatar-' + avatar);
-        var avatarName    = '';
-        if (!isParticipant && cfg.avatarnames) {
-            for (var k = 0; k < cfg.avatarnames.length; k++) {
-                if (cfg.avatarnames[k].index === avatar) {
-                    avatarName = cfg.avatarnames[k].name;
-                    break;
-                }
-            }
+/**
+ * Shows and speaks one avatar line.
+ *
+ * @param {Object} data Turn payload from the server.
+ * @returns {Promise<void>}
+ */
+const deliverAvatarTurn = async(data) => {
+    const avatar = data.avatar || 1;
+    appendTurn(avatar, data.text || '');
+    setActiveAvatar(avatar);
+    setTalking(avatar, true);
+    try {
+        if (data.audio_base64) {
+            await playServerAudio(data.audio_base64, data.audio_mime);
+        } else if (cfg.ttsmode === 'browser' && window.speechSynthesis) {
+            await speakInBrowser(data.text || '', avatar);
+        } else {
+            await new Promise((resolve) => setTimeout(resolve, Math.min(6000, 800 + (data.text || '').length * 45)));
         }
-        var label = isParticipant
-            ? ('&#127917; ' + (cfg.participantlabel || 'You'))
-            : ('&#128172; ' + (avatarName || ('Avatar ' + avatar)));
+    } finally {
+        setTalking(avatar, false);
+        setActiveAvatar(0);
+    }
+};
 
-        [transcriptEl, logEl].forEach(function(container) {
-            if (!container) { return; }
-            // Remove any live/interim transcription element.
-            var liveEl = container.querySelector('.live-transcript');
-            if (liveEl) { liveEl.remove(); }
-
-            var item = document.createElement('div');
-            item.className = 'transcript-item ' + itemClass;
-            item.innerHTML =
-                '<span class="speaker-label">' + label + '</span>' +
-                '<span class="message-text">' + escapeHtml(text) + '</span>';
-            container.appendChild(item);
-            container.scrollTop = container.scrollHeight;
-        });
+/**
+ * Plays base64 audio returned by the server TTS provider.
+ *
+ * @param {string} base64 Audio bytes, base64 encoded.
+ * @param {string} mime MIME type.
+ * @returns {Promise<void>}
+ */
+const playServerAudio = (base64, mime) => new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+        if (!settled) {
+            settled = true;
+            resolve();
+        }
     };
+    // Hard watchdog in case no audio event ever fires.
+    setTimeout(finish, 60000);
 
-    // ------------------------------------------------------------------
-    // Evaluation polling
-    // ------------------------------------------------------------------
+    let bytes;
+    try {
+        const binary = atob(base64);
+        bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+    } catch (e) {
+        finish();
+        return;
+    }
 
-    var pollEvaluationStatus = function(statusEl) {
-        var pollUrl  = M.cfg.wwwroot + '/mod/airoleplay/ajax.php';
-        var attempts = 0;
-
-        var poll = function() {
-            attempts++;
-            if (attempts > 60) { return; } // Give up after 5 minutes.
-
-            var url = pollUrl +
-                '?action=check_evaluation&submissionid=' + cfg.submissionid +
-                '&sesskey=' + cfg.sesskey +
-                '&cmid=' + cfg.cmid;
-
-            fetch(url).then(function(res) {
-                return res.json();
-            }).then(function(data) {
-                if (data.status === 'graded') {
-                    str.get_string('evaluation_complete', 'mod_airoleplay').then(function(msg) {
-                        utils.showStatus(statusEl, msg, 'success');
-                    }).catch(function() {});
-                    setTimeout(function() { window.location.reload(); }, 2000);
-                } else if (data.status === 'error') {
-                    utils.showStatus(statusEl, data.error || 'Evaluation failed', 'danger');
-                } else {
-                    setTimeout(poll, 5000);
-                }
-            }).catch(function() {
-                setTimeout(poll, 5000);
-            });
+    const playWithElement = () => {
+        const url = URL.createObjectURL(new Blob([bytes], {type: mime || 'audio/mpeg'}));
+        const audio = new Audio(url);
+        const done = () => {
+            URL.revokeObjectURL(url);
+            finish();
         };
-
-        setTimeout(poll, 5000);
+        audio.onended = done;
+        audio.onerror = done;
+        audio.play().catch(done);
     };
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
-    var escapeHtml = function(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    };
-
-    return {
-        init: init
-    };
+    const ctx = state.audioCtx;
+    if (!ctx) {
+        playWithElement();
+        return;
+    }
+    if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => null);
+    }
+    ctx.decodeAudioData(bytes.buffer.slice(0), (buffer) => {
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.onended = finish;
+        // Duration-based fallback in case onended never fires.
+        setTimeout(finish, Math.ceil(buffer.duration * 1000) + 2000);
+        source.start(0);
+    }, playWithElement);
 });
+
+/**
+ * Speaks a line with the browser's speech synthesis (no server cost).
+ *
+ * @param {string} text Line to speak.
+ * @param {number} avatar Avatar index, used to vary the voice.
+ * @returns {Promise<void>}
+ */
+const speakInBrowser = (text, avatar) => new Promise((resolve) => {
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = cfg.speechlang || 'en-US';
+    const langprefix = utterance.lang.split('-')[0].toLowerCase();
+    const voices = synth.getVoices().filter((v) => v.lang && v.lang.toLowerCase().startsWith(langprefix));
+    if (voices.length) {
+        utterance.voice = voices[(avatar - 1) % voices.length];
+    }
+    // Different pitch per avatar so several avatars remain distinguishable.
+    utterance.pitch = [1, 1.25, 0.8][(avatar - 1) % 3];
+    let settled = false;
+    const finish = () => {
+        if (!settled) {
+            settled = true;
+            resolve();
+        }
+    };
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    setTimeout(finish, Math.max(8000, text.length * 120));
+    synth.cancel();
+    synth.speak(utterance);
+});
+
+/**
+ * Switches an avatar video between its idle and talking loops.
+ *
+ * @param {number} avatar Avatar index.
+ * @param {boolean} talking Whether the avatar is speaking.
+ */
+const setTalking = (avatar, talking) => {
+    const wrapper = $('airoleplay_avatar_' + avatar);
+    if (wrapper) {
+        wrapper.classList.toggle('speaking', talking);
+    }
+    const video = $('avatar_video_' + avatar);
+    if (!video) {
+        return;
+    }
+    const src = talking ? video.dataset.talking : video.dataset.idle;
+    if (src && video.getAttribute('src') !== src) {
+        video.src = src;
+        video.loop = true;
+        video.play().catch(() => null);
+    }
+};
+
+/**
+ * Highlights the speaking avatar (0 clears the highlight).
+ *
+ * @param {number} avatar Avatar index.
+ */
+const setActiveAvatar = (avatar) => {
+    for (let i = 1; i <= (cfg.numavatars || 1); i++) {
+        const el = $('airoleplay_avatar_' + i);
+        if (el) {
+            el.classList.toggle('active-speaker', avatar !== 0 && i === avatar);
+            el.classList.toggle('inactive-speaker', avatar !== 0 && i !== avatar);
+        }
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Transcript.
+// ---------------------------------------------------------------------------
+
+/**
+ * Appends a line to the on-screen transcript (text only, never HTML).
+ *
+ * @param {number} avatar Avatar index, or 0 for the participant.
+ * @param {string} text Line text.
+ */
+const appendTurn = (avatar, text) => {
+    const transcript = $('airoleplay_transcript');
+    if (!transcript) {
+        return;
+    }
+    removeLiveTranscript();
+    const item = document.createElement('div');
+    item.className = 'transcript-item ' + (avatar ? 'avatar-turn avatar-' + avatar : 'participant-turn');
+    const label = document.createElement('span');
+    label.className = 'speaker-label';
+    if (avatar) {
+        const entry = (cfg.avatarnames || []).find((a) => a.index === avatar);
+        label.textContent = entry ? entry.name : 'Avatar ' + avatar;
+    } else {
+        label.textContent = t('you_label');
+    }
+    const message = document.createElement('span');
+    message.className = 'message-text';
+    message.textContent = text;
+    item.append(label, message);
+    transcript.appendChild(item);
+    transcript.scrollTop = transcript.scrollHeight;
+};
+
+/**
+ * Shows what the recogniser is hearing while the button is held.
+ *
+ * @param {string} text Current capture.
+ */
+const showLiveTranscript = (text) => {
+    const transcript = $('airoleplay_transcript');
+    if (!transcript) {
+        return;
+    }
+    let live = transcript.querySelector('.live-transcript');
+    if (!live) {
+        live = document.createElement('div');
+        live.className = 'transcript-item participant-turn live-transcript';
+        transcript.appendChild(live);
+    }
+    live.textContent = text;
+    transcript.scrollTop = transcript.scrollHeight;
+};
+
+/**
+ * Removes the live capture line.
+ */
+const removeLiveTranscript = () => {
+    const live = document.querySelector('#airoleplay_transcript .live-transcript');
+    if (live) {
+        live.remove();
+    }
+};
+
+/**
+ * Clears the status area.
+ */
+const clearStatus = () => {
+    const el = $('airoleplay_status');
+    if (el) {
+        el.className = 'airoleplay-status-message';
+        el.textContent = '';
+        el.style.display = 'none';
+    }
+};

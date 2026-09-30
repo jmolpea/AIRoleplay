@@ -90,8 +90,13 @@ class anonymizer {
         usort($candidates, fn($a, $b) => mb_strlen($b) - mb_strlen($a));
 
         foreach ($candidates as $candidate) {
-            $pattern = '/' . preg_quote($candidate, '/') . '/iu';
-            $text    = preg_replace($pattern, $hash, $text);
+            // Whole words only: a last name such as "Sol" must not mangle
+            // "solution" in the student's own sentence.
+            $pattern = '/(?<![\p{L}\p{N}])' . preg_quote($candidate, '/') . '(?![\p{L}\p{N}])/iu';
+            $replaced = preg_replace($pattern, $hash, $text);
+            if ($replaced !== null) {
+                $text = $replaced;
+            }
         }
         return $text;
     }

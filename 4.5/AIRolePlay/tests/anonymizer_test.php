@@ -27,13 +27,13 @@ namespace mod_airoleplay;
 
 use mod_airoleplay\privacy\anonymizer;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_airoleplay\privacy\anonymizer::class)]
 /**
  * Tests for the PII redactor at the OpenAI boundary.
  *
  * @covers \mod_airoleplay\privacy\anonymizer
  */
 final class anonymizer_test extends \advanced_testcase {
-
     public function test_hash_user_returns_anon_token_for_invalid_userid(): void {
         $this->resetAfterTest();
         $this->assertSame('STUDENT-anon', anonymizer::hash_user(0));
@@ -78,10 +78,10 @@ final class anonymizer_test extends \advanced_testcase {
         // Each entry: [text, must-not-contain pattern].
         $cases = [
             ['Hi, I am Ada Lovelace and I love Moodle.', 'Ada Lovelace'],
-            ['Lovelace, Ada speaking.',                   'Lovelace'],
-            ['Lovelace alone here.',                      'Lovelace'],
-            ['My handle is ada42 online.',                'ada42'],
-            ['Reach me at ada@example.org any time.',     'ada@example.org'],
+            ['Lovelace, Ada speaking.', 'Lovelace'],
+            ['Lovelace alone here.', 'Lovelace'],
+            ['My handle is ada42 online.', 'ada42'],
+            ['Reach me at ada@example.org any time.', 'ada@example.org'],
         ];
         foreach ($cases as [$text, $forbidden]) {
             $redacted = anonymizer::redact_text($text, (int)$user->id);
@@ -100,6 +100,21 @@ final class anonymizer_test extends \advanced_testcase {
         ]);
         $redacted = anonymizer::redact_text('Hi, my name is Ada and I work at the lab.', (int)$user->id);
         $this->assertStringContainsString('Ada', $redacted);
+    }
+
+    public function test_redact_text_only_replaces_whole_words(): void {
+        // A short last name must not corrupt other words the student says,
+        // which would also distort the language-quality grade.
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Ana',
+            'lastname'  => 'Sol',
+            'username'  => 'asol',
+        ]);
+        $hash = anonymizer::hash_user((int)$user->id);
+        $redacted = anonymizer::redact_text('La solución es clara, dijo Sol.', (int)$user->id);
+        $this->assertStringContainsString('solución', $redacted);
+        $this->assertStringContainsString('dijo ' . $hash, $redacted);
     }
 
     public function test_redact_text_returns_input_when_user_missing_or_empty(): void {

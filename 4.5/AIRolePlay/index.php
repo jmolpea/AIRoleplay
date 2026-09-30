@@ -30,9 +30,14 @@ $id = required_param('id', PARAM_INT); // Course id.
 $course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
 
 require_login($course);
+$PAGE->set_pagelayout('incourse');
+
+\mod_airoleplay\event\course_module_instance_list_viewed::create_from_course($course)->trigger();
+
 $PAGE->set_url('/mod/airoleplay/index.php', ['id' => $id]);
 $PAGE->set_title(get_string('modulenameplural', 'mod_airoleplay'));
 $PAGE->set_heading(format_string($course->fullname));
+$PAGE->navbar->add(get_string('modulenameplural', 'mod_airoleplay'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('modulenameplural', 'mod_airoleplay'));
@@ -46,20 +51,22 @@ if (empty($instances)) {
 
 $table = new html_table();
 $table->head = [
+    get_string('section'),
     get_string('name'),
-    get_string('description'),
 ];
 $table->attributes['class'] = 'generaltable mod_index';
 
+$format = course_get_format($course);
 foreach ($instances as $cm) {
     if (!$cm->uservisible) {
         continue;
     }
     $link = html_writer::link(
         new moodle_url('/mod/airoleplay/view.php', ['id' => $cm->id]),
-        format_string($cm->name, true, ['context' => $cm->context])
+        format_string($cm->name, true, ['context' => $cm->context]),
+        $cm->visible ? [] : ['class' => 'dimmed']
     );
-    $table->data[] = [$link, ''];
+    $table->data[] = [$format->get_section_name($cm->sectionnum), $link];
 }
 
 echo html_writer::table($table);

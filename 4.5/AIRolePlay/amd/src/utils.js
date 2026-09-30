@@ -20,91 +20,82 @@
  * @copyright  2025 Pluginia
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define([], function() {
-    'use strict';
 
-    /**
-     * Makes an AJAX POST request.
-     * @param {string} url
-     * @param {Object} data
-     * @param {string} sesskey
-     * @returns {Promise}
-     */
-    var ajaxPost = function(url, data, sesskey) {
-        var body = Object.assign({}, data, {sesskey: sesskey});
-        return fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(body)
-        }).then(function(res) {
-            if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
-            }
-            return res.json();
-        });
-    };
+/**
+ * Makes a JSON POST request to the plugin's AJAX endpoint.
+ *
+ * @param {string} url Endpoint URL.
+ * @param {Object} data Payload.
+ * @param {string} sesskey Moodle session key.
+ * @returns {Promise<Object>} Decoded JSON response.
+ */
+export const ajaxPost = async(url, data, sesskey) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(Object.assign({}, data, {sesskey: sesskey})),
+    });
+    if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+    }
+    return response.json();
+};
 
-    /**
-     * Formats seconds as MM:SS.
-     * @param {number} totalSeconds
-     * @returns {string}
-     */
-    var formatTime = function(totalSeconds) {
-        var abs = Math.abs(totalSeconds);
-        var minutes = Math.floor(abs / 60);
-        var seconds = abs % 60;
-        return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-    };
+/**
+ * Formats seconds as MM:SS.
+ *
+ * @param {number} totalSeconds Seconds.
+ * @returns {string}
+ */
+export const formatTime = (totalSeconds) => {
+    const abs = Math.max(0, Math.abs(totalSeconds));
+    const minutes = Math.floor(abs / 60);
+    const seconds = abs % 60;
+    return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+};
 
-    /**
-     * Plays a short beep via Web Audio API.
-     * @param {number} frequency
-     * @param {number} duration
-     * @param {number} volume
-     */
-    var playBeep = function(frequency, duration, volume) {
-        frequency = frequency || 440;
-        duration  = duration  || 200;
-        volume    = volume    || 0.3;
-        try {
-            var ctx  = new (window.AudioContext || window.webkitAudioContext)();
-            var osc  = ctx.createOscillator();
-            var gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = frequency;
-            gain.gain.setValueAtTime(volume, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + duration / 1000);
-        } catch (e) {
-            // ignore
-        }
-    };
+/**
+ * Plays a short beep via the Web Audio API.
+ *
+ * @param {number} frequency Frequency in Hz.
+ * @param {number} duration Duration in ms.
+ * @param {number} volume Gain between 0 and 1.
+ */
+export const playBeep = (frequency = 440, duration = 200, volume = 0.3) => {
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = frequency;
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration / 1000);
+        osc.onended = () => ctx.close();
+    } catch (e) {
+        // Audio is a nicety only.
+    }
+};
 
-    /**
-     * Shows a Bootstrap alert message in a container element.
-     * @param {HTMLElement} el
-     * @param {string}      message
-     * @param {string}      type   'info'|'success'|'warning'|'danger'
-     */
-    var showStatus = function(el, message, type) {
-        if (!el) {
-            return;
-        }
-        type = type || 'info';
-        el.className    = 'airoleplay-status-message alert alert-' + type;
-        el.textContent  = message;
-        el.style.display = 'block';
-    };
-
-    return {
-        ajaxPost:   ajaxPost,
-        formatTime: formatTime,
-        playBeep:   playBeep,
-        showStatus: showStatus
-    };
-});
+/**
+ * Shows a Bootstrap alert message in a container element.
+ *
+ * @param {HTMLElement|null} el Container.
+ * @param {string} message Text (never HTML).
+ * @param {string} type 'info'|'success'|'warning'|'danger'.
+ */
+export const showStatus = (el, message, type = 'info') => {
+    if (!el) {
+        return;
+    }
+    el.className = 'airoleplay-status-message alert alert-' + type;
+    el.textContent = message;
+    el.style.display = 'block';
+};

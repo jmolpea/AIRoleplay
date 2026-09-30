@@ -74,7 +74,8 @@ class prompt_guard {
             return $text;
         }
         return preg_replace(
-            '/===\s*([A-Za-z][A-Za-z0-9 _-]{0,60})\s*(START|END)\s*===/iu',
+            // Lazy name group, so the space before START/END is not captured twice.
+            '/===\s*([A-Za-z][A-Za-z0-9 _-]{0,60}?)\s*(START|END)\s*===/iu',
             '[$1 $2]',
             $text
         );
