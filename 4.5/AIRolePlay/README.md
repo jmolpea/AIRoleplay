@@ -1,164 +1,94 @@
-# AI Roleplay — Moodle Activity Plugin (`mod_airoleplay`)
+# AI Roleplay (`mod_airoleplay`)
 
-An AI-powered roleplay training plugin for Moodle 4.5 that immerses participants in conversational scenarios with up to three configurable AI avatars. Ideal for practising soft skills, professional communication, language learning, negotiation, customer interactions, and real-world meeting simulations.
+Voice roleplay simulations for Moodle. Students talk, out loud, with one to three AI characters in a scenario the teacher writes (a difficult customer, a job interview, a negotiation, a clinical handover, a conversation in a foreign language). When the time is up, an AI evaluator grades the conversation against a four-part rubric and writes personalised feedback. Teachers can review every transcript and adjust or publish each grade.
 
 ---
 
 ## Requirements
 
-| Requirement | Minimum |
+| | |
 |---|---|
-| Moodle | 4.5 (build 2024042200) |
-| PHP | 8.1+ |
-| Database | MySQL 8.0+ / MariaDB 10.6+ / PostgreSQL 13+ |
-| Browser | Chrome 90+, Edge 90+ (Web Speech API required for STT) |
-| Server | HTTPS mandatory (Web Speech API requires a secure origin) |
-| OpenAI API key | Required — GPT-4o, TTS endpoints |
-| Moodle cron | Must be running regularly (fallback evaluation tasks) |
+| Moodle | 4.5 LTS, 5.0, 5.1, 5.2 and 5.3 LTS |
+| PHP | 8.1 or later (whatever your Moodle version requires) |
+| Database | MySQL, MariaDB or PostgreSQL (tested on MariaDB 10.11 and PostgreSQL 17) |
+| HTTPS | Required for the microphone in the browser |
+| Browser (voice) | Chrome, Edge or Safari. Other browsers, or students without a microphone, reply by typing |
+| AI provider | An API key from **one** of: OpenAI, Anthropic (Claude), Google Gemini or DeepSeek |
+| Cron | Must run regularly (closes abandoned sessions and retries evaluations) |
+| Licence | A licence key for the site URL (sold per site) |
 
 ---
 
 ## Installation
 
-### Method 1: Moodle Plugin Directory (recommended)
+1. **Site administration → Plugins → Install plugins**, upload the ZIP and follow the upgrade screens.
+   (Or unzip into `mod/airoleplay` — `public/mod/airoleplay` on Moodle 5.1+ — and visit **Site administration → Notifications**.)
+2. Open **Site administration → Plugins → Activity modules → AI Roleplay**.
+3. Paste your **licence key**. The status line must show *Valid*.
+4. Paste the **API key** of your AI provider and choose it as **Chat provider**.
+5. Choose the **voice provider**: OpenAI or Gemini (natural voices, small cost per reply), *Browser voices* (free) or *No voice*.
+6. Press **Run connection test**. Every row must show *OK*.
 
-1. Download the plugin zip from the Moodle Plugin Directory.
-2. In Moodle: **Site administration → Plugins → Install plugins**.
-3. Upload the zip and follow the on-screen prompts.
-4. Complete the database upgrade steps.
+The recommended models are preselected: they give natural, low-latency conversations and reliable grading.
 
-### Method 2: Manual installation
+| Provider | Roleplay (default) | Evaluation (default) | Also available |
+|---|---|---|---|
+| OpenAI | GPT-6 Sol | GPT-6 Sol | GPT-6 Luna (fastest), GPT-6 Astra (premium) |
+| Anthropic | Claude Sonnet 5 | Claude Sonnet 5 | Claude Haiku 4.5 (fastest), Claude Opus 5.5, Claude Opus 5 |
+| Google | Gemini 3.8 Flash | Gemini 3.8 Flash | Gemini 3.5 Flash-Lite, Gemini 3.1 Pro (preview) |
+| DeepSeek | DeepSeek V4.1 Flash | DeepSeek V4 Pro | |
 
-```bash
-# Unzip into the Moodle mod directory
-unzip mod_airoleplay.zip -d /path/to/moodle/mod/airoleplay
-
-# Fix permissions (Linux)
-chown -R www-data:www-data /path/to/moodle/mod/airoleplay
-chmod -R 755 /path/to/moodle/mod/airoleplay
-```
-
-Then visit **Site administration → Notifications** to run the database installer.
-
----
-
-## Post-Installation Configuration
-
-1. **Configure the OpenAI API Key**
-   Go to **Site administration → Plugins → Activity modules → AI Roleplay**.
-   Enter your OpenAI API key in the "Primary OpenAI API Key" field.
-   The key is stored encrypted using Moodle's built-in encryption.
-
-2. **Select AI models**
-   Choose the GPT model for roleplay conversations and for final evaluation.
-
-3. **Customise the GDPR notice**
-   Edit the privacy notice text to match your institution's data processing policies.
-
-4. **Configure the anonymisation salt** (optional)
-   A random salt is used when hashing student IDs before sending to OpenAI. Set this to a long random string specific to your installation.
-
-5. **Verify cron is running**
-   Evaluation fallback tasks run as Moodle adhoc tasks. Ensure `cron.php` or `cli/cron.php` runs regularly.
+Activities created with earlier models keep working. Retired model ids (for example `deepseek-chat`) are mapped to their current replacement automatically.
 
 ---
 
-## Creating an Activity
+## Creating an activity
 
-1. In a course, **Add an activity → AI Roleplay**.
-2. Configure the roleplay:
-   - **Scenario**: Describe the situation the participant will enter.
-   - **Participant role**: Describe the character/role the student will play.
-   - **Number of avatars**: Choose 1, 2 or 3 AI interlocutors.
-   - **Avatar configuration**: For each avatar set name, role, personality prompt, TTS voice, and avatar image.
-   - **Session duration**: How many minutes the roleplay will last.
-3. Set grading options (maximum grade, review workflow, notifications).
-4. Save and return to course.
+**Add an activity or resource → AI Roleplay**, then fill in:
 
----
+- **Scenario** and **participant's role**: what the student sees and what the avatars know.
+- **Avatars** (1–3): name, role, personality, voice and look (three built-in animated avatars or your own image).
+- **Session duration**, **maximum attempts** and, optionally, **availability dates**.
+- **Evaluation instructions** (optional): extra criteria for the AI grader.
+- **Grading workflow**: when enabled, grades wait for the teacher before students see them.
 
-## Student Workflow
-
-1. Student opens the activity and accepts the GDPR/privacy notice.
-2. Reads the scenario and their assigned role.
-3. Clicks **Start** to begin the timed session.
-4. Interacts with the AI avatars using the push-to-talk button (voice) or by typing.
-5. When time is up, the session ends automatically.
-6. The AI generates a comprehensive grade and structured feedback.
-7. If the grading workflow is disabled, the grade is published immediately.
+User and group **overrides** (extra attempts, different dates) are under the activity's *More* menu.
 
 ---
 
-## Teacher Workflow
+## What students experience
 
-1. Navigate to **AI Roleplay → Submissions** to see all student submissions.
-2. Review each submission's transcript.
-3. If grading workflow is enabled:
-   - Review the AI-generated grade and feedback.
-   - Adjust if needed and click **Publish grade** to release it to the student.
-4. Use **Overrides** to give specific users or groups extended attempts or custom time windows.
+1. Accept the privacy notice (once).
+2. Press **Start**. The browser asks for the microphone *before* the timer starts. If there is no microphone, permission is denied or the browser cannot recognise speech, the page says why and switches to typed replies.
+3. Hold **Hold to speak** (or the Space key) while answering. Address an avatar by name to make that avatar reply.
+4. Reloading the page resumes the session with the time that is really left.
+5. When time runs out the avatars close the scene and the evaluation starts. Results appear on the same page: grade, feedback, strengths, areas to improve and the rubric breakdown.
 
----
+## Grading and review
 
-## Browser Compatibility
-
-| Feature | Chrome | Firefox | Safari | Edge |
-|---|---|---|---|---|
-| Web Speech API (STT) | ✅ | ⚠️ Partial | ✅ | ✅ |
-| Audio playback (TTS) | ✅ | ✅ | ✅ | ✅ |
-| Video avatar playback | ✅ | ✅ | ✅ | ✅ |
-
-> **Note**: Web Speech API push-to-talk is fully supported in Chrome and Edge. Firefox support is partial.
+- Rubric: communication 30 %, role adherence 25 %, scenario handling 25 %, language quality 20 %. The server recomputes the grade from the components.
+- **Only the student's words are graded.** A session in which the student said nothing gets 0 and is always sent to teacher review (it is often a microphone problem, not a lack of effort). Very short participation, suspected prompt manipulation or an incomplete AI answer are also flagged for review.
+- In **Submissions** teachers read each transcript, see the flags, regenerate an evaluation, edit the grade and feedback, publish or withdraw.
+- With several attempts, the best published grade goes to the gradebook.
+- Completion: "complete a roleplay session", plus the standard grade conditions.
 
 ---
 
-## Security Notes
+## Privacy and security
 
-- Student names are **never** sent to OpenAI. They are replaced with `STUDENT-<sha256hash>`.
-- API keys are stored encrypted using `\core\encryption`.
-- CSRF protection (`sesskey`) is enforced on all write operations.
-- Participant input is wrapped in security delimiters before being sent to the model to prevent prompt injection.
-- Teacher-authored scenario and evaluation prompts are sanitised before use.
-- Rate limiting prevents API abuse per user.
-
----
-
-## Estimated OpenAI Costs (per student session)
-
-| Component | GPT-4o | GPT-4o mini |
-|---|---|---|
-| Roleplay (10 min, ~10 turns) | ~$0.05–$0.10 | ~$0.01–$0.02 |
-| TTS (~10 responses, ~80 words each) | ~$0.02 | ~$0.02 |
-| Final evaluation | ~$0.02 | ~$0.005 |
-| **Total per student** | **~$0.09–$0.15** | **~$0.03–$0.05** |
+- Implements the Moodle Privacy API (export and deletion). Declares every external provider.
+- Before any text leaves Moodle, the student's last name, username and email are replaced by an anonymous `STUDENT-…` token. The first name is kept so the avatars can greet the student.
+- Students can withdraw consent at any time; their conversations and AI feedback are deleted.
+- API keys are stored encrypted. Provider errors are logged on the server and never shown to students.
+- Rate limits per user and per site, plus a cooldown on teacher regenerations, cap AI spend.
+- DeepSeek processes data in China: check your data-protection requirements before choosing it.
 
 ---
 
-## Frequently Asked Questions
+## Support
 
-**Q: Can I use this without HTTPS?**
-A: No. Web Speech API requires a secure (HTTPS) origin. You must have a valid SSL certificate.
+Pluginia — support contact and documentation are listed on the Moodle Marketplace page of the plugin.
 
-**Q: What happens to student data sent to OpenAI?**
-A: Content is anonymised before sending (student name replaced with a hash). Per OpenAI's API terms, data is not used to train models.
+## Licence
 
-**Q: Can the avatars speak a language other than English?**
-A: Yes. The avatar prompts, scenario, and participant role can all be written in any language. The plugin automatically detects the Moodle site language and instructs the AI to respond accordingly. The Web Speech API language attribute is also set to match the current Moodle language.
-
-**Q: Can I have more than 3 avatars?**
-A: The current version supports 1, 2, or 3 avatars per activity. This is a planned enhancement for a future release.
-
-**Q: Can a student retake the activity?**
-A: Yes. The `max_attempts` setting controls how many attempts a student can make. Set to 0 for unlimited.
-
----
-
-## License
-
-GNU General Public License v3 or later — see [LICENSE](https://www.gnu.org/copyleft/gpl.html).
-
----
-
-## Support & Bug Reports
-
-Please report issues at the [Moodle Plugin Directory](https://moodle.org/plugins) tracker or open a GitHub issue.
+The plugin code is licensed under the GNU GPL v3 or later. Use of the service requires a paid licence key for each Moodle site.

@@ -41,13 +41,13 @@ use core_privacy\local\request\writer;
  *  - Roleplay message logs (turn-by-turn)
  *
  * Data sent to external service:
- *  - OpenAI API: spoken responses (as text), conversation turns for evaluation
+ *  - The configured AI provider (OpenAI, Anthropic, Google or DeepSeek): the
+ *    participant's first name, transcribed replies and the conversation for evaluation
  */
 class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\request\plugin\provider {
-
     /**
      * Returns the metadata describing what data this plugin stores.
      *
@@ -75,6 +75,7 @@ class provider implements
                 'grader_userid'          => 'privacy:metadata:airoleplay_submissions:grader_userid',
                 'timecreated'            => 'privacy:metadata:airoleplay_submissions:timecreated',
                 'timemodified'           => 'privacy:metadata:airoleplay_submissions:timemodified',
+                'timestarted'            => 'privacy:metadata:airoleplay_submissions:timestarted',
                 'timesubmitted'          => 'privacy:metadata:airoleplay_submissions:timesubmitted',
                 'timegraded'             => 'privacy:metadata:airoleplay_submissions:timegraded',
             ],
@@ -105,25 +106,29 @@ class provider implements
             'privacy:metadata:airoleplay_overrides'
         );
 
-        // External service: OpenAI. Personal identifiers are replaced with a
-        // STUDENT-<hash> token (see mod_airoleplay\privacy\anonymizer) before
-        // any payload leaves the LMS, but the redacted free text — which the
-        // student authored — is still transmitted to OpenAI for inference.
-        // The participant's first name is also transmitted: the avatar needs
-        // it to greet the human naturally; last name, username and email
-        // remain redacted.
-        $collection->add_external_location_link(
-            'openai',
-            [
-                'firstname'           => 'privacy:metadata:openai:firstname',
-                'roleplay_transcript' => 'privacy:metadata:openai:roleplay_transcript',
-                'participant_turn'    => 'privacy:metadata:openai:participant_turn',
-                'scenario'            => 'privacy:metadata:openai:scenario',
-                'participant_role'    => 'privacy:metadata:openai:participant_role',
-                'evaluation_request'  => 'privacy:metadata:openai:evaluation_request',
-            ],
-            'privacy:metadata:openai'
-        );
+        // External services: the site may be configured to use OpenAI,
+        // Anthropic, Google Gemini or DeepSeek for chat/evaluation, and
+        // OpenAI or Google Gemini for text-to-speech. Personal identifiers
+        // are replaced with a STUDENT-<hash> token (see
+        // mod_airoleplay\privacy\anonymizer) before any payload leaves the
+        // LMS, but the redacted free text — which the student authored — is
+        // still transmitted to the configured provider for inference. The
+        // participant's first name is also transmitted: the avatar needs it
+        // to greet the human naturally; last name, username and email remain
+        // redacted. Only the provider(s) selected in the plugin settings
+        // actually receive data.
+        $aifields = [
+            'firstname'           => 'privacy:metadata:aiprovider:firstname',
+            'roleplay_transcript' => 'privacy:metadata:aiprovider:roleplay_transcript',
+            'participant_turn'    => 'privacy:metadata:aiprovider:participant_turn',
+            'scenario'            => 'privacy:metadata:aiprovider:scenario',
+            'participant_role'    => 'privacy:metadata:aiprovider:participant_role',
+            'evaluation_request'  => 'privacy:metadata:aiprovider:evaluation_request',
+        ];
+        $collection->add_external_location_link('openai', $aifields, 'privacy:metadata:openai');
+        $collection->add_external_location_link('anthropic', $aifields, 'privacy:metadata:anthropic');
+        $collection->add_external_location_link('gemini', $aifields, 'privacy:metadata:gemini');
+        $collection->add_external_location_link('deepseek', $aifields, 'privacy:metadata:deepseek');
 
         return $collection;
     }
@@ -140,10 +145,23 @@ class provider implements
         $sql = "SELECT ctx.id
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :ctxlevel
-                  JOIN {modules} m ON m.id = cm.module AND m.name = 'airoleplay'
-                  JOIN {airoleplay_submissions} s ON s.airoleplay = cm.instance AND s.userid = :userid";
+                  JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                  JOIN {airoleplay_submissions} s ON s.airoleplay = cm.instance
+                 WHERE s.userid = :userid OR s.grader_userid = :grader";
+        $contextlist->add_from_sql($sql, [
+            'ctxlevel' => CONTEXT_MODULE,
+            'modname'  => 'airoleplay',
+            'userid'   => $userid,
+            'grader'   => $userid,
+        ]);
 
-        $contextlist->add_from_sql($sql, ['ctxlevel' => CONTEXT_MODULE, 'userid' => $userid]);
+        $sql = "SELECT ctx.id
+                  FROM {context} ctx
+                  JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :ctxlevel
+                  JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                  JOIN {airoleplay_overrides} o ON o.airoleplay = cm.instance
+                 WHERE o.userid = :userid";
+        $contextlist->add_from_sql($sql, ['ctxlevel' => CONTEXT_MODULE, 'modname' => 'airoleplay', 'userid' => $userid]);
         return $contextlist;
     }
 
@@ -157,11 +175,20 @@ class provider implements
         if (!$context instanceof \context_module) {
             return;
         }
-        $sql = "SELECT s.userid
-                  FROM {airoleplay_submissions} s
-                  JOIN {course_modules} cm ON cm.instance = s.airoleplay
-                 WHERE cm.id = :cmid";
-        $userlist->add_from_sql('userid', $sql, ['cmid' => $context->instanceid]);
+        $params = ['cmid' => $context->instanceid, 'modname' => 'airoleplay'];
+        $join   = "JOIN {course_modules} cm ON cm.instance = s.airoleplay
+                   JOIN {modules} m ON m.id = cm.module AND m.name = :modname";
+        $userlist->add_from_sql('userid', "SELECT s.userid FROM {airoleplay_submissions} s {$join} WHERE cm.id = :cmid", $params);
+        $userlist->add_from_sql(
+            'grader_userid',
+            "SELECT s.grader_userid FROM {airoleplay_submissions} s {$join} WHERE cm.id = :cmid AND s.grader_userid IS NOT NULL",
+            $params
+        );
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT s.userid FROM {airoleplay_overrides} s {$join} WHERE cm.id = :cmid AND s.userid IS NOT NULL",
+            $params
+        );
     }
 
     /**
@@ -206,6 +233,9 @@ class provider implements
                     'timemodified'        => $submission->timemodified
                         ? transform::datetime($submission->timemodified)
                         : '-',
+                    'timestarted'         => $submission->timestarted
+                        ? transform::datetime($submission->timestarted)
+                        : '-',
                     'timesubmitted'       => $submission->timesubmitted
                         ? transform::datetime($submission->timesubmitted)
                         : '-',
@@ -225,7 +255,7 @@ class provider implements
                 $messages = $DB->get_records(
                     'airoleplay_messages',
                     ['submission_id' => $submission->id],
-                    'turn_number ASC'
+                    'turn_number ASC, id ASC'
                 );
 
                 if ($messages) {
@@ -322,6 +352,11 @@ class provider implements
 
             $DB->delete_records('airoleplay_submissions', ['airoleplay' => $cm->instance, 'userid' => $userid]);
             $DB->delete_records('airoleplay_overrides', ['airoleplay' => $cm->instance, 'userid' => $userid]);
+            // Keep other students' grades but forget who graded them.
+            $DB->set_field('airoleplay_submissions', 'grader_userid', null, [
+                'airoleplay'    => $cm->instance,
+                'grader_userid' => $userid,
+            ]);
         }
     }
 
@@ -368,6 +403,13 @@ class provider implements
         $DB->delete_records_select(
             'airoleplay_overrides',
             "airoleplay = :airoleplay AND userid {$insql}",
+            $params
+        );
+        $DB->set_field_select(
+            'airoleplay_submissions',
+            'grader_userid',
+            null,
+            "airoleplay = :airoleplay AND grader_userid {$insql}",
             $params
         );
     }

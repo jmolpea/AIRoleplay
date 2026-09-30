@@ -27,6 +27,29 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
+    // Section: License.
+    $settings->add(new admin_setting_heading(
+        'mod_airoleplay/license_heading',
+        get_string('license_heading', 'mod_airoleplay'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'mod_airoleplay/license_key',
+        get_string('license_key', 'mod_airoleplay'),
+        get_string('license_key_desc', 'mod_airoleplay'),
+        '',
+        PARAM_RAW_TRIMMED
+    ));
+
+    // License status indicator — computed inline at render time (offline, no DB hit).
+    $licenseresult = \mod_airoleplay\license\validator::get_settings_status();
+    $settings->add(new admin_setting_heading(
+        'mod_airoleplay/license_status_display',
+        '',
+        html_writer::tag('span', $licenseresult['text'], ['class' => $licenseresult['css']])
+    ));
+
     // Section: API Keys.
     $settings->add(new admin_setting_heading(
         'mod_airoleplay/apikeys_heading',
@@ -48,34 +71,119 @@ if ($ADMIN->fulltree) {
         get_string('settings_openai_apikey_secondary_desc', 'mod_airoleplay')
     ));
 
-    // Section: Available Models.
+    // Anthropic (Claude) API Key. Stored encrypted.
+    $settings->add(new admin_setting_encryptedpassword(
+        'mod_airoleplay/anthropic_apikey',
+        get_string('settings_anthropic_apikey', 'mod_airoleplay'),
+        get_string('settings_anthropic_apikey_desc', 'mod_airoleplay')
+    ));
+
+    // Google Gemini API Key. Stored encrypted.
+    $settings->add(new admin_setting_encryptedpassword(
+        'mod_airoleplay/gemini_apikey',
+        get_string('settings_gemini_apikey', 'mod_airoleplay'),
+        get_string('settings_gemini_apikey_desc', 'mod_airoleplay')
+    ));
+
+    // DeepSeek API Key. Stored encrypted.
+    $settings->add(new admin_setting_encryptedpassword(
+        'mod_airoleplay/deepseek_apikey',
+        get_string('settings_deepseek_apikey', 'mod_airoleplay'),
+        get_string('settings_deepseek_apikey_desc', 'mod_airoleplay')
+    ));
+
+    // Connection test: calls the configured providers once with a tiny prompt.
+    $settings->add(new admin_setting_description(
+        'mod_airoleplay/testconnection',
+        get_string('testconnection', 'mod_airoleplay'),
+        html_writer::link(
+            new moodle_url('/mod/airoleplay/testconnection.php'),
+            get_string('testconnection_run', 'mod_airoleplay'),
+            ['class' => 'btn btn-secondary']
+        ) . html_writer::div(get_string('testconnection_desc', 'mod_airoleplay'), 'form-text text-muted mt-1')
+    ));
+
+    // Section: Text-to-speech.
+    $settings->add(new admin_setting_heading(
+        'mod_airoleplay/tts_heading',
+        get_string('settings_tts_heading', 'mod_airoleplay'),
+        get_string('settings_tts_heading_desc', 'mod_airoleplay')
+    ));
+
+    // Site-wide TTS provider (determines the avatar voice catalogue).
+    $settings->add(new admin_setting_configselect(
+        'mod_airoleplay/tts_provider',
+        get_string('settings_tts_provider', 'mod_airoleplay'),
+        get_string('settings_tts_provider_desc', 'mod_airoleplay'),
+        'openai',
+        [
+            'openai'  => get_string('tts_provider_openai', 'mod_airoleplay'),
+            'gemini'  => get_string('tts_provider_gemini', 'mod_airoleplay'),
+            'browser' => get_string('tts_provider_browser', 'mod_airoleplay'),
+            'none'    => get_string('tts_provider_none', 'mod_airoleplay'),
+        ]
+    ));
+
+    // Section: Chat provider and available models.
     $settings->add(new admin_setting_heading(
         'mod_airoleplay/models_heading',
         get_string('settings_models_heading', 'mod_airoleplay'),
         get_string('settings_models_heading_desc', 'mod_airoleplay')
     ));
 
-    // Enable GPT-4o.
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_airoleplay/enable_gpt4o',
-        get_string('settings_enable_gpt4o', 'mod_airoleplay'),
-        get_string('settings_enable_gpt4o_desc', 'mod_airoleplay'),
-        1
+    // Site-wide chat provider. Determines which model picker is shown below
+    // and which models teachers can choose in activities.
+    $settings->add(new admin_setting_configselect(
+        'mod_airoleplay/chat_provider',
+        get_string('settings_chat_provider', 'mod_airoleplay'),
+        get_string('settings_chat_provider_desc', 'mod_airoleplay'),
+        'openai',
+        [
+            'openai'    => get_string('provider_openai', 'mod_airoleplay'),
+            'anthropic' => get_string('provider_anthropic', 'mod_airoleplay'),
+            'gemini'    => get_string('provider_gemini', 'mod_airoleplay'),
+            'deepseek'  => get_string('provider_deepseek', 'mod_airoleplay'),
+        ]
     ));
 
-    // Enable GPT-4o-mini.
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_airoleplay/enable_gpt4o_mini',
-        get_string('settings_enable_gpt4o_mini', 'mod_airoleplay'),
-        get_string('settings_enable_gpt4o_mini_desc', 'mod_airoleplay'),
-        1
-    ));
+    // One model picker per provider; only the selected provider's picker is
+    // visible thanks to the hide_if dependencies declared below.
+    $catalog = \mod_airoleplay\form\mod_form_helper::model_catalog();
+    foreach ($catalog as $providerid => $models) {
+        $settings->add(new admin_setting_configmultiselect(
+            "mod_airoleplay/{$providerid}_models",
+            get_string("settings_{$providerid}_models", 'mod_airoleplay'),
+            get_string('settings_provider_models_desc', 'mod_airoleplay'),
+            array_keys($models),
+            $models
+        ));
+        $settings->hide_if(
+            "mod_airoleplay/{$providerid}_models",
+            'mod_airoleplay/chat_provider',
+            'neq',
+            $providerid
+        );
+    }
 
     // Estimated cost notice.
     $settings->add(new admin_setting_heading(
         'mod_airoleplay/cost_estimate_heading',
         get_string('settings_cost_estimate_heading', 'mod_airoleplay'),
         get_string('settings_cost_estimate_desc', 'mod_airoleplay')
+    ));
+
+    // Section: Grading. Default (and optional site-wide lock) for teacher
+    // review before AI grades are released.
+    $settings->add(new admin_setting_heading(
+        'mod_airoleplay/grading_heading',
+        get_string('settings_grading_heading', 'mod_airoleplay'),
+        ''
+    ));
+    $settings->add(new admin_setting_configcheckbox_with_lock(
+        'mod_airoleplay/grading_workflow',
+        get_string('settings_grading_workflow', 'mod_airoleplay'),
+        get_string('settings_grading_workflow_desc', 'mod_airoleplay'),
+        ['value' => 1, 'locked' => 0]
     ));
 
     // Section: Security.
@@ -165,7 +273,7 @@ if ($ADMIN->fulltree) {
         'mod_airoleplay/api_rate_limit_global',
         get_string('settings_api_rate_limit_global', 'mod_airoleplay'),
         get_string('settings_api_rate_limit_global_desc', 'mod_airoleplay'),
-        60,
+        300,
         PARAM_INT
     ));
 }

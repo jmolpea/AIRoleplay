@@ -24,296 +24,368 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['activityname']       = 'Activity name';
-
-$string['airoleplay:addinstance']         = 'Add an AI Roleplay activity';
-$string['airoleplay:grade']               = 'Grade submissions';
-$string['airoleplay:manageoverrides']     = 'Manage user and group overrides';
-$string['airoleplay:manageplugin']        = 'Manage plugin settings';
-$string['airoleplay:submit']              = 'Participate in a roleplay session';
-$string['airoleplay:view']                = 'View AI Roleplay activity';
-$string['airoleplay:viewallsubmissions']  = 'View all submissions';
-
-$string['attemptsinfo']   = 'Attempts used: {$a->used} / {$a->max} ({$a->remaining} remaining)';
-
-$string['avatar_1']           = 'Avatar 1 (neutral)';
-$string['avatar_2']           = 'Avatar 2 (feminine)';
-$string['avatar_3']           = 'Avatar 3 (masculine)';
-$string['avatar_custom']      = 'Custom image';
+$string['activityclosed'] = 'This activity is closed.';
+$string['activityclosed_date'] = 'This activity closed on {$a}. No new sessions can be started.';
+$string['activityname'] = 'Activity name';
+$string['airoleplay:addinstance'] = 'Add an AI Roleplay activity';
+$string['airoleplay:grade'] = 'Grade submissions';
+$string['airoleplay:manageoverrides'] = 'Manage user and group overrides';
+$string['airoleplay:submit'] = 'Participate in a roleplay session';
+$string['airoleplay:view'] = 'View AI Roleplay activity';
+$string['airoleplay:viewallsubmissions'] = 'View all submissions';
+$string['apikey_missing'] = 'The AI Roleplay plugin has no usable {$a} API key configured. Ask the site administrator to set it under Site administration > Plugins > Activity modules > AI Roleplay.';
+$string['attempt_in_progress'] = 'Finish your current attempt before starting a new one.';
+$string['attempt_n'] = 'Attempt {$a}';
+$string['attemptsinfo'] = 'Attempts used: {$a->used} / {$a->max} ({$a->remaining} remaining)';
+$string['availability_header'] = 'Availability';
+$string['avatar_1'] = 'Avatar 1 (man, light blue shirt)';
+$string['avatar_2'] = 'Avatar 2 (woman, dark hair)';
+$string['avatar_3'] = 'Avatar 3 (man, grey hair, blazer)';
+$string['avatar_custom'] = 'Custom image';
 $string['avatar_custom_upload'] = 'Upload custom avatar image';
-
-$string['avatar_header']      = 'Avatar {$a}';
-$string['avatar_name']        = 'Name';
-$string['avatar_prompt']      = 'Personality & interaction style';
+$string['avatar_custom_upload_help'] = 'Upload a square image (PNG, JPG, GIF or WebP, up to 2 MB). It is shown instead of the animated avatar while the avatar speaks and listens.';
+$string['avatar_default_name'] = 'Avatar {$a}';
+$string['avatar_header'] = 'Avatar {$a}';
+$string['avatar_name'] = 'Name';
+$string['avatar_prompt'] = 'Personality & interaction style';
 $string['avatar_prompt_help'] = 'Describe how this avatar behaves, their personality, tone, and role within the scenario.';
-$string['avatar_role']        = 'Role / Title';
-$string['avatar_visual']      = 'Avatar appearance';
-$string['avatar_voice']       = 'TTS Voice';
-$string['avatars_header']     = 'Avatars';
-
+$string['avatar_role'] = 'Role / Title';
+$string['avatar_role_default'] = 'Interlocutor';
+$string['avatar_visual'] = 'Avatar appearance';
+$string['avatar_voice'] = 'TTS Voice';
+$string['avatars_header'] = 'Avatars';
 $string['badrequest'] = 'The request could not be processed.';
-
-$string['col_actions']        = 'Actions';
-$string['col_grade']          = 'Grade';
-$string['col_status']         = 'Status';
-$string['col_student']        = 'Student';
-$string['col_submitted']      = 'Submitted';
-$string['col_workflow']       = 'Workflow';
-
-$string['completiongrade']    = 'Student must receive a grade';
-$string['completionsubmit']   = 'Student must complete the roleplay session';
-
+$string['breakdown_score'] = 'Score: {$a->score}/100 (weight: {$a->weight}%)';
+$string['busy'] = 'The session is busy processing another request. Please try again in a moment.';
+$string['col_actions'] = 'Actions';
+$string['col_attempt'] = 'Attempt';
+$string['col_grade'] = 'Grade';
+$string['col_status'] = 'Status';
+$string['col_student'] = 'Student';
+$string['col_submitted'] = 'Submitted';
+$string['col_workflow'] = 'Workflow';
+$string['completiondetail:submit'] = 'Complete a roleplay session';
+$string['completionsubmit'] = 'Student must complete a roleplay session';
+$string['completionsubmit_help'] = 'The activity is marked complete as soon as the student finishes a roleplay session (when the time runs out), even before the evaluation is ready. To require a grade or a passing grade, use the standard grade conditions instead.';
 $string['confirm_delete_submission'] = 'Are you sure you want to delete this submission? This cannot be undone.';
-
-$string['content_flagged']    = 'Content was flagged by the AI safety filter.';
-
-$string['conversation_log']   = 'Session Log';
-
-$string['delete_submission']  = 'Delete submission';
-
-$string['dimension_communication']    = 'Communication';
+$string['content_flagged'] = 'Content was flagged by the AI safety filter.';
+$string['conversation_log'] = 'Session Log';
+$string['dimension_communication'] = 'Communication';
 $string['dimension_language_quality'] = 'Language quality';
-
-$string['dimension_role_adherence']   = 'Role adherence';
+$string['dimension_role_adherence'] = 'Role adherence';
 $string['dimension_scenario_handling'] = 'Scenario handling';
-$string['error_duration_invalid']  = 'Duration must be at least 1 minute.';
-
-$string['evaluation_complete']  = '✅ Evaluation complete. Redirecting…';
-$string['evaluation_pending']   = 'The AI is evaluating your performance. This may take a moment…';
-
+$string['emptyresponse'] = 'Your reply was empty. Please speak or type something before sending.';
+$string['error_close_before_open'] = 'The closing date must be after the opening date.';
+$string['error_duration_invalid'] = 'Duration must be at least 1 minute.';
+$string['error_generic'] = 'Something went wrong. Please try again.';
+$string['error_grade_invalid'] = 'Enter a maximum grade between 1 and 10000.';
+$string['error_nolicense'] = 'AI Roleplay has no valid license for this site, so the activity is disabled. Please contact your administrator.';
+$string['eval_no_participation'] = 'No contribution from you was recorded during this session, so it could not be assessed. If you had technical problems (for example, the microphone did not work), please tell your teacher, who can review this attempt.';
+$string['evaluation_complete'] = '✅ Evaluation complete. Redirecting…';
+$string['evaluation_delayed'] = 'The evaluation is taking longer than usual. You can leave this page: it will be ready here when you come back.';
+$string['evaluation_pending'] = 'The AI is evaluating your performance. This may take a moment…';
 $string['evaluator_invalid_response'] = 'The AI evaluator returned an invalid response. Please contact your instructor.';
-
 $string['event_assessment_completed'] = 'AI assessment completed';
-$string['event_grade_issued']         = 'Grade issued';
-$string['event_submission_created']   = 'Roleplay session started';
-
-$string['feedback']           = 'Feedback';
-
-$string['gdpr_consent_label']   = 'I understand and agree that my spoken responses will be processed by OpenAI\'s API.';
+$string['event_grade_issued'] = 'Grade issued';
+$string['event_submission_created'] = 'Roleplay session started';
+$string['feedback'] = 'Feedback';
+$string['flag_breakdown_incomplete'] = 'The AI returned an incomplete rubric; the grade is its overall estimate.';
+$string['flag_injection_pattern_detected'] = 'The transcript contains text that looks like an attempt to manipulate the AI evaluator.';
+$string['flag_insufficient_participation'] = 'The student spoke very little, so there is little evidence for the grade.';
+$string['flag_no_participant_input'] = 'The student did not say anything during the session (possible microphone or connection problem). The grade was set to 0 without calling the AI.';
+$string['flagged'] = 'Needs review';
+$string['flags_heading'] = 'This attempt needs your review:';
+$string['gdpr_consent_label'] = 'I understand and agree that my responses (spoken or typed) will be processed by the AI provider configured for this site.';
 $string['gdpr_consent_required'] = 'You must provide consent on the activity page before starting the session.';
-$string['gdpr_default_notice']  = '<p>To complete this activity, your spoken responses during the roleplay session will be sent to <strong>OpenAI\'s API</strong> for AI-driven conversation and evaluation.</p><p>Data is not retained by OpenAI beyond the immediate request.</p><p>By proceeding, you consent to this processing in accordance with our privacy policy.</p>';
-$string['gdpr_notice_title']    = 'Privacy Notice — AI Processing';
-$string['gdpr_revoke_button']   = 'Withdraw consent and delete my data';
-$string['gdpr_revoke_confirm']  = 'This will delete every roleplay submission, transcript and grade you have on this activity. This cannot be undone. Continue?';
-$string['gdpr_revoked_notice']  = 'Your consent has been withdrawn and your roleplay data has been deleted from this activity.';
-
-$string['grade_breakdown']       = 'Grade breakdown';
-$string['grade_override_saved']  = 'Grade saved successfully.';
-$string['grade_pending_review']  = 'Your grade is being reviewed by your instructor. You will be notified when it is released.';
-
-$string['gradenotification_body']     = <<<'EOT'
-Your grade for '{$a->activityname}' in '{$a->coursename}' has been released.
+$string['gdpr_default_notice'] = '<p>To complete this activity, your spoken responses during the roleplay session will be sent to an <strong>external AI provider</strong> (such as OpenAI, Anthropic, Google or DeepSeek, as configured by your institution) for AI-driven conversation and evaluation.</p><p>By proceeding, you consent to this processing in accordance with our privacy policy.</p>';
+$string['gdpr_notice_title'] = 'Privacy Notice — AI Processing';
+$string['gdpr_revoke_busy'] = 'You cannot withdraw consent while a session is in progress or being evaluated. Please try again once your results are available.';
+$string['gdpr_revoke_button'] = 'Withdraw consent and delete my conversations';
+$string['gdpr_revoke_confirm'] = 'This deletes the transcripts, conversation logs and AI feedback of all your attempts on this activity. The number of attempts used and any grade already recorded are kept. This cannot be undone. Continue?';
+$string['gdpr_revoked_notice'] = 'Your consent has been withdrawn and your conversations have been deleted from this activity.';
+$string['grade_breakdown'] = 'Grade breakdown';
+$string['grade_label'] = 'Grade (out of {$a})';
+$string['grade_out_of_range'] = 'The grade must be a number between 0 and {$a}.';
+$string['grade_override_saved'] = 'Grade saved successfully.';
+$string['grade_pending_review'] = 'Your grade is being reviewed by your instructor. You will be notified when it is released.';
+$string['grade_published'] = 'Grade published. The student can now see it.';
+$string['grade_returned'] = 'The grade has been withdrawn from the gradebook and returned to review.';
+$string['gradenotification_body'] = 'Your grade for \'{$a->activityname}\' in \'{$a->coursename}\' has been released.
 
 Grade: {$a->grade}
 
-View your results: {$a->link}
-EOT;
+View your results: {$a->link}';
 $string['gradenotification_bodyhtml'] = '<p>Your grade for <strong>{$a->activityname}</strong> in <em>{$a->coursename}</em> has been released.</p><p>Grade: <strong>{$a->grade}</strong></p><p><a href="{$a->link}">View your results</a></p>';
-$string['gradenotification_small']    = 'Grade released for {$a->activityname}';
-$string['gradenotification_subject']  = 'Your grade is ready: {$a->activityname}';
-
-$string['grading_header']     = 'Grading & Workflow';
-$string['grading_workflow']   = 'Enable grading workflow';
-$string['grading_workflow_help'] = 'If enabled, grades are held for teacher review before being released to students.';
-
-$string['groupsubmission']     = 'Group submission';
-$string['groupsubmission_help'] = 'Allow groups to submit together. Requires groups to be configured in the course.';
-
+$string['gradenotification_small'] = 'Grade released for {$a->activityname}';
+$string['gradenotification_subject'] = 'Your grade is ready: {$a->activityname}';
+$string['grading_header'] = 'Grading & Workflow';
+$string['grading_workflow'] = 'Teacher review before release';
+$string['grading_workflow_help'] = 'If enabled, AI grades wait until a teacher reviews and publishes them. If disabled, grades are published to students automatically as soon as the AI evaluation finishes. Evaluations with integrity warnings (little or no participation, suspected manipulation, incomplete rubric) always wait for a teacher.';
+$string['grading_workflow_locked'] = 'This setting is fixed by the site administrator.';
+$string['groupsubmission'] = 'Group submission';
+$string['groupsubmission_help'] = 'Records the student\'s current group with each attempt, so submissions can be filtered and reviewed by group.';
 $string['invalid_state_transition'] = 'Invalid submission state transition.';
 $string['invalidsubmissionstatus'] = 'This action is not allowed in the current submission state.';
-$string['maxattempts']         = 'Maximum attempts';
-$string['maxattempts_help']    = 'Maximum number of times a student may attempt this activity. Set to 0 for unlimited.';
-$string['maximumgrade']        = 'Maximum grade';
-
-$string['model_economical']    = '(economical)';
-$string['model_recommended']   = '(recommended)';
-$string['models_header']       = 'AI Models';
-
-$string['modulename']          = 'AI Roleplay';
-$string['modulenameplural']    = 'AI Roleplays';
-
-$string['no_overrides_yet']    = 'No overrides have been configured.';
-$string['no_submissions_yet']  = 'No submissions yet.';
-$string['noinstances']         = 'No AI Roleplay activities in this course.';
-$string['notify_student']      = 'Notify student when grade is published';
-
-$string['num_avatars']         = 'Number of avatars';
-$string['num_avatars_help']    = 'Choose how many avatars participate in the roleplay (1, 2, or 3). When multiple avatars are active, they take turns responding, and the participant can address a specific avatar by name.';
-
-$string['openai_api_error']    = 'AI service error: {$a}';
-$string['openai_apikey_missing']      = 'The AI Roleplay plugin has no usable OpenAI API key configured. Ask the site administrator to set it under Site administration > Plugins > Activity modules > AI Roleplay.';
-$string['openai_model_eval']   = 'AI model for final evaluation';
+$string['license_banner_expired'] = 'AI Roleplay is not available because the license expired on {$a}. Please contact your administrator.';
+$string['license_banner_invalid'] = 'AI Roleplay is not available because the license key does not match this site ({$a}). Please contact your administrator.';
+$string['license_banner_missing'] = 'AI Roleplay is not available because no license key has been entered for this site. Please contact your administrator.';
+$string['license_heading'] = 'License';
+$string['license_key'] = 'License key';
+$string['license_key_desc'] = 'Enter the license key provided by RSMAX Consulting. The key is validated offline (no internet connection required) and is bound to this site\'s URL. Without a valid key, the activity is disabled for participants.';
+$string['license_status_expired'] = 'Expired on {$a}';
+$string['license_status_invalid'] = 'Invalid — key does not match this site';
+$string['license_status_missing'] = 'Not configured';
+$string['license_status_valid'] = 'Valid — expires {$a}';
+$string['license_status_valid_lifetime'] = 'Valid — lifetime license';
+$string['listening'] = 'Listening… release the button when you finish speaking.';
+$string['maxattempts'] = 'Maximum attempts';
+$string['maxattempts_help'] = 'Maximum number of sessions a student may complete in this activity. After an attempt is graded, the student can start a new one while attempts remain. The best released grade goes to the gradebook.';
+$string['maximumgrade'] = 'Maximum grade';
+$string['maximumgrade_help'] = 'The grade scale for this activity. The AI grades out of 100% and the result is scaled to this maximum.';
+$string['mic_checking'] = 'Checking your microphone… If your browser asks for permission, choose "Allow".';
+$string['mic_denied'] = 'Microphone access is blocked, so you will type your replies. To speak instead, allow the microphone for this site in your browser settings and reload the page.';
+$string['mic_insecure'] = 'Voice input needs a secure (https) connection, so you will type your replies.';
+$string['mic_unavailable'] = 'No working microphone was found, so you will type your replies.';
+$string['model_economical'] = '(fastest, economical)';
+$string['model_legacy'] = '(previous generation)';
+$string['model_premium'] = '(most capable, premium)';
+$string['model_preview'] = '(preview)';
+$string['model_recommended'] = '(recommended)';
+$string['models_header'] = 'AI Models';
+$string['modulename'] = 'AI Roleplay';
+$string['modulenameplural'] = 'AI Roleplays';
+$string['no_overrides_yet'] = 'No overrides have been configured.';
+$string['no_submissions_yet'] = 'No submissions yet.';
+$string['noattemptsleft'] = 'You have used all the attempts allowed for this activity.';
+$string['noinstances'] = 'No AI Roleplay activities in this course.';
+$string['notify_student'] = 'Notify student when grade is published';
+$string['notopenyet'] = 'This activity is not open yet.';
+$string['notopenyet_date'] = 'This activity opens on {$a}.';
+$string['num_avatars'] = 'Number of avatars';
+$string['num_avatars_help'] = 'Choose how many avatars participate in the roleplay (1, 2, or 3). When multiple avatars are active, they take turns responding, and the participant can address a specific avatar by name.';
+$string['openai_api_error'] = 'The AI service is temporarily unavailable. Please try again in a moment.';
+$string['openai_model_eval'] = 'AI model for final evaluation';
+$string['openai_model_eval_help'] = 'Model that grades the whole conversation once the session ends. A more capable model gives more reliable grades; the evaluation runs once per attempt, so its cost is small.';
 $string['openai_model_roleplay'] = 'AI model for roleplay conversation';
-
-$string['override_add']            = 'Add override';
+$string['openai_model_roleplay_help'] = 'Model that plays the avatars during the live conversation. Faster models make the conversation feel more natural. Only models of the provider chosen by the site administrator are listed.';
+$string['override_add'] = 'Add override';
 $string['override_confirm_delete'] = 'Are you sure you want to delete this override?';
-$string['override_delete']         = 'Delete override';
-$string['override_deleted']        = 'Override deleted.';
-$string['override_edit']           = 'Edit override';
-$string['override_group']          = 'Group';
-$string['override_maxattempts']    = 'Maximum attempts';
-$string['override_saved']          = 'Override saved.';
-$string['override_timeclose']      = 'Close';
-$string['override_timeopen']       = 'Open';
-$string['override_type']           = 'Override type';
-$string['override_type_group']     = 'Group override';
-$string['override_type_user']      = 'User override';
-$string['override_user']           = 'User';
-$string['overrides_heading']       = 'User/Group Overrides';
-
-$string['participant_role']        = 'Participant\'s role';
-$string['participant_role_help']   = 'Describe the character or role the participant plays in this scenario. This is shown to the participant before the session starts.';
-
-$string['pluginadministration']    = 'AI Roleplay administration';
-$string['pluginname']              = 'AI Roleplay';
-
-$string['privacy:metadata:airoleplay_messages']                          = 'Detailed log of each turn in the roleplay session.';
-$string['privacy:metadata:airoleplay_messages:message_text']             = 'The text of what was said.';
-$string['privacy:metadata:airoleplay_messages:speaker']                  = 'Who spoke in this turn (avatar or participant).';
-$string['privacy:metadata:airoleplay_messages:timestamp']                = 'When this turn occurred.';
-$string['privacy:metadata:airoleplay_overrides']                         = 'Per-user (or per-group) overrides that change the activity\'s availability or attempt limits for specific participants.';
-$string['privacy:metadata:airoleplay_overrides:groupid']                 = 'The group the override applies to (null for user overrides).';
-$string['privacy:metadata:airoleplay_overrides:max_attempts']            = 'Override for the maximum number of attempts.';
-$string['privacy:metadata:airoleplay_overrides:timeclose']               = 'Override for the activity close time.';
-$string['privacy:metadata:airoleplay_overrides:timecreated']             = 'When the override was created.';
-$string['privacy:metadata:airoleplay_overrides:timemodified']            = 'When the override was last modified.';
-$string['privacy:metadata:airoleplay_overrides:timeopen']                = 'Override for the activity open time.';
-$string['privacy:metadata:airoleplay_overrides:userid']                  = 'The user the override applies to (null for group overrides).';
-$string['privacy:metadata:airoleplay_submissions']                       = 'Information about each student\'s roleplay session, including conversation transcript, grades and review workflow state.';
-$string['privacy:metadata:airoleplay_submissions:attempt']               = 'The attempt number for this submission.';
-$string['privacy:metadata:airoleplay_submissions:final_feedback']        = 'The final feedback text provided to the student.';
-$string['privacy:metadata:airoleplay_submissions:final_grade']           = 'The final grade awarded to the student.';
-$string['privacy:metadata:airoleplay_submissions:gdpr_consent']          = 'Whether the student gave GDPR consent.';
-$string['privacy:metadata:airoleplay_submissions:gdpr_consent_time']     = 'When the student gave GDPR consent.';
-$string['privacy:metadata:airoleplay_submissions:grade_breakdown']       = 'JSON breakdown of how the rubric components contribute to the final grade.';
-$string['privacy:metadata:airoleplay_submissions:grader_userid']         = 'The teacher who last graded or published this submission.';
-$string['privacy:metadata:airoleplay_submissions:groupid']               = 'The group the student submitted on behalf of (only for group submissions).';
-$string['privacy:metadata:airoleplay_submissions:roleplay_analysis']     = 'The full evaluation JSON returned by the AI evaluator (rubric scores, integrity flags, model output).';
-$string['privacy:metadata:airoleplay_submissions:roleplay_transcript']   = 'Full transcript of the roleplay session.';
-$string['privacy:metadata:airoleplay_submissions:status']                = 'Current status of the submission.';
-$string['privacy:metadata:airoleplay_submissions:timecreated']           = 'When the submission was created.';
-$string['privacy:metadata:airoleplay_submissions:timegraded']            = 'When the submission was last graded.';
-$string['privacy:metadata:airoleplay_submissions:timemodified']          = 'When the submission was last modified.';
-$string['privacy:metadata:airoleplay_submissions:timesubmitted']         = 'When the session was completed.';
-$string['privacy:metadata:airoleplay_submissions:userid']                = 'The ID of the student who participated.';
-$string['privacy:metadata:airoleplay_submissions:workflow_state']        = 'Where the submission sits in the review workflow (inreview, readyforrelease, released).';
-$string['privacy:metadata:openai']                                       = 'Conversation and evaluation data are sent to OpenAI for inference. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission. The participant\'s first name is sent so the AI avatars can address the human naturally. The redacted free text the student authored is still transmitted. According to OpenAI\'s API terms, content is not used to train models.';
-$string['privacy:metadata:openai:evaluation_request']                    = 'The teacher-authored evaluation rubric and the request to score the submission, sent to the AI evaluator.';
-
-$string['privacy:metadata:openai:firstname']                             = 'The participant\'s first name is included in the avatar\'s system prompt so the AI greets and addresses them by their real name.';
-$string['privacy:metadata:openai:participant_role']                      = 'The teacher-defined role assigned to the participant, sent as context to the AI.';
-$string['privacy:metadata:openai:participant_turn']                      = 'The redacted text of each participant turn, sent to the AI in real time during the roleplay.';
-$string['privacy:metadata:openai:roleplay_transcript']                   = 'The redacted JSON transcript of the entire roleplay session, sent to the AI evaluator.';
-$string['privacy:metadata:openai:scenario']                              = 'The teacher-authored scenario description, sent as context to the AI.';
-$string['publish_grade']       = 'Publish grade';
-$string['push_to_talk']        = 'Hold to respond';
-
-$string['rate_limit_exceeded']        = 'You have made too many requests. Please wait a moment before trying again.';
+$string['override_deleted'] = 'Override deleted.';
+$string['override_duplicate'] = 'This user or group already has an override. Edit the existing one instead.';
+$string['override_edit'] = 'Edit override';
+$string['override_group'] = 'Group';
+$string['override_maxattempts'] = 'Maximum attempts';
+$string['override_saved'] = 'Override saved.';
+$string['override_timeclose'] = 'Close';
+$string['override_timeopen'] = 'Open';
+$string['override_type'] = 'Override type';
+$string['override_type_group'] = 'Group override';
+$string['override_type_user'] = 'User override';
+$string['override_user'] = 'User';
+$string['overrides_heading'] = 'User/Group Overrides';
+$string['participant_role'] = 'Participant\'s role';
+$string['participant_role_help'] = 'Describe the character or role the participant plays in this scenario. This is shown to the participant before the session starts.';
+$string['pluginadministration'] = 'AI Roleplay administration';
+$string['pluginname'] = 'AI Roleplay';
+$string['privacy:metadata:aiprovider:evaluation_request'] = 'The teacher-authored evaluation rubric and the request to score the submission, sent to the AI evaluator.';
+$string['privacy:metadata:aiprovider:firstname'] = 'The participant\'s first name is included in the avatar\'s system prompt so the AI greets and addresses them by their real name.';
+$string['privacy:metadata:aiprovider:participant_role'] = 'The teacher-defined role assigned to the participant, sent as context to the AI.';
+$string['privacy:metadata:aiprovider:participant_turn'] = 'The redacted text of each participant turn, sent to the AI in real time during the roleplay.';
+$string['privacy:metadata:aiprovider:roleplay_transcript'] = 'The redacted JSON transcript of the entire roleplay session, sent to the AI evaluator.';
+$string['privacy:metadata:aiprovider:scenario'] = 'The teacher-authored scenario description, sent as context to the AI.';
+$string['privacy:metadata:airoleplay_messages'] = 'Detailed log of each turn in the roleplay session.';
+$string['privacy:metadata:airoleplay_messages:message_text'] = 'The text of what was said.';
+$string['privacy:metadata:airoleplay_messages:speaker'] = 'Who spoke in this turn (avatar or participant).';
+$string['privacy:metadata:airoleplay_messages:timestamp'] = 'When this turn occurred.';
+$string['privacy:metadata:airoleplay_overrides'] = 'Per-user (or per-group) overrides that change the activity\'s availability or attempt limits for specific participants.';
+$string['privacy:metadata:airoleplay_overrides:groupid'] = 'The group the override applies to (null for user overrides).';
+$string['privacy:metadata:airoleplay_overrides:max_attempts'] = 'Override for the maximum number of attempts.';
+$string['privacy:metadata:airoleplay_overrides:timeclose'] = 'Override for the activity close time.';
+$string['privacy:metadata:airoleplay_overrides:timecreated'] = 'When the override was created.';
+$string['privacy:metadata:airoleplay_overrides:timemodified'] = 'When the override was last modified.';
+$string['privacy:metadata:airoleplay_overrides:timeopen'] = 'Override for the activity open time.';
+$string['privacy:metadata:airoleplay_overrides:userid'] = 'The user the override applies to (null for group overrides).';
+$string['privacy:metadata:airoleplay_submissions'] = 'Information about each student\'s roleplay session, including conversation transcript, grades and review workflow state.';
+$string['privacy:metadata:airoleplay_submissions:attempt'] = 'The attempt number for this submission.';
+$string['privacy:metadata:airoleplay_submissions:final_feedback'] = 'The final feedback text provided to the student.';
+$string['privacy:metadata:airoleplay_submissions:final_grade'] = 'The final grade awarded to the student.';
+$string['privacy:metadata:airoleplay_submissions:gdpr_consent'] = 'Whether the student gave GDPR consent.';
+$string['privacy:metadata:airoleplay_submissions:gdpr_consent_time'] = 'When the student gave GDPR consent.';
+$string['privacy:metadata:airoleplay_submissions:grade_breakdown'] = 'JSON breakdown of how the rubric components contribute to the final grade.';
+$string['privacy:metadata:airoleplay_submissions:grader_userid'] = 'The teacher who last graded or published this submission.';
+$string['privacy:metadata:airoleplay_submissions:groupid'] = 'The group the student submitted on behalf of (only for group submissions).';
+$string['privacy:metadata:airoleplay_submissions:roleplay_analysis'] = 'The full evaluation JSON returned by the AI evaluator (rubric scores, integrity flags, model output).';
+$string['privacy:metadata:airoleplay_submissions:roleplay_transcript'] = 'Full transcript of the roleplay session.';
+$string['privacy:metadata:airoleplay_submissions:status'] = 'Current status of the submission.';
+$string['privacy:metadata:airoleplay_submissions:timecreated'] = 'When the submission was created.';
+$string['privacy:metadata:airoleplay_submissions:timegraded'] = 'When the submission was last graded.';
+$string['privacy:metadata:airoleplay_submissions:timemodified'] = 'When the submission was last modified.';
+$string['privacy:metadata:airoleplay_submissions:timestarted'] = 'When the roleplay session started.';
+$string['privacy:metadata:airoleplay_submissions:timesubmitted'] = 'When the session was completed.';
+$string['privacy:metadata:airoleplay_submissions:userid'] = 'The ID of the student who participated.';
+$string['privacy:metadata:airoleplay_submissions:workflow_state'] = 'Where the submission sits in the review workflow (inreview, released).';
+$string['privacy:metadata:anthropic'] = 'When Anthropic (Claude) is the configured chat provider, conversation and evaluation data are sent to Anthropic for inference. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission; the participant\'s first name is sent so the AI avatars can address the human naturally.';
+$string['privacy:metadata:deepseek'] = 'When DeepSeek is the configured chat provider, conversation and evaluation data are sent to DeepSeek for inference. Note that DeepSeek processes data on servers located in China; review your institution\'s data-protection requirements before enabling it. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission.';
+$string['privacy:metadata:gemini'] = 'When Google Gemini is the configured chat or TTS provider, conversation, evaluation and speech-synthesis data are sent to Google for inference. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission; the participant\'s first name is sent so the AI avatars can address the human naturally.';
+$string['privacy:metadata:openai'] = 'When OpenAI is the configured chat or TTS provider, conversation, evaluation and speech-synthesis data are sent to OpenAI for inference. Last name, username and email are replaced with a STUDENT-<hash> placeholder before transmission. The participant\'s first name is sent so the AI avatars can address the human naturally. The redacted free text the student authored is still transmitted. According to OpenAI\'s API terms, content is not used to train models.';
+$string['provider_anthropic'] = 'Anthropic (Claude)';
+$string['provider_deepseek'] = 'DeepSeek';
+$string['provider_gemini'] = 'Google Gemini';
+$string['provider_openai'] = 'OpenAI';
+$string['publish_grade'] = 'Publish grade';
+$string['push_to_talk'] = 'Hold to speak';
+$string['rate_limit_exceeded'] = 'You have made too many requests. Please wait a moment before trying again.';
 $string['rate_limit_exceeded_global'] = 'The site-wide AI Roleplay request limit has been reached. Please try again shortly.';
-
-$string['regen_confirm']       = 'This will replace the current evaluation with a new one. Continue?';
-$string['regen_cooldown']      = 'Please wait before regenerating again. This operation has a 5-minute cooldown to prevent excessive API usage.';
-$string['regen_daily_cap']     = 'You have reached the daily limit for regenerations on this submission. Try again tomorrow.';
-$string['regen_evaluation']    = 'Recalculate final evaluation';
-$string['regen_heading']       = 'Regenerate AI Evaluation';
-$string['regen_running']       = 'Processing… please wait (may take 1–3 minutes)';
-$string['regen_success']       = 'Done! Reloading…';
-
-$string['results_title']       = 'Your Results';
-$string['return_to_student']   = 'Return for revision';
-
-$string['roleplay_ending']     = 'The session is concluding…';
-$string['roleplay_finished']   = 'Session ended. Your evaluation is being prepared…';
-$string['roleplay_loading']    = 'Starting the roleplay…';
+$string['regen_confirm'] = 'This will replace the current evaluation with a new one. Continue?';
+$string['regen_cooldown'] = 'Please wait before regenerating again. This operation has a 5-minute cooldown to prevent excessive API usage.';
+$string['regen_daily_cap'] = 'You have reached the daily limit for regenerations on this submission. Try again tomorrow.';
+$string['regen_evaluation'] = 'Recalculate final evaluation';
+$string['regen_heading'] = 'Regenerate AI Evaluation';
+$string['regen_running'] = 'Processing… please wait (may take 1–3 minutes)';
+$string['regen_success'] = 'Done! Reloading…';
+$string['reset_overrides'] = 'Delete all user and group overrides';
+$string['reset_submissions'] = 'Delete all roleplay attempts, transcripts and AI evaluations';
+$string['results_areas_for_improvement'] = 'Areas for improvement';
+$string['results_strengths'] = 'Strengths';
+$string['results_title'] = 'Your Results';
+$string['return_to_review'] = 'Withdraw grade and return to review';
+$string['roleplay_ending'] = 'The session is concluding…';
+$string['roleplay_finished'] = 'Session ended. Your evaluation is being prepared…';
+$string['roleplay_loading'] = 'Starting the roleplay…';
 $string['roleplay_prompt_eval'] = 'Evaluation instructions';
 $string['roleplay_prompt_eval_help'] = 'Instructions to the AI for generating the final grade and feedback. Leave blank to use the default evaluation criteria.';
-$string['roleplay_ready_notice'] = 'You are about to start the roleplay session. Once you press the button, the timer will start and the avatars will begin interacting with you. You will not be able to pause the session.';
+$string['roleplay_ready_notice'] = 'When you press the button, the timer starts and the avatars begin talking to you. Hold the "Hold to speak" button (or the Space key) while you answer and release it when you finish. If your microphone does not work you can type your replies instead. The session cannot be paused.';
 $string['roleplay_ready_title'] = 'Ready to Begin?';
-$string['roleplay_start_btn']   = 'Start Roleplay';
-$string['roleplay_thinking']    = 'The avatar is responding…';
-
-$string['safety_extra_prompt']      = 'Additional content restrictions (optional)';
+$string['roleplay_resume_btn'] = 'Resume session';
+$string['roleplay_start_btn'] = 'Start Roleplay';
+$string['roleplay_thinking'] = 'The avatar is responding…';
+$string['safety_extra_prompt'] = 'Additional content restrictions (optional)';
 $string['safety_extra_prompt_help'] = 'Any extra safety instructions appended to every API call for this activity.';
-$string['scenario_description']       = 'Scenario description';
-$string['scenario_description_help']  = 'Describe the situation for the roleplay. This context is given to the avatars and shown to the participant before the session starts.';
-$string['scenario_header']            = 'Scenario & Participant Role';
-$string['scenario_label']             = 'Scenario';
+$string['scenario_description'] = 'Scenario description';
+$string['scenario_description_help'] = 'Describe the situation for the roleplay. This context is given to the avatars and shown to the participant before the session starts.';
+$string['scenario_header'] = 'Scenario & Participant Role';
+$string['scenario_label'] = 'Scenario';
+$string['security_header'] = 'Activity Security';
+$string['session_duration'] = 'Session duration (minutes)';
+$string['session_duration_help'] = 'Length of the roleplay session. The clock is kept by the server: reloading the page resumes the session with the time that is left. When the time runs out, the session ends and the evaluation begins.';
+$string['settings_advanced_heading'] = 'Advanced';
+$string['settings_anonymize_desc'] = 'Student real names are <strong>always</strong> replaced by an anonymous identifier before sending to the AI provider.';
+$string['settings_anonymize_heading'] = 'Student Anonymisation';
+$string['settings_anonymize_salt'] = 'Anonymisation salt';
+$string['settings_anonymize_salt_desc'] = 'Random string mixed into the SHA-256 hash that replaces student identifiers before transcripts leave the LMS. Leave empty to auto-generate (32 random bytes are seeded on the next plugin upgrade). Manual values must be 32–128 characters of letters, digits, hyphen or underscore.';
+$string['settings_anthropic_apikey'] = 'Anthropic API Key';
+$string['settings_anthropic_apikey_desc'] = 'Your Anthropic API key. Required to use the Claude models.';
+$string['settings_anthropic_models'] = 'Anthropic models';
+$string['settings_api_rate_limit'] = 'Max API calls per user per minute';
+$string['settings_api_rate_limit_desc'] = 'Rate limit per Moodle user to prevent API abuse.';
+$string['settings_api_rate_limit_global'] = 'Max API calls per minute (whole site)';
+$string['settings_api_rate_limit_global_desc'] = 'Site-wide cap that backs up the per-user limit. Counts every AI provider call (chat, voice, evaluation, background tasks). Each roleplay turn uses about two calls, so allow roughly 5 calls per minute for each student who may be in a session at the same time.';
+$string['settings_api_timeout'] = 'API request timeout (seconds)';
+$string['settings_api_timeout_desc'] = 'Maximum time to wait for a response from the AI provider.';
+$string['settings_apikeys_heading'] = 'AI Provider API Keys';
+$string['settings_apikeys_heading_desc'] = 'Configure a key for each AI provider you want to use. All keys are stored encrypted.';
+$string['settings_chat_provider'] = 'Chat provider';
+$string['settings_chat_provider_desc'] = 'AI provider used for the roleplay conversation and the final evaluation across the whole site. Select the provider first, then choose which of its models teachers may pick. Activities configured with a model from another provider keep working, as long as that provider\'s API key stays configured.';
+$string['settings_cost_estimate_desc'] = 'Approximate AI cost of one complete 10-minute session with the recommended models (prices change; check your provider):<br/>GPT-6 Sol / Claude Sonnet 5: ~$0.05–$0.15 USD &nbsp;|&nbsp; GPT-6 Luna / Claude Haiku 4.5 / Gemini 3.8 Flash / DeepSeek Flash: ~$0.01–$0.04 USD<br/>Server voices (OpenAI / Gemini): ~$0.01 per avatar reply. Browser voices: free.';
+$string['settings_cost_estimate_heading'] = 'Cost Estimates';
+$string['settings_deepseek_apikey'] = 'DeepSeek API Key';
+$string['settings_deepseek_apikey_desc'] = 'Your DeepSeek API key. Required to use the DeepSeek models. <strong>Note:</strong> DeepSeek processes data on servers located in China — review your institution\'s GDPR/data-protection requirements before enabling it.';
+$string['settings_deepseek_models'] = 'DeepSeek models';
+$string['settings_gdpr_heading'] = 'GDPR Notice';
+$string['settings_gdpr_heading_desc'] = 'This notice is shown to participants before they begin.';
+$string['settings_gdpr_notice_text'] = 'GDPR notice text';
+$string['settings_gdpr_notice_text_desc'] = 'HTML text shown to participants.';
+$string['settings_gemini_apikey'] = 'Google Gemini API Key';
+$string['settings_gemini_apikey_desc'] = 'Your Google AI Studio (Gemini) API key. Required to use the Gemini models or Gemini voices.';
+$string['settings_gemini_models'] = 'Gemini models';
+$string['settings_grading_heading'] = 'Grading';
+$string['settings_grading_workflow'] = 'Teacher review before release';
+$string['settings_grading_workflow_desc'] = 'Default for new activities. Ticked: AI grades wait until a teacher reviews and publishes them. Unticked: grades are published automatically as soon as the AI evaluation finishes. Evaluations with integrity warnings (little or no participation, suspected manipulation, incomplete rubric) always wait for a teacher. Tick "Locked" to impose this choice on every activity, existing ones included; teachers can then no longer change it.';
+$string['settings_models_heading'] = 'Chat Provider & Models';
+$string['settings_models_heading_desc'] = 'Choose the AI provider for the site, then select which of its models teachers can pick in each activity. Remember to configure the provider\'s API key above.';
+$string['settings_openai_apikey'] = 'Primary OpenAI API Key';
+$string['settings_openai_apikey_desc'] = 'Your OpenAI API key. Used for the GPT models and OpenAI TTS.';
+$string['settings_openai_apikey_secondary'] = 'Secondary OpenAI API Key (optional)';
+$string['settings_openai_apikey_secondary_desc'] = 'If set, OpenAI TTS calls will use this key.';
+$string['settings_openai_models'] = 'OpenAI models';
+$string['settings_provider_models_desc'] = 'Models teachers can choose from in each activity (Ctrl/Cmd+click to select several). Leave empty to offer the provider\'s full catalogue.';
+$string['settings_safety_content_filter'] = 'Enable OpenAI content moderation';
+$string['settings_safety_content_filter_desc'] = 'Checks each student reply with the OpenAI Moderation API before it reaches the chat model. Only applies when the activity uses an OpenAI chat model; other providers rely on their built-in safety systems.';
+$string['settings_safety_max_tokens'] = 'Maximum tokens per API call';
+$string['settings_safety_max_tokens_desc'] = 'Default limit on output tokens per AI call. Thinking models count their hidden reasoning against the same limit, so the plugin raises it automatically where needed: a limit that is too low would make them return an empty reply.';
+$string['settings_security_heading'] = 'Security & Safety';
+$string['settings_security_heading_desc'] = 'Configure safety filters applied to all AI calls.';
+$string['settings_tts_heading'] = 'Text-to-speech (avatar voices)';
+$string['settings_tts_heading_desc'] = 'Choose how the avatars speak. OpenAI and Gemini voices are natural and cost a little per reply; browser voices are free but depend on the student\'s device. Anthropic and DeepSeek offer no voices.';
+$string['settings_tts_provider'] = 'TTS provider';
+$string['settings_tts_provider_desc'] = 'Determines the voice catalogue offered in every activity. After changing it, activities fall back to the new provider\'s default voices until teachers re-select them.';
+$string['start_activity'] = 'I\'m ready to begin';
+$string['start_new_attempt'] = 'Start a new attempt';
+$string['status_active'] = 'In progress';
+$string['status_draft'] = 'Not started';
+$string['status_graded'] = 'Graded';
+$string['status_grading'] = 'Being evaluated';
+$string['status_submitted'] = 'Awaiting evaluation';
+$string['stt_empty'] = 'We did not catch that. Hold the button while you speak, or type your reply.';
+$string['stt_network'] = 'The speech recognition service could not be reached from this network or browser, so you will type your replies.';
+$string['stt_nospeech'] = 'No speech was detected. Check your microphone and try again.';
+$string['stt_unsupported'] = 'This browser cannot recognise speech (for example Firefox), so you will type your replies. For voice, use Chrome, Edge or Safari.';
+$string['submission'] = 'Submission';
+$string['submission_deleted'] = 'Submission deleted.';
+$string['submissionnotification_body'] = 'A student ({$a->studentname}) has completed \'{$a->activityname}\' in \'{$a->coursename}\' and their session is ready for your review.
 
-$string['security_header']          = 'Activity Security';
-
-$string['session_duration']           = 'Session duration (minutes)';
-$string['session_duration_help']      = 'Maximum duration of the roleplay session. When the timer runs out, the session ends and evaluation begins.';
-
-$string['settings_advanced_heading']         = 'Advanced';
-$string['settings_anonymize_desc']           = 'Student real names are <strong>always</strong> replaced by an anonymous identifier before sending to OpenAI.';
-$string['settings_anonymize_heading']        = 'Student Anonymisation';
-$string['settings_anonymize_salt']           = 'Anonymisation salt';
-$string['settings_anonymize_salt_desc']      = 'Random string mixed into the SHA-256 hash that replaces student identifiers before transcripts leave the LMS. Leave empty to auto-generate (32 random bytes are seeded on the next plugin upgrade). Manual values must be 32–128 characters of letters, digits, hyphen or underscore.';
-$string['settings_api_rate_limit']           = 'Max API calls per user per minute';
-$string['settings_api_rate_limit_desc']      = 'Rate limit per Moodle user to prevent API abuse.';
-$string['settings_api_rate_limit_global']    = 'Max API calls per minute (whole site)';
-$string['settings_api_rate_limit_global_desc'] = 'Site-wide cap that backs up the per-user limit. Counts every OpenAI call (chat, TTS, evaluation, cron tasks). Lower this if cost runaway is a concern.';
-$string['settings_api_timeout']              = 'API request timeout (seconds)';
-$string['settings_api_timeout_desc']         = 'Maximum time to wait for a response from OpenAI.';
-$string['settings_apikeys_heading']          = 'OpenAI API Keys';
-$string['settings_apikeys_heading_desc']     = 'These keys are stored encrypted.';
-$string['settings_cost_estimate_desc']       = 'Estimated cost per complete 10-minute session:<br/>GPT-4o: ~$0.05–$0.15 USD &nbsp;|&nbsp; GPT-4o mini: ~$0.01–$0.03 USD<br/>TTS: ~$0.01 per avatar response';
-$string['settings_cost_estimate_heading']    = 'Cost Estimates';
-$string['settings_enable_gpt4o']             = 'Enable GPT-4o';
-$string['settings_enable_gpt4o_desc']        = 'GPT-4o — highest quality, higher cost.';
-$string['settings_enable_gpt4o_mini']        = 'Enable GPT-4o mini';
-$string['settings_enable_gpt4o_mini_desc']   = 'GPT-4o mini — good quality, lower cost.';
-$string['settings_gdpr_heading']             = 'GDPR Notice';
-$string['settings_gdpr_heading_desc']        = 'This notice is shown to participants before they begin.';
-$string['settings_gdpr_notice_text']         = 'GDPR notice text';
-$string['settings_gdpr_notice_text_desc']    = 'HTML text shown to participants.';
-$string['settings_models_heading']           = 'Available AI Models';
-$string['settings_models_heading_desc']      = 'Select which models teachers can choose from.';
-$string['settings_openai_apikey']            = 'Primary OpenAI API Key';
-$string['settings_openai_apikey_desc']       = 'Your OpenAI API key. Used for GPT-4o and TTS.';
-$string['settings_openai_apikey_secondary']  = 'Secondary OpenAI API Key (optional)';
-$string['settings_openai_apikey_secondary_desc'] = 'If set, TTS calls will use this key.';
-$string['settings_safety_content_filter']    = 'Enable OpenAI content moderation';
-$string['settings_safety_content_filter_desc'] = 'Runs all user content through the OpenAI Moderation API before sending to GPT.';
-$string['settings_safety_max_tokens']        = 'Maximum tokens per API call';
-$string['settings_safety_max_tokens_desc']   = 'Hard limit on output tokens for all API calls.';
-$string['settings_security_heading']         = 'Security & Safety';
-$string['settings_security_heading_desc']    = 'Configure safety filters applied to all AI calls.';
-$string['settings_storage_heading']          = 'Storage & Retention';
-$string['settings_storage_heading_desc']     = 'Configure file storage limits.';
-
-$string['start_activity']      = 'I\'m ready to begin';
-
-$string['submission']          = 'Submission';
-$string['submission_deleted']  = 'Submission deleted.';
-
-$string['submissionnotification_body']     = <<<'EOT'
-A student ({$a->studentname}) has completed '{$a->activityname}' in '{$a->coursename}' and their session is ready for your review.
-
-View submissions: {$a->link}
-EOT;
+View submissions: {$a->link}';
 $string['submissionnotification_bodyhtml'] = '<p>Student <strong>{$a->studentname}</strong> has completed <em>{$a->activityname}</em> and their session is ready for review.</p><p><a href="{$a->link}">View submissions</a></p>';
-$string['submissionnotification_small']    = 'New submission: {$a->activityname}';
-$string['submissionnotification_subject']  = 'New submission for review: {$a->activityname}';
-$string['submissions_heading']             = 'Submissions';
-
+$string['submissionnotification_small'] = 'New submission: {$a->activityname}';
+$string['submissionnotification_subject'] = 'New submission for review: {$a->activityname}';
+$string['submissions_heading'] = 'Submissions';
+$string['task_close_expired_sessions'] = 'AI Roleplay: close sessions whose time ran out';
 $string['task_evaluate_submission'] = 'AI Roleplay: Generate final evaluation';
-
-$string['unlimited']           = 'Unlimited';
-
-$string['voice_alloy']   = 'Alloy — versatile, neutral';
-$string['voice_echo']    = 'Echo — resonant, male';
-$string['voice_fable']   = 'Fable — expressive, British';
-$string['voice_nova']    = 'Nova — warm, female';
-$string['voice_onyx']    = 'Onyx — deep, authoritative';
+$string['teacher_view_submissions'] = 'View and grade the students\' attempts';
+$string['testconnection'] = 'Test AI connection';
+$string['testconnection_chat'] = 'Chat model {$a}';
+$string['testconnection_check'] = 'Check';
+$string['testconnection_desc'] = 'Sends a one-word test request to the configured chat provider and voice provider, using the saved settings. It costs a fraction of a cent.';
+$string['testconnection_ok'] = 'Answered in {$a->ms} ms: "{$a->reply}"';
+$string['testconnection_run'] = 'Run connection test';
+$string['testconnection_tts'] = 'Voice provider ({$a})';
+$string['testconnection_tts_browser'] = 'Voices are generated in the student\'s browser; nothing to test on the server.';
+$string['testconnection_tts_ok'] = 'Generated {$a->bytes} of {$a->mime} audio.';
+$string['timeclose'] = 'Close sessions from';
+$string['timeclose_help'] = 'After this date students can no longer start a session. A session already in progress can be finished.';
+$string['timeopen'] = 'Allow sessions from';
+$string['timeopen_help'] = 'Students cannot start a session before this date.';
+$string['transcript_withdrawn'] = 'The student withdrew their consent, so the conversation has been deleted. The grade is kept.';
+$string['tts_provider_browser'] = 'Browser voices (free, no API key; quality depends on the device)';
+$string['tts_provider_gemini'] = 'Google Gemini (requires Gemini key)';
+$string['tts_provider_none'] = 'No voice (avatars reply as on-screen text)';
+$string['tts_provider_openai'] = 'OpenAI (requires OpenAI key)';
+$string['typed_reply_label'] = 'Your reply';
+$string['typed_reply_placeholder'] = 'Type your reply and press Enter';
+$string['typed_reply_send'] = 'Send';
+$string['typed_reply_toggle'] = 'Can\'t use the microphone? Type your reply';
+$string['unlimited'] = 'Unlimited';
+$string['voice_alloy'] = 'Alloy — versatile, neutral';
+$string['voice_aoede'] = 'Aoede — breezy, light';
+$string['voice_ash'] = 'Ash — warm, natural';
+$string['voice_auto'] = 'Automatic (browser voice for the course language)';
+$string['voice_charon'] = 'Charon — informative, male';
+$string['voice_coral'] = 'Coral — female, expressive';
+$string['voice_echo'] = 'Echo — resonant, male';
+$string['voice_fable'] = 'Fable — expressive, British';
+$string['voice_fenrir'] = 'Fenrir — excitable, energetic';
+$string['voice_kore'] = 'Kore — firm, female';
+$string['voice_leda'] = 'Leda — youthful, female';
+$string['voice_nova'] = 'Nova — warm, female';
+$string['voice_onyx'] = 'Onyx — deep, authoritative';
+$string['voice_orus'] = 'Orus — firm, male';
+$string['voice_puck'] = 'Puck — upbeat, playful';
+$string['voice_sage'] = 'Sage — calm, thoughtful';
 $string['voice_shimmer'] = 'Shimmer — soft, clear';
-
-$string['warning_1min']  = '⚠️ 1 minute remaining';
-$string['warning_2min']  = '⚠️ 2 minutes remaining';
-
-$string['workflow_inreview']        = 'In review';
-$string['workflow_readyforrelease'] = 'Ready for release';
-$string['workflow_released']        = 'Released';
-
-$string['your_grade']       = 'Your grade:';
-$string['your_role_label']  = 'Your role in this scenario:';
+$string['voice_zephyr'] = 'Zephyr — bright, clear';
+$string['warning_1min'] = '1 minute remaining';
+$string['workflow_inreview'] = 'In review';
+$string['workflow_released'] = 'Released';
+$string['you_label'] = 'You';
+$string['your_grade'] = 'Your grade:';
+$string['your_role_label'] = 'Your role in this scenario:';

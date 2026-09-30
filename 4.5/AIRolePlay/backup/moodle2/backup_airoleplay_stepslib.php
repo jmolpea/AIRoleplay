@@ -25,7 +25,7 @@
 /**
  * Defines the XML structure for a mod_airoleplay backup.
  *
- * API keys are intentionally excluded from the backup for security reasons.
+ * API keys are site-level settings and are never included in a backup.
  */
 class backup_airoleplay_activity_structure_step extends backup_activity_structure_step {
     /**
@@ -39,27 +39,27 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
         // Root element — activity settings (no API keys). Every column in
         // {airoleplay} is listed here so a course duplicate or a "Restore
         // into a new course" lands a fully-configured activity that does
-        // not need to be re-set up by hand. Only the encrypted API key is
-        // intentionally excluded.
+        // not need to be re-set up by hand. API keys are site settings and
+        // never part of an activity backup.
         $airoleplay = new backup_nested_element('airoleplay', ['id'], [
             'name', 'intro', 'introformat',
             'num_avatars',
             'scenario_description', 'scenario_descriptionformat',
             'participant_role',
-            'session_duration',
+            'session_duration', 'timeopen', 'timeclose',
             'roleplay_prompt_eval',
             'openai_model_roleplay', 'openai_model_eval',
             'avatar_1_name', 'avatar_1_role', 'avatar_1_prompt',
-            'avatar_1_voice', 'avatar_1_avatar', 'avatar_1_avatar_custom',
+            'avatar_1_voice', 'avatar_1_avatar',
             'avatar_2_name', 'avatar_2_role', 'avatar_2_prompt',
-            'avatar_2_voice', 'avatar_2_avatar', 'avatar_2_avatar_custom',
+            'avatar_2_voice', 'avatar_2_avatar',
             'avatar_3_name', 'avatar_3_role', 'avatar_3_prompt',
-            'avatar_3_voice', 'avatar_3_avatar', 'avatar_3_avatar_custom',
+            'avatar_3_voice', 'avatar_3_avatar',
             'max_attempts',
             'grading_workflow', 'group_submission', 'groupingid',
             'notify_student',
-            'safety_max_tokens', 'safety_content_filter', 'safety_extra_prompt',
-            'grade', 'completionsubmit', 'completiongrade', 'completionmingradeval',
+            'safety_extra_prompt',
+            'grade', 'completionsubmit',
             'timecreated', 'timemodified',
         ]);
 
@@ -81,7 +81,7 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
             'roleplay_transcript', 'roleplay_analysis',
             'final_grade', 'final_feedback', 'grade_breakdown',
             'grader_userid', 'workflow_state',
-            'timecreated', 'timemodified', 'timesubmitted', 'timegraded',
+            'timecreated', 'timemodified', 'timestarted', 'timesubmitted', 'timegraded',
         ]);
 
         $messages = new backup_nested_element('roleplay_messages');
@@ -99,13 +99,23 @@ class backup_airoleplay_activity_structure_step extends backup_activity_structur
 
         // Data sources.
         $airoleplay->set_source_table('airoleplay', ['id' => backup::VAR_ACTIVITYID]);
-        $override->set_source_table('airoleplay_overrides', ['airoleplay' => backup::VAR_PARENTID]);
+        if ($includesubmissions) {
+            $override->set_source_table('airoleplay_overrides', ['airoleplay' => backup::VAR_PARENTID]);
+        } else {
+            // Without user data only group overrides travel: user overrides
+            // would otherwise pull user records into the backup.
+            $override->set_source_sql(
+                'SELECT * FROM {airoleplay_overrides} WHERE airoleplay = ? AND userid IS NULL',
+                [backup::VAR_PARENTID]
+            );
+        }
 
         if ($includesubmissions) {
             $submission->set_source_table('airoleplay_submissions', ['airoleplay' => backup::VAR_PARENTID]);
             $message->set_source_table('airoleplay_messages', ['submission_id' => backup::VAR_PARENTID]);
             $submission->annotate_ids('user', 'userid');
             $submission->annotate_ids('user', 'grader_userid');
+            $submission->annotate_ids('group', 'groupid');
         }
 
         // Annotate ids that need to be remapped on restore.

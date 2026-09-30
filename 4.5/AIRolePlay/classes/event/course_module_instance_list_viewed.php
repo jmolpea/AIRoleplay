@@ -15,15 +15,17 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Event observers for mod_airoleplay.
+ * The mod_airoleplay instance list viewed event.
  *
  * @package    mod_airoleplay
  * @copyright  2025 Pluginia
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace mod_airoleplay\event;
 
-// No external event observers needed at this time.
-// Internal events are dispatched directly by the plugin code.
-$observers = [];
+/**
+ * Triggered when a user views the list of AI Roleplay activities of a course.
+ */
+class course_module_instance_list_viewed extends \core\event\course_module_instance_list_viewed {
+}

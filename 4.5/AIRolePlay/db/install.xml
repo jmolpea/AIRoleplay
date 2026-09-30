@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/airoleplay/db" VERSION="20250421" COMMENT="XMLDB file for mod_airoleplay"
+<XMLDB PATH="mod/airoleplay/db" VERSION="20260928" COMMENT="XMLDB file for mod_airoleplay"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -11,45 +11,39 @@
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="intro" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="openai_apikey" TYPE="text" NOTNULL="false" COMMENT="Encrypted OpenAI API key (overrides global)"/>
-        <FIELD NAME="openai_model_roleplay" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-4o" COMMENT="Model for roleplay conversation"/>
-        <FIELD NAME="openai_model_eval" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-4o" COMMENT="Model for final evaluation"/>
+        <FIELD NAME="openai_model_roleplay" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-6-sol" COMMENT="Model for roleplay conversation (provider inferred from the id)"/>
+        <FIELD NAME="openai_model_eval" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="gpt-6-sol" COMMENT="Model for final evaluation (provider inferred from the id)"/>
         <FIELD NAME="num_avatars" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" COMMENT="Number of active avatars: 1, 2 or 3"/>
         <FIELD NAME="scenario_description" TYPE="text" NOTNULL="false" COMMENT="The roleplay situation shown to the participant"/>
         <FIELD NAME="scenario_descriptionformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="participant_role" TYPE="text" NOTNULL="false" COMMENT="The character/role the participant plays"/>
         <FIELD NAME="session_duration" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="10" COMMENT="Roleplay session duration in minutes"/>
+        <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Sessions can start from this time (0 = no limit)"/>
+        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Sessions can start until this time (0 = no limit)"/>
         <FIELD NAME="roleplay_prompt_eval" TYPE="text" NOTNULL="false" COMMENT="Final evaluation prompt for the teacher"/>
         <FIELD NAME="avatar_1_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Alex"/>
         <FIELD NAME="avatar_1_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
         <FIELD NAME="avatar_1_prompt" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="avatar_1_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="onyx"/>
         <FIELD NAME="avatar_1_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
-        <FIELD NAME="avatar_1_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="avatar_2_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Jordan"/>
         <FIELD NAME="avatar_2_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
         <FIELD NAME="avatar_2_prompt" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="avatar_2_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="nova"/>
         <FIELD NAME="avatar_2_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="2"/>
-        <FIELD NAME="avatar_2_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="avatar_3_name" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Morgan"/>
         <FIELD NAME="avatar_3_role" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="Interlocutor"/>
         <FIELD NAME="avatar_3_prompt" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="avatar_3_voice" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="echo"/>
         <FIELD NAME="avatar_3_avatar" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="3"/>
-        <FIELD NAME="avatar_3_avatar_custom" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="max_attempts" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="2" COMMENT="0 = unlimited"/>
         <FIELD NAME="grading_workflow" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="group_submission" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="groupingid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="notify_student" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"/>
-        <FIELD NAME="safety_max_tokens" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="4096"/>
-        <FIELD NAME="safety_content_filter" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="safety_extra_prompt" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="100"/>
-        <FIELD NAME="completionsubmit" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="completiongrade" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="completionmingradeval" TYPE="number" LENGTH="10" NOTNULL="false" DECIMALS="5" DEFAULT="0.00000"/>
+        <FIELD NAME="completionsubmit" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" COMMENT="Completion rule: participant completed a session"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -67,7 +61,7 @@
         <FIELD NAME="airoleplay" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to airoleplay table"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0"/>
-        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="draft" COMMENT="draft|active|submitted|graded"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="draft" COMMENT="draft|active|submitted|grading|graded"/>
         <FIELD NAME="attempt" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="gdpr_consent" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="gdpr_consent_time" TYPE="int" LENGTH="10" NOTNULL="false"/>
@@ -77,9 +71,10 @@
         <FIELD NAME="final_feedback" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="grade_breakdown" TYPE="text" NOTNULL="false" COMMENT="JSON with evaluation breakdown"/>
         <FIELD NAME="grader_userid" TYPE="int" LENGTH="10" NOTNULL="false"/>
-        <FIELD NAME="workflow_state" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="inreview|readyforrelease|released"/>
+        <FIELD NAME="workflow_state" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="inreview|released"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timestarted" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="When the session clock started (server-side deadline)"/>
         <FIELD NAME="timesubmitted" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timegraded" TYPE="int" LENGTH="10" NOTNULL="false"/>
       </FIELDS>

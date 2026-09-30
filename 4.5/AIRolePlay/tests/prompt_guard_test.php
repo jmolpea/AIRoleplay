@@ -27,13 +27,13 @@ namespace mod_airoleplay;
 
 use mod_airoleplay\local\prompt_guard;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_airoleplay\local\prompt_guard::class)]
 /**
  * Tests for the prompt-injection detector and delimiter neutraliser.
  *
  * @covers \mod_airoleplay\local\prompt_guard
  */
 final class prompt_guard_test extends \basic_testcase {
-
     /**
      * Provider of payloads the detector must classify as prompt injections.
      *
@@ -59,6 +59,7 @@ final class prompt_guard_test extends \basic_testcase {
      * @dataProvider injection_payloads
      * @param string $payload Untrusted text that should match a known pattern.
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('injection_payloads')]
     public function test_detect_injection_flags_known_payloads(string $payload): void {
         $this->assertTrue(prompt_guard::detect_injection($payload), $payload);
     }
@@ -85,6 +86,7 @@ final class prompt_guard_test extends \basic_testcase {
      * @dataProvider benign_payloads
      * @param string $payload Innocent text that should not match any pattern.
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('benign_payloads')]
     public function test_detect_injection_passes_benign_text(string $payload): void {
         $this->assertFalse(prompt_guard::detect_injection($payload), $payload);
     }

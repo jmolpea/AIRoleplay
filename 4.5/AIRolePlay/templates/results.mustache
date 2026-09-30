@@ -1,0 +1,100 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_airoleplay/results
+
+    Results of the participant's latest graded attempt and their next actions.
+
+    Context variables required for this template:
+    * hasresults - Whether a graded attempt exists.
+    * released - Whether its grade has been released.
+    * grade - Formatted grade.
+    * feedback - Formatted feedback (HTML), may be empty.
+    * lists - Strengths / areas for improvement: heading and items (plain text).
+    * hasbreakdown - Whether there is a rubric breakdown.
+    * breakdown - Rubric rows: label, score, feedback (plain text).
+    * newattempturl - Where to post "start a new attempt", empty when not allowed.
+    * sesskey - Session key.
+    * revokebutton - Rendered "withdraw consent" button (HTML), may be empty.
+
+    Example context (json):
+    {
+        "hasresults": true,
+        "released": true,
+        "grade": "82.50",
+        "feedback": "<div class=\"text_to_html\">Good opening and clear questions.</div>",
+        "lists": [
+            {"heading": "Strengths", "items": ["Empathy", "Clear summary"]}
+        ],
+        "hasbreakdown": true,
+        "breakdown": [
+            {"label": "Communication", "score": 85, "weight": 30, "feedback": "Clear and polite."}
+        ],
+        "newattempturl": "https://example.com/mod/airoleplay/view.php?id=1",
+        "sesskey": "abc123",
+        "revokebutton": ""
+    }
+}}
+{{#hasresults}}
+<div class="airoleplay-results card mt-4">
+    <div class="card-body">
+        <h3>{{#str}}results_title, mod_airoleplay{{/str}}</h3>
+        {{^released}}
+        <div class="alert alert-info">{{#str}}grade_pending_review, mod_airoleplay{{/str}}</div>
+        {{/released}}
+        {{#released}}
+        <div class="airoleplay-final-grade alert alert-success">
+            {{#str}}your_grade, mod_airoleplay{{/str}} <strong>{{grade}}</strong>
+        </div>
+        {{#feedback}}
+        <div class="airoleplay-feedback mt-3">
+            <h5>{{#str}}feedback, mod_airoleplay{{/str}}</h5>
+            {{{feedback}}}
+        </div>
+        {{/feedback}}
+        {{#lists}}
+        <h5 class="mt-3">{{heading}}</h5>
+        <ul>
+            {{#items}}
+            <li>{{.}}</li>
+            {{/items}}
+        </ul>
+        {{/lists}}
+        {{#hasbreakdown}}
+        <h5 class="mt-4">{{#str}}grade_breakdown, mod_airoleplay{{/str}}</h5>
+        <ul class="list-group">
+            {{#breakdown}}
+            <li class="list-group-item"><strong>{{label}}</strong>: {{score}}/100{{#feedback}} — {{feedback}}{{/feedback}}</li>
+            {{/breakdown}}
+        </ul>
+        {{/hasbreakdown}}
+        {{/released}}
+    </div>
+</div>
+{{/hasresults}}
+{{#newattempturl}}
+<form method="post" action="{{newattempturl}}" class="mt-3">
+    <input type="hidden" name="action" value="newattempt">
+    <input type="hidden" name="sesskey" value="{{sesskey}}">
+    <button type="submit" class="btn btn-primary">{{#str}}start_new_attempt, mod_airoleplay{{/str}}</button>
+</form>
+{{/newattempturl}}
+{{#revokebutton}}
+<div class="airoleplay-gdpr-revoke mt-4 text-end">
+    {{{revokebutton}}}
+</div>
+{{/revokebutton}}

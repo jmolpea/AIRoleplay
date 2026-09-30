@@ -1,0 +1,126 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_airoleplay/room
+
+    The participant's side of an attempt: scenario card, the panel shown
+    while the attempt is evaluated and the roleplay room. The element ids
+    are used by the mod_airoleplay/roleplay module.
+
+    Context variables required for this template:
+    * hascard - Whether there is a scenario or a role to show.
+    * scenario - Formatted scenario (HTML), may be empty.
+    * role - Formatted participant role (HTML), may be empty.
+    * evaluating - Whether the attempt is being evaluated.
+    * canstart - Whether the roleplay room is shown.
+    * title - Formatted activity name.
+    * avatars - Active avatars: index, name, role and either image.src or video.{idle, talking, poster}.
+
+    Example context (json):
+    {
+        "hascard": true,
+        "scenario": "<p>A customer calls to complain about a late delivery.</p>",
+        "role": "<p>You are the customer service agent.</p>",
+        "evaluating": false,
+        "canstart": true,
+        "title": "Customer complaint",
+        "avatars": [
+            {
+                "index": 1,
+                "name": "Alex",
+                "role": "Customer",
+                "video": {
+                    "idle": "https://example.com/avatar_1_idle.mp4",
+                    "talking": "https://example.com/avatar_1_talking.mp4",
+                    "poster": "https://example.com/avatar_1_poster.png"
+                }
+            },
+            {
+                "index": 2,
+                "name": "Jordan",
+                "role": "Manager",
+                "image": {"src": "https://example.com/jordan.png"}
+            }
+        ]
+    }
+}}
+{{#hascard}}
+<div class="airoleplay-scenario-card card mb-3">
+    <div class="card-body">
+        {{#scenario}}
+        <h5 class="card-title">{{#str}}scenario_label, mod_airoleplay{{/str}}</h5>
+        <div class="airoleplay-scenario-text">{{{scenario}}}</div>
+        {{/scenario}}
+        {{#role}}
+        <h6 class="mt-3 fw-bold">{{#str}}your_role_label, mod_airoleplay{{/str}}</h6>
+        <div class="airoleplay-participant-role alert alert-info">{{{role}}}</div>
+        {{/role}}
+    </div>
+</div>
+{{/hascard}}
+<div class="airoleplay-panel text-center py-5 {{^evaluating}}d-none{{/evaluating}}" id="airoleplay_evaluating_panel">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <p class="lead">{{#str}}evaluation_pending, mod_airoleplay{{/str}}</p>
+    <div class="airoleplay-status-message" id="airoleplay_eval_status" aria-live="polite"></div>
+</div>
+{{#canstart}}
+<div class="airoleplay-panel airoleplay-roleplay" id="airoleplay_roleplay_panel">
+    <div class="airoleplay-room">
+        <div class="airoleplay-header">
+            <h3 class="airoleplay-title">{{{title}}}</h3>
+            <div class="airoleplay-timer" id="airoleplay_timer" role="timer" aria-live="off"></div>
+        </div>
+        <div class="airoleplay-avatars">
+            {{#avatars}}
+            <div class="airoleplay-avatar" id="airoleplay_avatar_{{index}}" data-avatar="{{index}}">
+                <div class="avatar-glow">
+                    {{#image}}
+                    <img src="{{src}}" alt="{{{name}}}" class="avatar-image">
+                    {{/image}}
+                    {{#video}}
+                    <video id="avatar_video_{{index}}" class="avatar-video" src="{{idle}}" poster="{{poster}}"
+                        loop autoplay muted playsinline aria-hidden="true"
+                        data-idle="{{idle}}" data-talking="{{talking}}"></video>
+                    {{/video}}
+                </div>
+                <div class="avatar-info">
+                    <strong>{{{name}}}</strong>
+                    <span class="avatar-role">{{{role}}}</span>
+                </div>
+            </div>
+            {{/avatars}}
+        </div>
+        <div class="airoleplay-transcript" id="airoleplay_transcript" role="log" aria-live="polite"></div>
+        {{! Push-to-talk, plus a typed-reply fallback the script reveals when speech recognition is unavailable. }}
+        <div class="airoleplay-participant-controls">
+            <div class="airoleplay-mode-notice d-none" id="airoleplay_mode_notice" role="alert"></div>
+            <div class="participant-waveform" id="airoleplay_waveform"></div>
+            <button type="button" class="btn btn-primary btn-lg push-to-talk d-none" id="airoleplay_ptt_btn"
+                aria-pressed="false">{{#str}}push_to_talk, mod_airoleplay{{/str}}</button>
+            <form class="airoleplay-text-reply d-none mt-2" id="airoleplay_text_form">
+                <label for="airoleplay_text_input" class="visually-hidden sr-only">{{#str}}typed_reply_label, mod_airoleplay{{/str}}</label>
+                <div class="input-group">
+                    <input type="text" id="airoleplay_text_input" class="form-control" maxlength="2000" autocomplete="off"
+                        placeholder="{{#str}}typed_reply_placeholder, mod_airoleplay{{/str}}">
+                    <button type="submit" class="btn btn-secondary" id="airoleplay_text_send">{{#str}}typed_reply_send, mod_airoleplay{{/str}}</button>
+                </div>
+            </form>
+            <div class="airoleplay-status-message" id="airoleplay_status" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+</div>
+{{/canstart}}

@@ -24,265 +24,368 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['activityname']       = 'Nombre de la actividad';
-
-$string['airoleplay:addinstance']         = 'Añadir una actividad AI Roleplay';
-$string['airoleplay:grade']               = 'Calificar entregas';
-$string['airoleplay:manageoverrides']     = 'Gestionar excepciones de usuarios y grupos';
-$string['airoleplay:manageplugin']        = 'Gestionar configuración del plugin';
-$string['airoleplay:submit']              = 'Participar en una sesión de juego de roles';
-$string['airoleplay:view']                = 'Ver la actividad AI Roleplay';
-$string['airoleplay:viewallsubmissions']  = 'Ver todas las entregas';
-
-$string['attemptsinfo']   = 'Intentos usados: {$a->used} / {$a->max} ({$a->remaining} restantes)';
-
-$string['avatar_1']           = 'Avatar 1 (neutro)';
-$string['avatar_2']           = 'Avatar 2 (femenino)';
-$string['avatar_3']           = 'Avatar 3 (masculino)';
-$string['avatar_custom']      = 'Imagen personalizada';
+$string['activityclosed'] = 'Esta actividad está cerrada.';
+$string['activityclosed_date'] = 'Esta actividad se cerró el {$a}. Ya no se pueden iniciar sesiones nuevas.';
+$string['activityname'] = 'Nombre de la actividad';
+$string['airoleplay:addinstance'] = 'Añadir una actividad AI Roleplay';
+$string['airoleplay:grade'] = 'Calificar entregas';
+$string['airoleplay:manageoverrides'] = 'Gestionar excepciones de usuarios y grupos';
+$string['airoleplay:submit'] = 'Participar en una sesión de juego de roles';
+$string['airoleplay:view'] = 'Ver la actividad AI Roleplay';
+$string['airoleplay:viewallsubmissions'] = 'Ver todas las entregas';
+$string['apikey_missing'] = 'El plugin AI Roleplay no tiene configurada una clave API de {$a} utilizable. Pide al administrador del sitio que la configure en Administración del sitio > Extensiones > Módulos de actividad > AI Roleplay.';
+$string['attempt_in_progress'] = 'Termina el intento en curso antes de empezar uno nuevo.';
+$string['attempt_n'] = 'Intento {$a}';
+$string['attemptsinfo'] = 'Intentos usados: {$a->used} / {$a->max} ({$a->remaining} restantes)';
+$string['availability_header'] = 'Disponibilidad';
+$string['avatar_1'] = 'Avatar 1 (hombre, camisa azul claro)';
+$string['avatar_2'] = 'Avatar 2 (mujer, pelo oscuro)';
+$string['avatar_3'] = 'Avatar 3 (hombre, pelo canoso, americana)';
+$string['avatar_custom'] = 'Imagen personalizada';
 $string['avatar_custom_upload'] = 'Subir imagen personalizada del avatar';
-
-$string['avatar_header']      = 'Avatar {$a}';
-$string['avatar_name']        = 'Nombre';
-$string['avatar_prompt']      = 'Personalidad y estilo de interacción';
+$string['avatar_custom_upload_help'] = 'Sube una imagen cuadrada (PNG, JPG, GIF o WebP, hasta 2 MB). Se muestra en lugar del avatar animado mientras el avatar habla y escucha.';
+$string['avatar_default_name'] = 'Avatar {$a}';
+$string['avatar_header'] = 'Avatar {$a}';
+$string['avatar_name'] = 'Nombre';
+$string['avatar_prompt'] = 'Personalidad y estilo de interacción';
 $string['avatar_prompt_help'] = 'Describe cómo se comporta este avatar, su personalidad, tono y rol dentro del escenario.';
-$string['avatar_role']        = 'Rol / Título';
-$string['avatar_visual']      = 'Apariencia del avatar';
-$string['avatar_voice']       = 'Voz TTS';
-$string['avatars_header']     = 'Avatares';
-
-$string['col_actions']        = 'Acciones';
-$string['col_grade']          = 'Calificación';
-$string['col_status']         = 'Estado';
-$string['col_student']        = 'Estudiante';
-$string['col_submitted']      = 'Enviado';
-$string['col_workflow']       = 'Flujo de trabajo';
-
-$string['completiongrade']    = 'El estudiante debe recibir una calificación';
-$string['completionsubmit']   = 'El estudiante debe completar la sesión de juego de roles';
-
+$string['avatar_role'] = 'Rol / Título';
+$string['avatar_role_default'] = 'Interlocutor';
+$string['avatar_visual'] = 'Apariencia del avatar';
+$string['avatar_voice'] = 'Voz TTS';
+$string['avatars_header'] = 'Avatares';
+$string['badrequest'] = 'No se ha podido procesar la solicitud.';
+$string['breakdown_score'] = 'Puntuación: {$a->score}/100 (peso: {$a->weight}%)';
+$string['busy'] = 'La sesión está procesando otra petición. Inténtalo de nuevo en un momento.';
+$string['col_actions'] = 'Acciones';
+$string['col_attempt'] = 'Intento';
+$string['col_grade'] = 'Calificación';
+$string['col_status'] = 'Estado';
+$string['col_student'] = 'Estudiante';
+$string['col_submitted'] = 'Enviado';
+$string['col_workflow'] = 'Flujo de trabajo';
+$string['completiondetail:submit'] = 'Completar una sesión de roleplay';
+$string['completionsubmit'] = 'El estudiante debe completar una sesión de roleplay';
+$string['completionsubmit_help'] = 'La actividad se marca como completada en cuanto el estudiante termina una sesión de roleplay (cuando se agota el tiempo), incluso antes de que la evaluación esté lista. Para exigir una calificación o una calificación aprobatoria, usa las condiciones estándar de calificación.';
 $string['confirm_delete_submission'] = '¿Está seguro de que desea eliminar esta entrega? Esta acción no se puede deshacer.';
-
-$string['content_flagged']    = 'El contenido fue marcado por el filtro de seguridad de la IA.';
-
-$string['conversation_log']   = 'Registro de la sesión';
-
-$string['delete_submission']  = 'Eliminar entrega';
-
-$string['dimension_communication']    = 'Comunicación';
+$string['content_flagged'] = 'El contenido fue marcado por el filtro de seguridad de la IA.';
+$string['conversation_log'] = 'Registro de la sesión';
+$string['dimension_communication'] = 'Comunicación';
 $string['dimension_language_quality'] = 'Calidad del lenguaje';
-
-$string['dimension_role_adherence']   = 'Adherencia al rol';
+$string['dimension_role_adherence'] = 'Adherencia al rol';
 $string['dimension_scenario_handling'] = 'Manejo del escenario';
-$string['error_duration_invalid']  = 'La duración debe ser al menos 1 minuto.';
-
-$string['evaluation_complete']  = '✅ Evaluación completada. Redirigiendo…';
-$string['evaluation_pending']   = 'La IA está evaluando tu desempeño. Esto puede tardar un momento…';
-
+$string['emptyresponse'] = 'Tu respuesta estaba vacía. Habla o escribe algo antes de enviarla.';
+$string['error_close_before_open'] = 'La fecha de cierre debe ser posterior a la de apertura.';
+$string['error_duration_invalid'] = 'La duración debe ser al menos 1 minuto.';
+$string['error_generic'] = 'Algo ha fallado. Inténtalo de nuevo.';
+$string['error_grade_invalid'] = 'Introduce una calificación máxima entre 1 y 10000.';
+$string['error_nolicense'] = 'AI Roleplay no tiene una licencia válida para este sitio, por lo que la actividad está desactivada. Contacte con el administrador.';
+$string['eval_no_participation'] = 'No se registró ninguna intervención tuya durante esta sesión, por lo que no ha podido evaluarse. Si tuviste problemas técnicos (por ejemplo, el micrófono no funcionaba), avisa a tu profesor, que puede revisar este intento.';
+$string['evaluation_complete'] = '✅ Evaluación completada. Redirigiendo…';
+$string['evaluation_delayed'] = 'La evaluación está tardando más de lo habitual. Puedes salir de esta página: estará aquí cuando vuelvas.';
+$string['evaluation_pending'] = 'La IA está evaluando tu desempeño. Esto puede tardar un momento…';
 $string['evaluator_invalid_response'] = 'El evaluador de IA devolvió una respuesta inválida. Por favor, contacta a tu instructor.';
-
 $string['event_assessment_completed'] = 'Evaluación IA completada';
-$string['event_grade_issued']         = 'Calificación emitida';
-$string['event_submission_created']   = 'Sesión de juego de roles iniciada';
-
-$string['feedback']           = 'Retroalimentación';
-
-$string['gdpr_consent_label']   = 'Entiendo y acepto que mis respuestas habladas serán procesadas por la API de OpenAI.';
+$string['event_grade_issued'] = 'Calificación emitida';
+$string['event_submission_created'] = 'Sesión de juego de roles iniciada';
+$string['feedback'] = 'Retroalimentación';
+$string['flag_breakdown_incomplete'] = 'La IA devolvió una rúbrica incompleta; la nota es su estimación global.';
+$string['flag_injection_pattern_detected'] = 'La transcripción contiene texto que parece un intento de manipular al evaluador de IA.';
+$string['flag_insufficient_participation'] = 'El estudiante habló muy poco, por lo que hay poca evidencia para la nota.';
+$string['flag_no_participant_input'] = 'El estudiante no dijo nada durante la sesión (posible problema de micrófono o de conexión). La nota se fijó en 0 sin llamar a la IA.';
+$string['flagged'] = 'Requiere revisión';
+$string['flags_heading'] = 'Este intento necesita tu revisión:';
+$string['gdpr_consent_label'] = 'Entiendo y acepto que mis respuestas (habladas o escritas) sean procesadas por el proveedor de IA configurado en este sitio.';
 $string['gdpr_consent_required'] = 'Debes dar tu consentimiento en la página de la actividad antes de iniciar la sesión.';
-$string['gdpr_default_notice']  = '<p>Para completar esta actividad, tus respuestas habladas durante la sesión de juego de roles serán enviadas a la <strong>API de OpenAI</strong> para la conversación y evaluación por IA.</p><p>OpenAI no conserva los datos más allá de la solicitud inmediata.</p><p>Al continuar, consientes este procesamiento de acuerdo con nuestra política de privacidad.</p>';
-$string['gdpr_notice_title']    = 'Aviso de privacidad — Procesamiento por IA';
-
-$string['grade_breakdown']       = 'Desglose de la calificación';
-$string['grade_override_saved']  = 'Calificación guardada correctamente.';
-$string['grade_pending_review']  = 'Tu calificación está siendo revisada por tu instructor. Se te notificará cuando sea publicada.';
-
-$string['gradenotification_body']     = <<<'EOT'
-Tu calificación para '{$a->activityname}' en '{$a->coursename}' ha sido publicada.
+$string['gdpr_default_notice'] = '<p>Para completar esta actividad, tus respuestas habladas durante la sesión de juego de roles serán enviadas a un <strong>proveedor externo de IA</strong> (como OpenAI, Anthropic, Google o DeepSeek, según haya configurado tu institución) para la conversación y evaluación por IA.</p><p>Al continuar, consientes este procesamiento de acuerdo con nuestra política de privacidad.</p>';
+$string['gdpr_notice_title'] = 'Aviso de privacidad — Procesamiento por IA';
+$string['gdpr_revoke_busy'] = 'No puedes retirar el consentimiento mientras una sesión está en curso o evaluándose. Inténtalo cuando tus resultados estén disponibles.';
+$string['gdpr_revoke_button'] = 'Retirar el consentimiento y borrar mis conversaciones';
+$string['gdpr_revoke_confirm'] = 'Se borrarán las transcripciones, los registros de conversación y la retroalimentación de la IA de todos tus intentos en esta actividad. Se conservan el número de intentos usados y las notas ya registradas. No se puede deshacer. ¿Continuar?';
+$string['gdpr_revoked_notice'] = 'Has retirado tu consentimiento y tus conversaciones se han borrado de esta actividad.';
+$string['grade_breakdown'] = 'Desglose de la calificación';
+$string['grade_label'] = 'Calificación (sobre {$a})';
+$string['grade_out_of_range'] = 'La calificación debe ser un número entre 0 y {$a}.';
+$string['grade_override_saved'] = 'Calificación guardada correctamente.';
+$string['grade_pending_review'] = 'Tu calificación está siendo revisada por tu instructor. Se te notificará cuando sea publicada.';
+$string['grade_published'] = 'Calificación publicada. El estudiante ya puede verla.';
+$string['grade_returned'] = 'La calificación se ha retirado del libro de calificaciones y ha vuelto a revisión.';
+$string['gradenotification_body'] = 'Tu calificación para \'{$a->activityname}\' en \'{$a->coursename}\' ha sido publicada.
 
 Calificación: {$a->grade}
 
-Ver tus resultados: {$a->link}
-EOT;
+Ver tus resultados: {$a->link}';
 $string['gradenotification_bodyhtml'] = '<p>Tu calificación para <strong>{$a->activityname}</strong> en <em>{$a->coursename}</em> ha sido publicada.</p><p>Calificación: <strong>{$a->grade}</strong></p><p><a href="{$a->link}">Ver tus resultados</a></p>';
-$string['gradenotification_small']    = 'Calificación publicada para {$a->activityname}';
-$string['gradenotification_subject']  = 'Tu calificación está lista: {$a->activityname}';
-
-$string['grading_header']     = 'Calificación y flujo de trabajo';
-$string['grading_workflow']   = 'Activar flujo de revisión de calificaciones';
-$string['grading_workflow_help'] = 'Si está activado, las calificaciones se retienen para revisión del profesor antes de publicarse a los estudiantes.';
-
-$string['groupsubmission']     = 'Entrega grupal';
-$string['groupsubmission_help'] = 'Permite que grupos realicen la actividad juntos. Requiere que los grupos estén configurados en el curso.';
-
+$string['gradenotification_small'] = 'Calificación publicada para {$a->activityname}';
+$string['gradenotification_subject'] = 'Tu calificación está lista: {$a->activityname}';
+$string['grading_header'] = 'Calificación y flujo de trabajo';
+$string['grading_workflow'] = 'Revisión del profesor antes de publicar';
+$string['grading_workflow_help'] = 'Si está activado, las calificaciones de la IA esperan a que un profesor las revise y publique. Si está desactivado, se publican automáticamente a los estudiantes en cuanto termina la evaluación de la IA. Las evaluaciones con avisos de integridad (poca o ninguna participación, sospecha de manipulación, rúbrica incompleta) siempre esperan a un profesor.';
+$string['grading_workflow_locked'] = 'Este ajuste lo fija el administrador del sitio.';
+$string['groupsubmission'] = 'Entrega grupal';
+$string['groupsubmission_help'] = 'Guarda el grupo actual del estudiante con cada intento, para poder filtrar y revisar los envíos por grupo.';
+$string['invalid_state_transition'] = 'Cambio de estado del envío no válido.';
 $string['invalidsubmissionstatus'] = 'Esta acción no está permitida en el estado actual de la entrega.';
-
-$string['maxattempts']         = 'Intentos máximos';
-$string['maxattempts_help']    = 'Número máximo de veces que un estudiante puede intentar esta actividad. Establece 0 para ilimitados.';
-$string['maximumgrade']        = 'Calificación máxima';
-
-$string['model_economical']    = '(económico)';
-$string['model_recommended']   = '(recomendado)';
-$string['models_header']       = 'Modelos de IA';
-
-$string['modulename']          = 'AI Roleplay';
-$string['modulenameplural']    = 'AI Roleplays';
-
-$string['no_overrides_yet']    = 'No se han configurado excepciones.';
-$string['no_submissions_yet']  = 'Aún no hay entregas.';
-$string['noinstances']         = 'No hay actividades AI Roleplay en este curso.';
-$string['notify_student']      = 'Notificar al estudiante cuando se publique la calificación';
-
-$string['num_avatars']         = 'Número de avatares';
-$string['num_avatars_help']    = 'Elige cuántos avatares participan en el juego de roles (1, 2 o 3). Cuando hay múltiples avatares activos, se turnan para responder, y el participante puede dirigirse a un avatar específico por nombre.';
-
-$string['openai_api_error']    = 'Error del servicio de IA: {$a}';
-$string['openai_model_eval']   = 'Modelo de IA para evaluación final';
+$string['license_banner_expired'] = 'AI Roleplay no está disponible porque la licencia caducó el {$a}. Contacte con el administrador.';
+$string['license_banner_invalid'] = 'AI Roleplay no está disponible porque la clave de licencia no corresponde a este sitio ({$a}). Contacte con el administrador.';
+$string['license_banner_missing'] = 'AI Roleplay no está disponible porque no se ha introducido ninguna clave de licencia para este sitio. Contacte con el administrador.';
+$string['license_heading'] = 'Licencia';
+$string['license_key'] = 'Clave de licencia';
+$string['license_key_desc'] = 'Introduzca la clave de licencia proporcionada por RSMAX Consulting. La clave se valida sin conexión (no requiere Internet) y está vinculada a la URL de este sitio. Sin una clave válida, la actividad queda desactivada para los participantes.';
+$string['license_status_expired'] = 'Caducada el {$a}';
+$string['license_status_invalid'] = 'No válida — la clave no corresponde a este sitio';
+$string['license_status_missing'] = 'Sin configurar';
+$string['license_status_valid'] = 'Válida — caduca el {$a}';
+$string['license_status_valid_lifetime'] = 'Válida — licencia permanente';
+$string['listening'] = 'Escuchando… suelta el botón cuando termines de hablar.';
+$string['maxattempts'] = 'Intentos máximos';
+$string['maxattempts_help'] = 'Número máximo de sesiones que un estudiante puede completar en esta actividad. Cuando un intento se califica, el estudiante puede empezar otro mientras le queden intentos. La mejor nota publicada va al libro de calificaciones.';
+$string['maximumgrade'] = 'Calificación máxima';
+$string['maximumgrade_help'] = 'Escala de calificación de esta actividad. La IA califica sobre 100 % y el resultado se escala a este máximo.';
+$string['mic_checking'] = 'Comprobando tu micrófono… Si el navegador pide permiso, elige «Permitir».';
+$string['mic_denied'] = 'El acceso al micrófono está bloqueado, así que escribirás tus respuestas. Para hablar, permite el micrófono para este sitio en la configuración del navegador y recarga la página.';
+$string['mic_insecure'] = 'La entrada por voz necesita una conexión segura (https), así que escribirás tus respuestas.';
+$string['mic_unavailable'] = 'No se ha encontrado un micrófono que funcione, así que escribirás tus respuestas.';
+$string['model_economical'] = '(más rápido, económico)';
+$string['model_legacy'] = '(generación anterior)';
+$string['model_premium'] = '(más capaz, premium)';
+$string['model_preview'] = '(vista previa)';
+$string['model_recommended'] = '(recomendado)';
+$string['models_header'] = 'Modelos de IA';
+$string['modulename'] = 'AI Roleplay';
+$string['modulenameplural'] = 'AI Roleplays';
+$string['no_overrides_yet'] = 'No se han configurado excepciones.';
+$string['no_submissions_yet'] = 'Aún no hay entregas.';
+$string['noattemptsleft'] = 'Has agotado los intentos permitidos en esta actividad.';
+$string['noinstances'] = 'No hay actividades AI Roleplay en este curso.';
+$string['notify_student'] = 'Notificar al estudiante cuando se publique la calificación';
+$string['notopenyet'] = 'Esta actividad aún no está abierta.';
+$string['notopenyet_date'] = 'Esta actividad se abre el {$a}.';
+$string['num_avatars'] = 'Número de avatares';
+$string['num_avatars_help'] = 'Elige cuántos avatares participan en el juego de roles (1, 2 o 3). Cuando hay múltiples avatares activos, se turnan para responder, y el participante puede dirigirse a un avatar específico por nombre.';
+$string['openai_api_error'] = 'El servicio de IA no está disponible temporalmente. Inténtalo de nuevo en un momento.';
+$string['openai_model_eval'] = 'Modelo de IA para evaluación final';
+$string['openai_model_eval_help'] = 'Modelo que califica toda la conversación al terminar la sesión. Un modelo más capaz da notas más fiables; la evaluación se ejecuta una vez por intento, así que su coste es pequeño.';
 $string['openai_model_roleplay'] = 'Modelo de IA para la conversación del juego de roles';
-
-$string['override_add']            = 'Añadir excepción';
+$string['openai_model_roleplay_help'] = 'Modelo que interpreta a los avatares durante la conversación en directo. Los modelos más rápidos hacen que la conversación resulte más natural. Solo aparecen los modelos del proveedor elegido por el administrador del sitio.';
+$string['override_add'] = 'Añadir excepción';
 $string['override_confirm_delete'] = '¿Está seguro de que desea eliminar esta excepción?';
-$string['override_delete']         = 'Eliminar excepción';
-$string['override_deleted']        = 'Excepción eliminada.';
-$string['override_edit']           = 'Editar excepción';
-$string['override_group']          = 'Grupo';
-$string['override_maxattempts']    = 'Intentos máximos';
-$string['override_saved']          = 'Excepción guardada.';
-$string['override_timeclose']      = 'Cierre';
-$string['override_timeopen']       = 'Apertura';
-$string['override_type']           = 'Tipo de excepción';
-$string['override_type_group']     = 'Excepción de grupo';
-$string['override_type_user']      = 'Excepción de usuario';
-$string['override_user']           = 'Usuario';
-$string['overrides_heading']       = 'Excepciones de usuario/grupo';
-
-$string['participant_role']        = 'Rol del participante';
-$string['participant_role_help']   = 'Describe el personaje o rol que desempeña el participante en este escenario. Se muestra al participante antes de iniciar la sesión.';
-
-$string['pluginadministration']    = 'Administración de AI Roleplay';
-$string['pluginname']              = 'AI Roleplay';
-
-$string['privacy:metadata:airoleplay_messages']                     = 'Registro detallado de cada turno en la sesión de juego de roles.';
-$string['privacy:metadata:airoleplay_messages:message_text']        = 'El texto de lo que se dijo.';
-$string['privacy:metadata:airoleplay_messages:speaker']             = 'Quién habló en este turno (avatar o participante).';
-$string['privacy:metadata:airoleplay_messages:timestamp']           = 'Cuándo ocurrió este turno.';
-$string['privacy:metadata:airoleplay_submissions']                  = 'Información sobre la sesión de juego de roles de cada estudiante, incluyendo la transcripción de la conversación y las calificaciones.';
-$string['privacy:metadata:airoleplay_submissions:final_feedback']   = 'El texto de retroalimentación final proporcionado al estudiante.';
-$string['privacy:metadata:airoleplay_submissions:final_grade']      = 'La calificación final otorgada al estudiante.';
-$string['privacy:metadata:airoleplay_submissions:gdpr_consent']     = 'Si el estudiante dio su consentimiento RGPD.';
+$string['override_deleted'] = 'Excepción eliminada.';
+$string['override_duplicate'] = 'Este usuario o grupo ya tiene una excepción. Edita la existente.';
+$string['override_edit'] = 'Editar excepción';
+$string['override_group'] = 'Grupo';
+$string['override_maxattempts'] = 'Intentos máximos';
+$string['override_saved'] = 'Excepción guardada.';
+$string['override_timeclose'] = 'Cierre';
+$string['override_timeopen'] = 'Apertura';
+$string['override_type'] = 'Tipo de excepción';
+$string['override_type_group'] = 'Excepción de grupo';
+$string['override_type_user'] = 'Excepción de usuario';
+$string['override_user'] = 'Usuario';
+$string['overrides_heading'] = 'Excepciones de usuario/grupo';
+$string['participant_role'] = 'Rol del participante';
+$string['participant_role_help'] = 'Describe el personaje o rol que desempeña el participante en este escenario. Se muestra al participante antes de iniciar la sesión.';
+$string['pluginadministration'] = 'Administración de AI Roleplay';
+$string['pluginname'] = 'AI Roleplay';
+$string['privacy:metadata:aiprovider:evaluation_request'] = 'La rúbrica de evaluación redactada por el profesor y la petición de calificar la entrega, enviadas al evaluador de IA.';
+$string['privacy:metadata:aiprovider:firstname'] = 'El nombre de pila del participante se incluye en el prompt del avatar para que la IA le salude por su nombre real.';
+$string['privacy:metadata:aiprovider:participant_role'] = 'El rol asignado al participante por el profesor, enviado como contexto a la IA.';
+$string['privacy:metadata:aiprovider:participant_turn'] = 'El texto anonimizado de cada intervención del participante, enviado a la IA en tiempo real durante el juego de roles.';
+$string['privacy:metadata:aiprovider:roleplay_transcript'] = 'La transcripción JSON anonimizada de toda la sesión, enviada al evaluador de IA.';
+$string['privacy:metadata:aiprovider:scenario'] = 'La descripción del escenario redactada por el profesor, enviada como contexto a la IA.';
+$string['privacy:metadata:airoleplay_messages'] = 'Registro detallado de cada turno en la sesión de juego de roles.';
+$string['privacy:metadata:airoleplay_messages:message_text'] = 'El texto de lo que se dijo.';
+$string['privacy:metadata:airoleplay_messages:speaker'] = 'Quién habló en este turno (avatar o participante).';
+$string['privacy:metadata:airoleplay_messages:timestamp'] = 'Cuándo ocurrió este turno.';
+$string['privacy:metadata:airoleplay_overrides'] = 'Excepciones por usuario (o por grupo) que cambian la disponibilidad o los intentos de la actividad para participantes concretos.';
+$string['privacy:metadata:airoleplay_overrides:groupid'] = 'El grupo al que se aplica la excepción (nulo en las excepciones de usuario).';
+$string['privacy:metadata:airoleplay_overrides:max_attempts'] = 'Excepción del número máximo de intentos.';
+$string['privacy:metadata:airoleplay_overrides:timeclose'] = 'Excepción de la fecha de cierre de la actividad.';
+$string['privacy:metadata:airoleplay_overrides:timecreated'] = 'Cuándo se creó la excepción.';
+$string['privacy:metadata:airoleplay_overrides:timemodified'] = 'Cuándo se modificó por última vez la excepción.';
+$string['privacy:metadata:airoleplay_overrides:timeopen'] = 'Excepción de la fecha de apertura de la actividad.';
+$string['privacy:metadata:airoleplay_overrides:userid'] = 'El usuario al que se aplica la excepción (nulo en las excepciones de grupo).';
+$string['privacy:metadata:airoleplay_submissions'] = 'Información sobre la sesión de juego de roles de cada estudiante, incluyendo la transcripción de la conversación y las calificaciones.';
+$string['privacy:metadata:airoleplay_submissions:attempt'] = 'El número de intento de este envío.';
+$string['privacy:metadata:airoleplay_submissions:final_feedback'] = 'El texto de retroalimentación final proporcionado al estudiante.';
+$string['privacy:metadata:airoleplay_submissions:final_grade'] = 'La calificación final otorgada al estudiante.';
+$string['privacy:metadata:airoleplay_submissions:gdpr_consent'] = 'Si el estudiante dio su consentimiento RGPD.';
 $string['privacy:metadata:airoleplay_submissions:gdpr_consent_time'] = 'Cuándo el estudiante dio su consentimiento RGPD.';
+$string['privacy:metadata:airoleplay_submissions:grade_breakdown'] = 'Desglose en JSON de cómo contribuye cada componente de la rúbrica a la nota final.';
+$string['privacy:metadata:airoleplay_submissions:grader_userid'] = 'El profesor que calificó o publicó este envío por última vez.';
+$string['privacy:metadata:airoleplay_submissions:groupid'] = 'El grupo en cuyo nombre envió el estudiante (solo en envíos de grupo).';
+$string['privacy:metadata:airoleplay_submissions:roleplay_analysis'] = 'El JSON completo de la evaluación devuelto por el evaluador de IA (puntuaciones de la rúbrica, alertas de integridad, salida del modelo).';
 $string['privacy:metadata:airoleplay_submissions:roleplay_transcript'] = 'Transcripción completa de la sesión de juego de roles.';
-$string['privacy:metadata:airoleplay_submissions:status']           = 'Estado actual de la entrega.';
-$string['privacy:metadata:airoleplay_submissions:timecreated']      = 'Cuándo se creó la entrega.';
-$string['privacy:metadata:airoleplay_submissions:timesubmitted']    = 'Cuándo se completó la sesión.';
-$string['privacy:metadata:airoleplay_submissions:userid']           = 'El ID del estudiante que participó.';
-$string['privacy:metadata:openai']                                  = 'Las respuestas habladas se envían a la API de OpenAI para la conversación y evaluación por IA. Los datos no se conservan más allá de la solicitud inmediata.';
-$string['privacy:metadata:openai:conversation_turns']               = 'El texto de las respuestas habladas del participante durante la sesión de juego de roles.';
-
-$string['publish_grade']       = 'Publicar calificación';
-$string['push_to_talk']        = 'Mantén pulsado para responder';
-
+$string['privacy:metadata:airoleplay_submissions:status'] = 'Estado actual de la entrega.';
+$string['privacy:metadata:airoleplay_submissions:timecreated'] = 'Cuándo se creó la entrega.';
+$string['privacy:metadata:airoleplay_submissions:timegraded'] = 'Cuándo se calificó el envío por última vez.';
+$string['privacy:metadata:airoleplay_submissions:timemodified'] = 'Cuándo se modificó el envío por última vez.';
+$string['privacy:metadata:airoleplay_submissions:timestarted'] = 'Cuándo empezó la sesión de roleplay.';
+$string['privacy:metadata:airoleplay_submissions:timesubmitted'] = 'Cuándo se completó la sesión.';
+$string['privacy:metadata:airoleplay_submissions:userid'] = 'El ID del estudiante que participó.';
+$string['privacy:metadata:airoleplay_submissions:workflow_state'] = 'En qué punto del flujo de revisión está el envío (en revisión, publicado).';
+$string['privacy:metadata:anthropic'] = 'Cuando Anthropic (Claude) es el proveedor de chat configurado, los datos de conversación y evaluación se envían a Anthropic para su inferencia. Apellidos, nombre de usuario y correo se sustituyen por un marcador STUDENT-<hash> antes de la transmisión; el nombre de pila se envía para que los avatares puedan dirigirse al participante con naturalidad.';
+$string['privacy:metadata:deepseek'] = 'Cuando DeepSeek es el proveedor de chat configurado, los datos de conversación y evaluación se envían a DeepSeek para su inferencia. Ten en cuenta que DeepSeek procesa los datos en servidores ubicados en China; revisa los requisitos de protección de datos de tu institución antes de activarlo. Apellidos, nombre de usuario y correo se sustituyen por un marcador STUDENT-<hash> antes de la transmisión.';
+$string['privacy:metadata:gemini'] = 'Cuando Google Gemini es el proveedor de chat o de voz configurado, los datos de conversación, evaluación y síntesis de voz se envían a Google para su inferencia. Apellidos, nombre de usuario y correo se sustituyen por un marcador STUDENT-<hash> antes de la transmisión; el nombre de pila se envía para que los avatares puedan dirigirse al participante con naturalidad.';
+$string['privacy:metadata:openai'] = 'Cuando OpenAI es el proveedor de chat o de voz configurado, los datos de conversación, evaluación y síntesis de voz se envían a OpenAI para su inferencia. Apellidos, nombre de usuario y correo se sustituyen por un marcador STUDENT-<hash> antes de la transmisión; el nombre de pila se envía para que los avatares puedan dirigirse al participante con naturalidad. Según los términos de la API de OpenAI, el contenido no se usa para entrenar modelos.';
+$string['provider_anthropic'] = 'Anthropic (Claude)';
+$string['provider_deepseek'] = 'DeepSeek';
+$string['provider_gemini'] = 'Google Gemini';
+$string['provider_openai'] = 'OpenAI';
+$string['publish_grade'] = 'Publicar calificación';
+$string['push_to_talk'] = 'Mantén pulsado para hablar';
 $string['rate_limit_exceeded'] = 'Has realizado demasiadas solicitudes. Por favor, espera un momento antes de intentarlo de nuevo.';
-
-$string['regen_confirm']       = 'Esto reemplazará la evaluación actual por una nueva. ¿Continuar?';
-$string['regen_cooldown']      = 'Por favor, espera antes de regenerar de nuevo. Esta operación tiene un período de espera para evitar el uso excesivo de la API.';
-$string['regen_evaluation']    = 'Recalcular evaluación final';
-$string['regen_heading']       = 'Regenerar evaluación de IA';
-$string['regen_running']       = 'Procesando… por favor, espera (puede tardar 1-3 minutos)';
-$string['regen_success']       = '¡Hecho! Recargando…';
-
-$string['results_title']       = 'Tus resultados';
-$string['return_to_student']   = 'Devolver para revisión';
-
-$string['roleplay_ending']     = 'La sesión está concluyendo…';
-$string['roleplay_finished']   = 'Sesión finalizada. Tu evaluación está siendo preparada…';
-$string['roleplay_loading']    = 'Iniciando el juego de roles…';
+$string['rate_limit_exceeded_global'] = 'Se ha alcanzado el límite de peticiones de AI Roleplay de todo el sitio. Inténtalo de nuevo en breve.';
+$string['regen_confirm'] = 'Esto reemplazará la evaluación actual por una nueva. ¿Continuar?';
+$string['regen_cooldown'] = 'Por favor, espera antes de regenerar de nuevo. Esta operación tiene un período de espera para evitar el uso excesivo de la API.';
+$string['regen_daily_cap'] = 'Has alcanzado el límite diario de regeneraciones para este envío. Inténtalo mañana.';
+$string['regen_evaluation'] = 'Recalcular evaluación final';
+$string['regen_heading'] = 'Regenerar evaluación de IA';
+$string['regen_running'] = 'Procesando… por favor, espera (puede tardar 1-3 minutos)';
+$string['regen_success'] = '¡Hecho! Recargando…';
+$string['reset_overrides'] = 'Borrar todas las excepciones de usuario y de grupo';
+$string['reset_submissions'] = 'Borrar todos los intentos de roleplay, transcripciones y evaluaciones de IA';
+$string['results_areas_for_improvement'] = 'Aspectos a mejorar';
+$string['results_strengths'] = 'Puntos fuertes';
+$string['results_title'] = 'Tus resultados';
+$string['return_to_review'] = 'Retirar la nota y devolverla a revisión';
+$string['roleplay_ending'] = 'La sesión está concluyendo…';
+$string['roleplay_finished'] = 'Sesión finalizada. Tu evaluación está siendo preparada…';
+$string['roleplay_loading'] = 'Iniciando el juego de roles…';
 $string['roleplay_prompt_eval'] = 'Instrucciones de evaluación';
 $string['roleplay_prompt_eval_help'] = 'Instrucciones para la IA para generar la calificación final y la retroalimentación. Déjalo en blanco para usar los criterios de evaluación predeterminados.';
-$string['roleplay_ready_notice'] = 'Estás a punto de iniciar la sesión de juego de roles. Una vez que pulses el botón, el temporizador comenzará y los avatares empezarán a interactuar contigo. No podrás pausar la sesión.';
+$string['roleplay_ready_notice'] = 'Al pulsar el botón empieza el temporizador y los avatares comenzarán a hablarte. Mantén pulsado el botón «Mantén pulsado para hablar» (o la barra espaciadora) mientras respondes y suéltalo al terminar. Si el micrófono no funciona, podrás escribir tus respuestas. La sesión no se puede pausar.';
 $string['roleplay_ready_title'] = '¿Listo para comenzar?';
-$string['roleplay_start_btn']   = 'Iniciar juego de roles';
-$string['roleplay_thinking']    = 'El avatar está respondiendo…';
-
-$string['safety_extra_prompt']      = 'Restricciones de contenido adicionales (opcional)';
+$string['roleplay_resume_btn'] = 'Reanudar la sesión';
+$string['roleplay_start_btn'] = 'Iniciar juego de roles';
+$string['roleplay_thinking'] = 'El avatar está respondiendo…';
+$string['safety_extra_prompt'] = 'Restricciones de contenido adicionales (opcional)';
 $string['safety_extra_prompt_help'] = 'Instrucciones de seguridad adicionales que se añaden a cada llamada a la API para esta actividad.';
-$string['scenario_description']       = 'Descripción del escenario';
-$string['scenario_description_help']  = 'Describe la situación para el juego de roles. Este contexto se proporciona a los avatares y se muestra al participante antes de iniciar la sesión.';
-$string['scenario_header']            = 'Escenario y rol del participante';
-$string['scenario_label']             = 'Escenario';
+$string['scenario_description'] = 'Descripción del escenario';
+$string['scenario_description_help'] = 'Describe la situación para el juego de roles. Este contexto se proporciona a los avatares y se muestra al participante antes de iniciar la sesión.';
+$string['scenario_header'] = 'Escenario y rol del participante';
+$string['scenario_label'] = 'Escenario';
+$string['security_header'] = 'Seguridad de la actividad';
+$string['session_duration'] = 'Duración de la sesión (minutos)';
+$string['session_duration_help'] = 'Duración de la sesión de roleplay. El reloj lo lleva el servidor: si recargas la página, la sesión se reanuda con el tiempo restante. Cuando se agota el tiempo, la sesión termina y empieza la evaluación.';
+$string['settings_advanced_heading'] = 'Avanzado';
+$string['settings_anonymize_desc'] = 'Los nombres reales de los estudiantes son <strong>siempre</strong> reemplazados por un identificador anónimo antes de enviarlos al proveedor de IA.';
+$string['settings_anonymize_heading'] = 'Anonimización de estudiantes';
+$string['settings_anonymize_salt'] = 'Sal de anonimización';
+$string['settings_anonymize_salt_desc'] = 'Cadena aleatoria añadida al hash para mayor seguridad.';
+$string['settings_anthropic_apikey'] = 'Clave API de Anthropic';
+$string['settings_anthropic_apikey_desc'] = 'Tu clave API de Anthropic. Necesaria para usar los modelos Claude.';
+$string['settings_anthropic_models'] = 'Modelos de Anthropic';
+$string['settings_api_rate_limit'] = 'Máx. llamadas API por usuario por minuto';
+$string['settings_api_rate_limit_desc'] = 'Límite de velocidad por usuario de Moodle para prevenir el abuso de la API.';
+$string['settings_api_rate_limit_global'] = 'Máximo de llamadas a la API por minuto (todo el sitio)';
+$string['settings_api_rate_limit_global_desc'] = 'Límite global que respalda el límite por usuario. Cuenta todas las llamadas a proveedores de IA (chat, voz, evaluación, tareas en segundo plano). Cada turno de roleplay usa unas dos llamadas, así que calcula unas 5 llamadas por minuto por cada estudiante que pueda estar en sesión a la vez.';
+$string['settings_api_timeout'] = 'Tiempo de espera de la solicitud API (segundos)';
+$string['settings_api_timeout_desc'] = 'Tiempo máximo de espera para una respuesta del proveedor de IA.';
+$string['settings_apikeys_heading'] = 'Claves API de proveedores de IA';
+$string['settings_apikeys_heading_desc'] = 'Configura una clave por cada proveedor de IA que quieras usar. Todas las claves se almacenan encriptadas.';
+$string['settings_chat_provider'] = 'Proveedor de chat';
+$string['settings_chat_provider_desc'] = 'Proveedor de IA usado para la conversación de roleplay y la evaluación final en todo el sitio. Elige primero el proveedor y luego qué modelos suyos pueden escoger los profesores. Las actividades configuradas con un modelo de otro proveedor siguen funcionando mientras su API key siga configurada.';
+$string['settings_cost_estimate_desc'] = 'Coste aproximado de IA de una sesión completa de 10 minutos con los modelos recomendados (los precios cambian; consulta tu proveedor):<br/>GPT-6 Sol / Claude Sonnet 5: ~0,05–0,15 USD &nbsp;|&nbsp; GPT-6 Luna / Claude Haiku 4.5 / Gemini 3.8 Flash / DeepSeek Flash: ~0,01–0,04 USD<br/>Voces de servidor (OpenAI / Gemini): ~0,01 USD por respuesta del avatar. Voces del navegador: gratis.';
+$string['settings_cost_estimate_heading'] = 'Estimaciones de coste';
+$string['settings_deepseek_apikey'] = 'Clave API de DeepSeek';
+$string['settings_deepseek_apikey_desc'] = 'Tu clave API de DeepSeek. Necesaria para usar los modelos DeepSeek. <strong>Nota:</strong> DeepSeek procesa los datos en servidores ubicados en China — revisa los requisitos RGPD/protección de datos de tu institución antes de activarlo.';
+$string['settings_deepseek_models'] = 'Modelos de DeepSeek';
+$string['settings_gdpr_heading'] = 'Aviso RGPD';
+$string['settings_gdpr_heading_desc'] = 'Este aviso se muestra a los participantes antes de comenzar.';
+$string['settings_gdpr_notice_text'] = 'Texto del aviso RGPD';
+$string['settings_gdpr_notice_text_desc'] = 'Texto HTML mostrado a los participantes.';
+$string['settings_gemini_apikey'] = 'Clave API de Google Gemini';
+$string['settings_gemini_apikey_desc'] = 'Tu clave API de Google AI Studio (Gemini). Necesaria para usar los modelos Gemini o las voces de Gemini.';
+$string['settings_gemini_models'] = 'Modelos de Gemini';
+$string['settings_grading_heading'] = 'Calificación';
+$string['settings_grading_workflow'] = 'Revisión del profesor antes de publicar';
+$string['settings_grading_workflow_desc'] = 'Valor por defecto para las actividades nuevas. Marcado: las calificaciones de la IA esperan a que un profesor las revise y publique. Desmarcado: se publican automáticamente en cuanto termina la evaluación de la IA. Las evaluaciones con avisos de integridad (poca o ninguna participación, sospecha de manipulación, rúbrica incompleta) siempre esperan a un profesor. Marca «Bloqueado» para imponer esta opción en todas las actividades, incluidas las existentes; los profesores ya no podrán cambiarla.';
+$string['settings_models_heading'] = 'Proveedor de chat y modelos';
+$string['settings_models_heading_desc'] = 'Elige el proveedor de IA del sitio y después selecciona qué modelos suyos pueden elegir los profesores en cada actividad. Recuerda configurar la clave API del proveedor más arriba.';
+$string['settings_openai_apikey'] = 'Clave API principal de OpenAI';
+$string['settings_openai_apikey_desc'] = 'Tu clave API de OpenAI. Usada para los modelos GPT y el TTS de OpenAI.';
+$string['settings_openai_apikey_secondary'] = 'Clave API secundaria de OpenAI (opcional)';
+$string['settings_openai_apikey_secondary_desc'] = 'Si está configurada, las llamadas TTS de OpenAI usarán esta clave.';
+$string['settings_openai_models'] = 'Modelos de OpenAI';
+$string['settings_provider_models_desc'] = 'Modelos que los profesores pueden elegir en cada actividad (Ctrl/Cmd+clic para seleccionar varios). Déjalo vacío para ofrecer el catálogo completo del proveedor.';
+$string['settings_safety_content_filter'] = 'Activar moderación de contenido de OpenAI';
+$string['settings_safety_content_filter_desc'] = 'Revisa cada respuesta del estudiante con la API de moderación de OpenAI antes de enviarla al modelo de chat. Solo se aplica cuando la actividad usa un modelo de chat de OpenAI; los demás proveedores usan sus propios sistemas de seguridad.';
+$string['settings_safety_max_tokens'] = 'Máximo de tokens por llamada API';
+$string['settings_safety_max_tokens_desc'] = 'Límite por defecto de tokens de salida por llamada a la IA. Los modelos que razonan cuentan su razonamiento oculto dentro del mismo límite, así que el plugin lo eleva automáticamente cuando hace falta: un límite demasiado bajo haría que devolvieran una respuesta vacía.';
+$string['settings_security_heading'] = 'Seguridad';
+$string['settings_security_heading_desc'] = 'Configura los filtros de seguridad aplicados a todas las llamadas de IA.';
+$string['settings_tts_heading'] = 'Texto a voz (voces de los avatares)';
+$string['settings_tts_heading_desc'] = 'Elige cómo hablan los avatares. Las voces de OpenAI y Gemini son naturales y cuestan un poco por respuesta; las voces del navegador son gratuitas pero dependen del dispositivo del estudiante. Anthropic y DeepSeek no ofrecen voces.';
+$string['settings_tts_provider'] = 'Proveedor de TTS';
+$string['settings_tts_provider_desc'] = 'Determina el catálogo de voces que se ofrece en cada actividad. Tras cambiarlo, las actividades usan las voces por defecto del nuevo proveedor hasta que los profesores las vuelvan a elegir.';
+$string['start_activity'] = 'Estoy listo para comenzar';
+$string['start_new_attempt'] = 'Empezar un nuevo intento';
+$string['status_active'] = 'En curso';
+$string['status_draft'] = 'Sin empezar';
+$string['status_graded'] = 'Calificado';
+$string['status_grading'] = 'Evaluándose';
+$string['status_submitted'] = 'Pendiente de evaluación';
+$string['stt_empty'] = 'No te hemos entendido. Mantén pulsado el botón mientras hablas, o escribe tu respuesta.';
+$string['stt_network'] = 'No se ha podido acceder al servicio de reconocimiento de voz desde esta red o navegador, así que escribirás tus respuestas.';
+$string['stt_nospeech'] = 'No se ha detectado voz. Comprueba el micrófono e inténtalo de nuevo.';
+$string['stt_unsupported'] = 'Este navegador no puede reconocer la voz (por ejemplo, Firefox), así que escribirás tus respuestas. Para hablar, usa Chrome, Edge o Safari.';
+$string['submission'] = 'Entrega';
+$string['submission_deleted'] = 'Entrega eliminada.';
+$string['submissionnotification_body'] = 'Un estudiante ({$a->studentname}) ha completado \'{$a->activityname}\' en \'{$a->coursename}\' y su sesión está lista para tu revisión.
 
-$string['security_header']          = 'Seguridad de la actividad';
-
-$string['session_duration']           = 'Duración de la sesión (minutos)';
-$string['session_duration_help']      = 'Duración máxima de la sesión de juego de roles. Cuando se acabe el temporizador, la sesión termina y comienza la evaluación.';
-
-$string['settings_advanced_heading']         = 'Avanzado';
-$string['settings_anonymize_desc']           = 'Los nombres reales de los estudiantes son <strong>siempre</strong> reemplazados por un identificador anónimo antes de enviarlos a OpenAI.';
-$string['settings_anonymize_heading']        = 'Anonimización de estudiantes';
-$string['settings_anonymize_salt']           = 'Sal de anonimización';
-$string['settings_anonymize_salt_desc']      = 'Cadena aleatoria añadida al hash para mayor seguridad.';
-$string['settings_api_rate_limit']           = 'Máx. llamadas API por usuario por minuto';
-$string['settings_api_rate_limit_desc']      = 'Límite de velocidad por usuario de Moodle para prevenir el abuso de la API.';
-$string['settings_api_timeout']              = 'Tiempo de espera de la solicitud API (segundos)';
-$string['settings_api_timeout_desc']         = 'Tiempo máximo de espera para una respuesta de OpenAI.';
-$string['settings_apikeys_heading']          = 'Claves API de OpenAI';
-$string['settings_apikeys_heading_desc']     = 'Estas claves se almacenan encriptadas.';
-$string['settings_cost_estimate_desc']       = 'Coste estimado por sesión completa de 10 minutos:<br/>GPT-4o: ~$0.05–$0.15 USD &nbsp;|&nbsp; GPT-4o mini: ~$0.01–$0.03 USD<br/>TTS: ~$0.01 por respuesta del avatar';
-$string['settings_cost_estimate_heading']    = 'Estimaciones de coste';
-$string['settings_enable_gpt4o']             = 'Activar GPT-4o';
-$string['settings_enable_gpt4o_desc']        = 'GPT-4o — máxima calidad, mayor coste.';
-$string['settings_enable_gpt4o_mini']        = 'Activar GPT-4o mini';
-$string['settings_enable_gpt4o_mini_desc']   = 'GPT-4o mini — buena calidad, menor coste.';
-$string['settings_gdpr_heading']             = 'Aviso RGPD';
-$string['settings_gdpr_heading_desc']        = 'Este aviso se muestra a los participantes antes de comenzar.';
-$string['settings_gdpr_notice_text']         = 'Texto del aviso RGPD';
-$string['settings_gdpr_notice_text_desc']    = 'Texto HTML mostrado a los participantes.';
-$string['settings_models_heading']           = 'Modelos de IA disponibles';
-$string['settings_models_heading_desc']      = 'Selecciona los modelos que los profesores pueden elegir.';
-$string['settings_openai_apikey']            = 'Clave API principal de OpenAI';
-$string['settings_openai_apikey_desc']       = 'Tu clave API de OpenAI. Usada para GPT-4o y TTS.';
-$string['settings_openai_apikey_secondary']  = 'Clave API secundaria de OpenAI (opcional)';
-$string['settings_openai_apikey_secondary_desc'] = 'Si está configurada, las llamadas TTS usarán esta clave.';
-$string['settings_safety_content_filter']    = 'Activar moderación de contenido de OpenAI';
-$string['settings_safety_content_filter_desc'] = 'Ejecuta todo el contenido del usuario a través de la API de Moderación de OpenAI antes de enviarlo a GPT.';
-$string['settings_safety_max_tokens']        = 'Máximo de tokens por llamada API';
-$string['settings_safety_max_tokens_desc']   = 'Límite estricto de tokens de salida para todas las llamadas API.';
-$string['settings_security_heading']         = 'Seguridad';
-$string['settings_security_heading_desc']    = 'Configura los filtros de seguridad aplicados a todas las llamadas de IA.';
-$string['settings_storage_heading']          = 'Almacenamiento y retención';
-$string['settings_storage_heading_desc']     = 'Configura los límites de almacenamiento de archivos.';
-
-$string['start_activity']      = 'Estoy listo para comenzar';
-
-$string['submission']          = 'Entrega';
-$string['submission_deleted']  = 'Entrega eliminada.';
-
-$string['submissionnotification_body']     = <<<'EOT'
-Un estudiante ({$a->studentname}) ha completado '{$a->activityname}' en '{$a->coursename}' y su sesión está lista para tu revisión.
-
-Ver entregas: {$a->link}
-EOT;
+Ver entregas: {$a->link}';
 $string['submissionnotification_bodyhtml'] = '<p>El estudiante <strong>{$a->studentname}</strong> ha completado <em>{$a->activityname}</em> y su sesión está lista para revisión.</p><p><a href="{$a->link}">Ver entregas</a></p>';
-$string['submissionnotification_small']    = 'Nueva entrega: {$a->activityname}';
-$string['submissionnotification_subject']  = 'Nueva entrega para revisión: {$a->activityname}';
-$string['submissions_heading']             = 'Entregas';
-
+$string['submissionnotification_small'] = 'Nueva entrega: {$a->activityname}';
+$string['submissionnotification_subject'] = 'Nueva entrega para revisión: {$a->activityname}';
+$string['submissions_heading'] = 'Entregas';
+$string['task_close_expired_sessions'] = 'AI Roleplay: cerrar las sesiones cuyo tiempo se ha agotado';
 $string['task_evaluate_submission'] = 'AI Roleplay: Generar evaluación final';
-
-$string['unlimited']           = 'Ilimitado';
-
-$string['voice_alloy']   = 'Alloy — versátil, neutro';
-$string['voice_echo']    = 'Echo — resonante, masculino';
-$string['voice_fable']   = 'Fable — expresivo, acento británico';
-$string['voice_nova']    = 'Nova — cálido, femenino';
-$string['voice_onyx']    = 'Onyx — profundo, autoritario';
+$string['teacher_view_submissions'] = 'Ver y calificar los intentos de los estudiantes';
+$string['testconnection'] = 'Probar la conexión con la IA';
+$string['testconnection_chat'] = 'Modelo de chat {$a}';
+$string['testconnection_check'] = 'Comprobación';
+$string['testconnection_desc'] = 'Envía una petición de prueba de una palabra al proveedor de chat y al de voz configurados, con los ajustes guardados. Cuesta una fracción de céntimo.';
+$string['testconnection_ok'] = 'Respondió en {$a->ms} ms: «{$a->reply}»';
+$string['testconnection_run'] = 'Ejecutar la prueba de conexión';
+$string['testconnection_tts'] = 'Proveedor de voz ({$a})';
+$string['testconnection_tts_browser'] = 'Las voces se generan en el navegador del estudiante; no hay nada que probar en el servidor.';
+$string['testconnection_tts_ok'] = 'Se generaron {$a->bytes} de audio {$a->mime}.';
+$string['timeclose'] = 'Cerrar sesiones a partir de';
+$string['timeclose_help'] = 'A partir de esta fecha los estudiantes ya no pueden iniciar una sesión. Una sesión ya en curso se puede terminar.';
+$string['timeopen'] = 'Permitir sesiones desde';
+$string['timeopen_help'] = 'Los estudiantes no pueden iniciar una sesión antes de esta fecha.';
+$string['transcript_withdrawn'] = 'El estudiante retiró su consentimiento, por lo que la conversación se ha borrado. La nota se conserva.';
+$string['tts_provider_browser'] = 'Voces del navegador (gratis, sin API key; la calidad depende del dispositivo)';
+$string['tts_provider_gemini'] = 'Google Gemini (requiere clave de Gemini)';
+$string['tts_provider_none'] = 'Sin voz (los avatares responden con texto en pantalla)';
+$string['tts_provider_openai'] = 'OpenAI (requiere clave de OpenAI)';
+$string['typed_reply_label'] = 'Tu respuesta';
+$string['typed_reply_placeholder'] = 'Escribe tu respuesta y pulsa Intro';
+$string['typed_reply_send'] = 'Enviar';
+$string['typed_reply_toggle'] = '¿No puedes usar el micrófono? Escribe tu respuesta';
+$string['unlimited'] = 'Ilimitado';
+$string['voice_alloy'] = 'Alloy — versátil, neutro';
+$string['voice_aoede'] = 'Aoede — ligero, desenfadado';
+$string['voice_ash'] = 'Ash — cálido, natural';
+$string['voice_auto'] = 'Automática (voz del navegador en el idioma del curso)';
+$string['voice_charon'] = 'Charon — informativo, masculino';
+$string['voice_coral'] = 'Coral — femenino, expresivo';
+$string['voice_echo'] = 'Echo — resonante, masculino';
+$string['voice_fable'] = 'Fable — expresivo, acento británico';
+$string['voice_fenrir'] = 'Fenrir — enérgico, entusiasta';
+$string['voice_kore'] = 'Kore — firme, femenino';
+$string['voice_leda'] = 'Leda — juvenil, femenino';
+$string['voice_nova'] = 'Nova — cálido, femenino';
+$string['voice_onyx'] = 'Onyx — profundo, autoritario';
+$string['voice_orus'] = 'Orus — firme, masculino';
+$string['voice_puck'] = 'Puck — animado, juguetón';
+$string['voice_sage'] = 'Sage — sereno, reflexivo';
 $string['voice_shimmer'] = 'Shimmer — suave, claro';
-
-$string['warning_1min']  = '⚠️ 1 minuto restante';
-$string['warning_2min']  = '⚠️ 2 minutos restantes';
-
-$string['workflow_inreview']        = 'En revisión';
-$string['workflow_readyforrelease'] = 'Listo para publicar';
-$string['workflow_released']        = 'Publicado';
-
-$string['your_grade']       = 'Tu calificación:';
-$string['your_role_label']  = 'Tu rol en este escenario:';
+$string['voice_zephyr'] = 'Zephyr — brillante, claro';
+$string['warning_1min'] = 'Queda 1 minuto';
+$string['workflow_inreview'] = 'En revisión';
+$string['workflow_released'] = 'Publicado';
+$string['you_label'] = 'Tú';
+$string['your_grade'] = 'Tu calificación:';
+$string['your_role_label'] = 'Tu rol en este escenario:';

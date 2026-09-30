@@ -36,17 +36,15 @@ class override_form extends \moodleform {
      * Defines the form fields.
      */
     public function definition(): void {
-        global $DB;
-
         $mform      = $this->_form;
         $cmid       = $this->_customdata['cmid'];
         $airoleplay = $this->_customdata['airoleplay'];
         $context    = $this->_customdata['context'];
 
-        $mform->addElement('hidden', 'id', 0);
-        $mform->addElement('hidden', 'cmid', $cmid);
+        // The page reads the course module id from 'id'. A hidden field with
+        // any other value would override it on submit, so it carries the cmid.
+        $mform->addElement('hidden', 'id', $cmid);
         $mform->setType('id', PARAM_INT);
-        $mform->setType('cmid', PARAM_INT);
 
         // Override type.
         $types = [
@@ -56,11 +54,26 @@ class override_form extends \moodleform {
         $mform->addElement('select', 'overridetype', get_string('override_type', 'mod_airoleplay'), $types);
         $mform->setDefault('overridetype', 'user');
 
-        // User selector.
-        $enrolledusers = get_enrolled_users($context, 'mod/airoleplay:submit');
-        $useroptions   = [0 => get_string('choosedots')];
+        // User selector. Identity fields (email...) are shown only as the site
+        // "Show user identity" setting and the viewer's capabilities allow.
+        $identityfields = \core_user\fields::get_identity_fields($context, false);
+        $userfields     = \core_user\fields::for_identity($context, false)->with_name()->get_sql('u');
+        $enrolledusers  = get_enrolled_users(
+            $context,
+            'mod/airoleplay:submit',
+            0,
+            'u.id' . $userfields->selects,
+            'u.lastname, u.firstname'
+        );
+        $useroptions = [0 => get_string('choosedots')];
         foreach ($enrolledusers as $u) {
-            $useroptions[$u->id] = fullname($u) . ' (' . $u->email . ')';
+            $identity = [];
+            foreach ($identityfields as $field) {
+                if (!empty($u->$field)) {
+                    $identity[] = s($u->$field);
+                }
+            }
+            $useroptions[$u->id] = fullname($u) . ($identity ? ' (' . implode(', ', $identity) . ')' : '');
         }
         $mform->addElement('select', 'userid', get_string('override_user', 'mod_airoleplay'), $useroptions);
         $mform->hideIf('userid', 'overridetype', 'eq', 'group');
@@ -69,13 +82,14 @@ class override_form extends \moodleform {
         $groups       = groups_get_all_groups($airoleplay->course);
         $groupoptions = [0 => get_string('choosedots')];
         foreach ($groups as $g) {
-            $groupoptions[$g->id] = format_string($g->name);
+            $groupoptions[$g->id] = format_string($g->name, true, ['context' => $context]);
         }
         $mform->addElement('select', 'groupid', get_string('override_group', 'mod_airoleplay'), $groupoptions);
         $mform->hideIf('groupid', 'overridetype', 'eq', 'user');
 
         // Maximum attempts.
-        $attemptsoptions = ['' => get_string('default')] + array_combine(range(1, 20), range(1, 20));
+        $attemptsoptions = ['' => get_string('default')] + array_combine(range(1, 20), range(1, 20))
+            + [0 => get_string('unlimited', 'mod_airoleplay')];
         $mform->addElement('select', 'max_attempts', get_string('override_maxattempts', 'mod_airoleplay'), $attemptsoptions);
 
         // Open date.
@@ -105,6 +119,8 @@ class override_form extends \moodleform {
      * @return array Validation errors keyed by field name.
      */
     public function validation($data, $files): array {
+        global $DB;
+
         $errors = parent::validation($data, $files);
 
         if ($data['overridetype'] === 'user' && empty($data['userid'])) {
@@ -115,8 +131,29 @@ class override_form extends \moodleform {
         }
 
         // At least one override field must be set.
-        if (empty($data['max_attempts']) && empty($data['timeopen']) && empty($data['timeclose'])) {
+        if ((string)($data['max_attempts'] ?? '') === '' && empty($data['timeopen']) && empty($data['timeclose'])) {
             $errors['max_attempts'] = get_string('required');
+        }
+        if (!empty($data['timeopen']) && !empty($data['timeclose']) && $data['timeclose'] <= $data['timeopen']) {
+            $errors['timeclose'] = get_string('error_close_before_open', 'mod_airoleplay');
+        }
+
+        // One override per user and per group: the settings resolver reads a
+        // single user override, so a second one would be silently ignored.
+        $field = $data['overridetype'] === 'user' ? 'userid' : 'groupid';
+        if (!empty($data[$field])) {
+            $duplicate = $DB->record_exists_select(
+                'airoleplay_overrides',
+                "airoleplay = :airoleplay AND {$field} = :value AND id <> :id",
+                [
+                    'airoleplay' => $this->_customdata['airoleplay']->id,
+                    'value'      => (int)$data[$field],
+                    'id'         => (int)($this->_customdata['overrideid'] ?? 0),
+                ]
+            );
+            if ($duplicate) {
+                $errors[$field] = get_string('override_duplicate', 'mod_airoleplay');
+            }
         }
 
         return $errors;

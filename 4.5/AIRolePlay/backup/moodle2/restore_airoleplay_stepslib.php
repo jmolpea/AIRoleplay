@@ -69,9 +69,6 @@ class restore_airoleplay_activity_structure_step extends restore_activity_struct
         $oldid        = $data->id;
         $data->course = $this->get_courseid();
 
-        // Ensure the API key is blank after restore (for security — must be re-entered).
-        $data->openai_apikey = '';
-
         // Remap grouping reference into the new course's grouping set.
         if (!empty($data->groupingid)) {
             $data->groupingid = (int)$this->get_mappingid('grouping', $data->groupingid) ?: 0;
@@ -79,6 +76,8 @@ class restore_airoleplay_activity_structure_step extends restore_activity_struct
 
         $data->timemodified = $this->apply_date_offset($data->timemodified);
         $data->timecreated  = $this->apply_date_offset($data->timecreated);
+        $data->timeopen     = !empty($data->timeopen) ? $this->apply_date_offset($data->timeopen) : 0;
+        $data->timeclose    = !empty($data->timeclose) ? $this->apply_date_offset($data->timeclose) : 0;
 
         $newid = $DB->insert_record('airoleplay', $data);
         $this->apply_activity_instance($newid);
@@ -143,12 +142,20 @@ class restore_airoleplay_activity_structure_step extends restore_activity_struct
         $oldid             = $data->id;
         $data->airoleplay  = $this->get_new_parentid('airoleplay');
         $data->userid      = $this->get_mappingid('user', $data->userid);
+        if (!$data->userid) {
+            // The participant is not part of this restore: the attempt has no owner.
+            return;
+        }
         $data->grader_userid = $data->grader_userid
             ? $this->get_mappingid('user', $data->grader_userid)
             : null;
 
         $data->timecreated  = $this->apply_date_offset($data->timecreated);
         $data->timemodified = $this->apply_date_offset($data->timemodified);
+        $data->groupid = !empty($data->groupid) ? (int)$this->get_mappingid('group', $data->groupid) : 0;
+        if (!empty($data->timestarted)) {
+            $data->timestarted = $this->apply_date_offset($data->timestarted);
+        }
         if ($data->timesubmitted) {
             $data->timesubmitted = $this->apply_date_offset($data->timesubmitted);
         }

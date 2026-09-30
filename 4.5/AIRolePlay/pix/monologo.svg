@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="AI Roleplay">
+  <!-- Speech bubble with a voice waveform: monochrome glyph, no background,
+       per Moodle 4.x activity icon guidelines (theme applies the colour). -->
+  <path d="M5.5 3h13A3.5 3.5 0 0 1 22 6.5v7a3.5 3.5 0 0 1-3.5 3.5H11l-4.6 4.1a.75.75 0 0 1-1.25-.56V17H5.5A3.5 3.5 0 0 1 2 13.5v-7A3.5 3.5 0 0 1 5.5 3z"
+        fill="none" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
+  <line x1="7.5"  y1="8.6" x2="7.5"  y2="11.4" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="10.5" y1="6.8" x2="10.5" y2="13.2" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="13.5" y1="7.8" x2="13.5" y2="12.2" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16.5" y1="6"   x2="16.5" y2="14"   stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

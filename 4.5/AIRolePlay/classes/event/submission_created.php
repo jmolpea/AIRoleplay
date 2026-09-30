@@ -57,6 +57,15 @@ class submission_created extends \core\event\base {
     }
 
     /**
+     * Maps the object id when course logs are restored.
+     *
+     * @return array
+     */
+    public static function get_objectid_mapping(): array {
+        return ['db' => 'airoleplay_submissions', 'restore' => 'airoleplay_submission'];
+    }
+
+    /**
      * Returns the URL of the relevant page.
      *
      * @return \moodle_url

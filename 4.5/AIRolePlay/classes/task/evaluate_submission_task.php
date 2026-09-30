@@ -24,13 +24,18 @@
 
 namespace mod_airoleplay\task;
 
+use mod_airoleplay\local\evaluation_runner;
+
 /**
- * Background task that calls the evaluator to produce the final grade and feedback
- * after the roleplay session ends (used as fallback when synchronous eval fails).
+ * Background task that evaluates a submitted attempt.
+ *
+ * Queued as a safety net when a session closes and as the fallback when the
+ * synchronous evaluation fails. A failure is re-thrown so Moodle retries the
+ * task with back-off, instead of leaving the student waiting forever.
  *
  * Custom data keys:
  *  - submissionid (int) — airoleplay_submissions.id
- *  - cmid         (int) — course_modules.id
+ *  - cmid         (int) — course_modules.id (informational)
  */
 class evaluate_submission_task extends \core\task\adhoc_task {
     /**
@@ -46,43 +51,20 @@ class evaluate_submission_task extends \core\task\adhoc_task {
      * Executes the evaluation task.
      */
     public function execute(): void {
-        global $DB;
-
         $data         = $this->get_custom_data();
         $submissionid = (int)($data->submissionid ?? 0);
-        $cmid         = (int)($data->cmid ?? 0);
-
-        if (!$submissionid || !$cmid) {
-            mtrace('airoleplay evaluate_submission_task: missing submissionid or cmid');
+        if (!$submissionid) {
+            mtrace('airoleplay evaluate_submission_task: missing submissionid');
             return;
         }
-
-        $submission = $DB->get_record('airoleplay_submissions', ['id' => $submissionid]);
-        if (!$submission) {
-            mtrace('airoleplay evaluate_submission_task: submission not found: ' . $submissionid);
-            return;
-        }
-
-        $cm         = get_coursemodule_from_id('airoleplay', $cmid, 0, false, MUST_EXIST);
-        $course     = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-        $airoleplay = $DB->get_record('airoleplay', ['id' => $cm->instance], '*', MUST_EXIST);
-
-        \mod_airoleplay\local\submission_state::assert_status_transition(
-            (string)$submission->status,
-            'grading'
-        );
-        $DB->set_field('airoleplay_submissions', 'status', 'grading', ['id' => $submissionid]);
-        $submission->status = 'grading';
 
         try {
-            $evaluator = new \mod_airoleplay\api\evaluator();
-            $evaluator->evaluate($submission, $airoleplay, $course, $cm);
-            mtrace('airoleplay evaluate_submission_task: completed for submission ' . $submissionid);
-        } catch (\moodle_exception $e) {
+            $result = evaluation_runner::run($submissionid);
+        } catch (\Throwable $e) {
             \airoleplay_log_internal_error('evaluate_submission_task', $e, ['submissionid' => $submissionid]);
-            mtrace('airoleplay evaluate_submission_task: failed for submission ' . $submissionid . ' (see error log)');
-            \mod_airoleplay\local\submission_state::assert_status_transition('grading', 'submitted');
-            $DB->set_field('airoleplay_submissions', 'status', 'submitted', ['id' => $submissionid]);
+            mtrace('airoleplay evaluate_submission_task: failed for submission ' . $submissionid . ', will retry');
+            throw $e;
         }
+        mtrace('airoleplay evaluate_submission_task: ' . $result . ' for submission ' . $submissionid);
     }
 }

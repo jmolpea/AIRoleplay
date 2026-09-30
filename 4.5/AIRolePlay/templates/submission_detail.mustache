@@ -1,0 +1,141 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_airoleplay/submission_detail
+
+    One attempt as the teacher reviews it. The regenerate button is wired
+    by the mod_airoleplay/submissions module.
+
+    Context variables required for this template:
+    * heading - Participant name and attempt number (plain text).
+    * backurl - Link back to the submissions list.
+    * statuslabel - Attempt status.
+    * hasflags, flags - Integrity warnings (plain text).
+    * hastranscript, transcript - Turns: speaker, text, isparticipant (plain text).
+    * withdrawn - Whether the transcript was erased because consent was withdrawn.
+    * hasbreakdown, breakdown - Rubric rows: label, score, weight, feedback (plain text).
+    * canregen, submissionid, cmid - Regenerate-evaluation button.
+    * gradeform - False, or the grading form: actionurl, userid, sesskey, gradelabel, grade, feedback, canpublish, canreturn.
+
+    Example context (json):
+    {
+        "heading": "Ada Lovelace — Attempt 1",
+        "backurl": "https://example.com/mod/airoleplay/submissions.php?id=1",
+        "statuslabel": "Graded",
+        "hasflags": true,
+        "flags": ["Fewer than 20 words spoken"],
+        "hastranscript": true,
+        "transcript": [
+            {"speaker": "Alex", "text": "Hello, how can I help?", "isparticipant": false},
+            {"speaker": "Ada Lovelace", "text": "I would like a refund.", "isparticipant": true}
+        ],
+        "withdrawn": false,
+        "hasbreakdown": true,
+        "breakdown": [{"label": "Communication", "score": 80, "weight": 30, "feedback": "Clear."}],
+        "canregen": true,
+        "submissionid": 5,
+        "cmid": 1,
+        "gradeform": {
+            "actionurl": "https://example.com/mod/airoleplay/submissions.php?id=1",
+            "userid": 3,
+            "sesskey": "abc123",
+            "gradelabel": "Grade (out of 100)",
+            "grade": "80.00",
+            "feedback": "Well done.",
+            "canpublish": true,
+            "canreturn": false
+        }
+    }
+}}
+<h3>{{heading}}</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{{backurl}}" class="btn btn-sm btn-outline-secondary">← {{#str}}submissions_heading, mod_airoleplay{{/str}}</a>
+    <span class="badge bg-info text-dark">{{#str}}col_status, mod_airoleplay{{/str}}: {{statuslabel}}</span>
+</div>
+{{#hasflags}}
+<div class="alert alert-warning" role="alert">
+    <strong>{{#str}}flags_heading, mod_airoleplay{{/str}}</strong>
+    <ul class="mb-0">
+        {{#flags}}
+        <li>{{.}}</li>
+        {{/flags}}
+    </ul>
+</div>
+{{/hasflags}}
+{{#hastranscript}}
+<div class="card card-body mb-3">
+    <h5>{{#str}}conversation_log, mod_airoleplay{{/str}}</h5>
+    <div class="airoleplay-log-detail">
+        {{#transcript}}
+        <div class="transcript-item {{#isparticipant}}participant-turn{{/isparticipant}}{{^isparticipant}}avatar-turn{{/isparticipant}}">
+            <strong>{{speaker}}: </strong>{{text}}
+        </div>
+        {{/transcript}}
+    </div>
+</div>
+{{/hastranscript}}
+{{#withdrawn}}
+<div class="alert alert-info">{{#str}}transcript_withdrawn, mod_airoleplay{{/str}}</div>
+{{/withdrawn}}
+{{#hasbreakdown}}
+<div class="card card-body mb-3">
+    <h5>{{#str}}grade_breakdown, mod_airoleplay{{/str}}</h5>
+    {{#breakdown}}
+    <div class="mb-2">
+        <strong>{{label}}</strong> — {{#str}}breakdown_score, mod_airoleplay, {"score": {{score}}, "weight": {{weight}} }{{/str}}<br>
+        {{feedback}}
+    </div>
+    {{/breakdown}}
+</div>
+{{/hasbreakdown}}
+{{#canregen}}
+<div class="card card-body mb-3 border-warning">
+    <h5>{{#str}}regen_heading, mod_airoleplay{{/str}}</h5>
+    <div>
+        <button type="button" class="btn btn-sm btn-outline-warning airoleplay-regen-btn"
+            data-submissionid="{{submissionid}}" data-cmid="{{cmid}}">{{#str}}regen_evaluation, mod_airoleplay{{/str}}</button>
+    </div>
+    <div id="airoleplay-regen-status" class="mt-2" role="status"></div>
+</div>
+{{/canregen}}
+{{#gradeform}}
+<form method="post" action="{{actionurl}}">
+    <input type="hidden" name="userid" value="{{userid}}">
+    <input type="hidden" name="submissionid" value="{{submissionid}}">
+    <input type="hidden" name="sesskey" value="{{sesskey}}">
+    <div class="card card-body mb-3">
+        <h5>{{#cleanstr}}grading_header, mod_airoleplay{{/cleanstr}}</h5>
+        <div class="mb-2">
+            <label for="grade_input">{{gradelabel}}</label>
+            <input type="text" id="grade_input" name="grade" value="{{grade}}" class="form-control d-inline-block w-auto ms-2" inputmode="decimal">
+        </div>
+        <div class="mb-2">
+            <label for="feedback_input">{{#str}}feedback, mod_airoleplay{{/str}}</label>
+            <textarea id="feedback_input" name="feedback" class="form-control mt-2" rows="5">{{feedback}}</textarea>
+        </div>
+        <div>
+            {{#canpublish}}
+            <button type="submit" name="action" value="publish" class="btn btn-success me-2">{{#str}}publish_grade, mod_airoleplay{{/str}}</button>
+            {{/canpublish}}
+            <button type="submit" name="action" value="savegrade" class="btn btn-primary me-2">{{#str}}savechanges{{/str}}</button>
+            {{#canreturn}}
+            <button type="submit" name="action" value="return" class="btn btn-outline-secondary">{{#str}}return_to_review, mod_airoleplay{{/str}}</button>
+            {{/canreturn}}
+        </div>
+    </div>
+</form>
+{{/gradeform}}
