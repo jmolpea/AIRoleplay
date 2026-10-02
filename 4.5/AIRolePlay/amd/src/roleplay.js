@@ -845,13 +845,13 @@ const playServerAudio = (base64, mime) => new Promise((resolve) => {
     const playWithElement = () => {
         const url = URL.createObjectURL(new Blob([bytes], {type: mime || 'audio/mpeg'}));
         const audio = new Audio(url);
-        const done = () => {
+        const release = () => {
             URL.revokeObjectURL(url);
             finish();
         };
-        audio.onended = done;
-        audio.onerror = done;
-        audio.play().catch(done);
+        audio.onended = release;
+        audio.onerror = release;
+        audio.play().catch(release);
     };
 
     const ctx = state.audioCtx;
