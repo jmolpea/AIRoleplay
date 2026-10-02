@@ -49,3 +49,10 @@ desktop.ini
 
 # Private licensing tooling (RSA signing key) - never commit.
 licensing_private/
+
+# Internal material - kept locally, not published.
+SECURITY_AUDIT.md
+4.5/marketplace/03_precio_y_estrategia.md
+*.zip
+.claude/
+CLAUDE.md
