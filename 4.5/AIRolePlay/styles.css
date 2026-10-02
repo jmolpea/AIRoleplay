@@ -10,18 +10,18 @@
    CSS Custom Properties
    ========================================================================= */
 :root {
-    --airoleplay-primary:       #0082CA;
-    --airoleplay-success:       #28a745;
-    --airoleplay-danger:        #dc3545;
-    --airoleplay-warning:       #ffc107;
-    --airoleplay-dark:          #1a1a2e;
-    --airoleplay-dark-card:     #16213e;
-    --airoleplay-dark-surface:  #0f3460;
-    --airoleplay-text-light:    #e0e0e0;
-    --airoleplay-glow:          rgba(0, 130, 202, 0.6);
-    --airoleplay-active-glow:   rgba(66, 133, 244, 0.6);
-    --airoleplay-radius:        12px;
-    --airoleplay-transition:    0.3s ease;
+    --airoleplay-primary: #0082ca;
+    --airoleplay-success: #28a745;
+    --airoleplay-danger: #dc3545;
+    --airoleplay-warning: #ffc107;
+    --airoleplay-dark: #1a1a2e;
+    --airoleplay-dark-card: #16213e;
+    --airoleplay-dark-surface: #0f3460;
+    --airoleplay-text-light: #e0e0e0;
+    --airoleplay-glow: rgba(0, 130, 202, 0.6);
+    --airoleplay-active-glow: rgba(66, 133, 244, 0.6);
+    --airoleplay-radius: 12px;
+    --airoleplay-transition: 0.3s ease;
 }
 
 /* =========================================================================
@@ -98,7 +98,13 @@
    Roleplay Room
    ========================================================================= */
 .airoleplay-room {
-    background: linear-gradient(160deg, var(--airoleplay-dark) 0%, var(--airoleplay-dark-card) 60%, var(--airoleplay-dark-surface) 100%);
+    background:
+        linear-gradient(
+            160deg,
+            var(--airoleplay-dark) 0%,
+            var(--airoleplay-dark-card) 60%,
+            var(--airoleplay-dark-surface) 100%
+        );
     border-radius: var(--airoleplay-radius);
     padding: 1.5rem;
     color: var(--airoleplay-text-light);
@@ -123,7 +129,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 1rem;
 }
 
@@ -132,7 +138,7 @@
     font-weight: 700;
     color: #fff;
     font-variant-numeric: tabular-nums;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     padding: 0.3rem 0.8rem;
     border-radius: 8px;
 }
@@ -143,8 +149,13 @@
 }
 
 @keyframes urgentPulse {
-    0%,100% { background: rgba(220,53,69,0.2); }
-    50%     { background: rgba(220,53,69,0.5); }
+    0%,
+    100% {
+        background: rgba(220, 53, 69, 0.2);
+    }
+    50% {
+        background: rgba(220, 53, 69, 0.5);
+    }
 }
 
 /* Avatars */
@@ -170,12 +181,12 @@
     height: 130px;
     border-radius: 50%;
     overflow: hidden;
-    border: 3px solid rgba(255,255,255,0.2);
+    border: 3px solid rgba(255, 255, 255, 0.2);
     transition: box-shadow 0.3s, border-color 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .airoleplay-container .avatar-glow svg {
@@ -205,7 +216,7 @@
 .airoleplay-container .avatar-info .avatar-role {
     display: block;
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Active speaker */
@@ -221,8 +232,13 @@
 
 /* Lip sync */
 @keyframes lipSync {
-    0%,100% { transform: scaleY(1); }
-    50%     { transform: scaleY(1.4); }
+    0%,
+    100% {
+        transform: scaleY(1);
+    }
+    50% {
+        transform: scaleY(1.4);
+    }
 }
 
 .airoleplay-container .speaking .mouth {
@@ -233,7 +249,7 @@
 /* Transcript */
 .airoleplay-transcript {
     grid-column: 1;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     padding: 1rem;
     /*
@@ -242,7 +258,9 @@
      * the full 1fr row. min-height: 0 lets the row shrink so overflow-y
      * can clip cleanly when the room is at its max-height.
      */
-    height: clamp(200px, 38vh, 460px);
+    height: 38vh;
+    min-height: 200px;
+    max-height: 460px;
     overflow-y: auto;
     font-size: 0.95rem;
     line-height: 1.6;
@@ -261,13 +279,19 @@
 }
 
 .airoleplay-container .transcript-item.avatar-turn {
-    background: rgba(255,255,255,0.07);
-    border-left: 3px solid rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.07);
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
 }
 
-.airoleplay-container .transcript-item.avatar-1 { border-left-color: #e74c3c; }
-.airoleplay-container .transcript-item.avatar-2 { border-left-color: #2ecc71; }
-.airoleplay-container .transcript-item.avatar-3 { border-left-color: #f39c12; }
+.airoleplay-container .transcript-item.avatar-1 {
+    border-left-color: #e74c3c;
+}
+.airoleplay-container .transcript-item.avatar-2 {
+    border-left-color: #2ecc71;
+}
+.airoleplay-container .transcript-item.avatar-3 {
+    border-left-color: #f39c12;
+}
 
 .airoleplay-container .speaker-label {
     display: block;
@@ -275,7 +299,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
     margin-bottom: 0.25rem;
 }
 
@@ -310,7 +334,7 @@
 .airoleplay-container .participant-waveform {
     width: 100%;
     height: 40px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 4px;
     display: none;
 }
