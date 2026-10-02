@@ -7,6 +7,30 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.2] — 2026-10-02
+
+Fixes for the findings of the Moodle Plugins directory review.
+
+### Changed
+
+- **External Services instead of `ajax.php`.** The browser now talks to Moodle through six web service functions (`mod_airoleplay_start_session`, `submit_turn`, `close_session`, `finalise_session`, `get_evaluation_status`, `regenerate_evaluation`) declared in `db/services.php` and called with `core/ajax`. `ajax.php` was removed. Session, capability, licence and rate-limit checks are unchanged and live in the service classes (`classes/external/`).
+- **Default consent notice.** It now says that the *text* of the replies goes to the AI provider, that spoken replies are transcribed by the browser's speech recognition service — which may process the audio on the browser vendor's servers (Google, Microsoft or Apple) — and that students can type instead. Sites that already saved the plugin settings keep their stored notice: review *Site administration > Plugins > Activity modules > AI Roleplay > GDPR notice text*.
+
+### Fixed
+
+- **Activity index page.** `index.php` ended in "Call to undefined method … create_from_course()"; the `course_module_instance_list_viewed` event is now created the core way.
+- **Group access on regeneration.** In separate groups mode, a teacher without `moodle/site:accessallgroups` could regenerate the evaluation of a student outside their groups by sending the attempt id. The service now makes the same group check as the submissions page.
+- **Missing language strings** for the rate-limit cache definition and the two message providers (`cachedef_ratelimit`, `messageprovider:gradenotification`, `messageprovider:submissionnotification`).
+- **Privacy API.** A teacher's export now includes the attempts they graded (attempt number, grade, feedback, review state and dates — never the student's identity or conversation). The browser speech recognition service is declared as an external location.
+
+### Added
+
+- `LICENSE` file (GNU GPL v3) in the plugin root.
+- GitHub Actions workflow running `moodle-plugin-ci` on every push.
+- Unit tests for the group check of the regeneration service and for the grader export.
+
+---
+
 ## [1.0.1] — 2026-09-30
 
 ### Added

@@ -78,6 +78,7 @@ User and group **overrides** (extra attempts, different dates) are under the act
 
 - Implements the Moodle Privacy API (export and deletion). Declares every external provider.
 - Before any text leaves Moodle, the student's last name, username and email are replaced by an anonymous `STUDENT-…` token. The first name is kept so the avatars can greet the student.
+- **Voice input and the browser's speech service.** Spoken replies are transcribed by the speech recognition built into the student's browser (Web Speech API). The plugin never records, stores or sends audio, and the AI provider only receives text. However, Chrome, Edge and Safari may send the audio to their vendor's speech service (Google, Microsoft or Apple) to transcribe it, so the audio can leave the student's device. The default consent notice says so. Students can always type their replies instead of speaking.
 - Students can withdraw consent at any time; their conversations and AI feedback are deleted.
 - API keys are stored encrypted. Provider errors are logged on the server and never shown to students.
 - Rate limits per user and per site, plus a cooldown on teacher regenerations, cap AI spend.

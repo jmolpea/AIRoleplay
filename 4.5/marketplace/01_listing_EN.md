@@ -116,7 +116,13 @@ The licence key is bound to the exact site URL (wwwroot). Need a key for a test 
 
 ---
 
-## What's new in 1.0.1 (release notes field)
+## What's new in 1.0.2 (release notes field)
+
+- Fixes from the Moodle Plugins directory review: the activity index page no longer fails; teachers in separate groups can only regenerate evaluations of their own groups; missing language strings added; LICENSE file included.
+- The browser now talks to Moodle through External Services (`core/ajax`) instead of a custom `ajax.php` endpoint.
+- Privacy: the consent notice and the documentation now explain that spoken replies are transcribed by the browser's speech service, which may process audio on the browser vendor's servers; teachers' data exports include the attempts they graded.
+
+## What's new in 1.0.1
 
 - Faster, more reliable conversations: a stalled voice response can no longer hold a turn for two minutes. Speech is retried within seconds, live turns have a strict time limit, and moderation runs only on student replies.
 - New site setting *Teacher review before release*: choose teacher review (default) or automatic publishing for new activities, and optionally lock the choice for every activity.

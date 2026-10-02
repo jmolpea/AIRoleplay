@@ -44,15 +44,10 @@ export const init = () => {
             button.disabled = true;
             utils.showStatus(statusEl, await getString('regen_running', 'mod_airoleplay'), 'info');
             try {
-                const data = await utils.ajaxPost(
-                    M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
-                    {
-                        action: 'regen_evaluation',
-                        cmid: parseInt(button.dataset.cmid, 10),
-                        submissionid: parseInt(button.dataset.submissionid, 10),
-                    },
-                    M.cfg.sesskey
-                );
+                const data = await utils.callService('mod_airoleplay_regenerate_evaluation', {
+                    cmid: parseInt(button.dataset.cmid, 10),
+                    submissionid: parseInt(button.dataset.submissionid, 10),
+                });
                 if (data.success) {
                     utils.showStatus(statusEl, await getString('regen_success', 'mod_airoleplay'), 'success');
                     setTimeout(() => window.location.reload(), 1000);

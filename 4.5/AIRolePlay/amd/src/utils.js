@@ -21,28 +21,30 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+import Ajax from 'core/ajax';
+
 /**
- * Makes a JSON POST request to the plugin's AJAX endpoint.
+ * Calls one of the plugin's external services.
  *
- * @param {string} url Endpoint URL.
- * @param {Object} data Payload.
- * @param {string} sesskey Moodle session key.
- * @returns {Promise<Object>} Decoded JSON response.
+ * Resolves with the service result plus success: true. A Moodle exception
+ * (capability, state, provider error...) resolves with success: false, the
+ * translated message and the error code, so callers can show it. Network
+ * failures reject.
+ *
+ * @param {string} methodname Service name, e.g. mod_airoleplay_submit_turn.
+ * @param {Object} args Service arguments.
+ * @returns {Promise<Object>}
  */
-export const ajaxPost = async(url, data, sesskey) => {
-    const response = await fetch(url, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify(Object.assign({}, data, {sesskey: sesskey})),
-    });
-    if (!response.ok) {
-        throw new Error('HTTP ' + response.status);
+export const callService = async(methodname, args) => {
+    try {
+        const data = await Ajax.call([{methodname: methodname, args: args}])[0];
+        return Object.assign({success: true}, data);
+    } catch (ex) {
+        if (ex && ex.errorcode) {
+            return {success: false, error: ex.message, errorcode: ex.errorcode};
+        }
+        throw ex;
     }
-    return response.json();
 };
 
 /**

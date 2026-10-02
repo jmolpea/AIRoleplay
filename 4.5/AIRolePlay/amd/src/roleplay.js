@@ -94,16 +94,15 @@ const status = (message, type = 'info') => utils.showStatus($('airoleplay_status
 const speechRecognitionCtor = () => window.SpeechRecognition || window.webkitSpeechRecognition || null;
 
 /**
- * Posts an action to the plugin's AJAX endpoint.
+ * Calls one of the plugin's session services for the current attempt.
  *
- * @param {string} action Action name.
- * @param {Object} data Extra payload.
+ * @param {string} service Service name without the component prefix.
+ * @param {Object} data Extra arguments.
  * @returns {Promise<Object>}
  */
-const call = (action, data = {}) => utils.ajaxPost(
-    M.cfg.wwwroot + '/mod/airoleplay/ajax.php',
-    Object.assign({action: action, cmid: cfg.cmid, submissionid: cfg.submissionid}, data),
-    M.cfg.sesskey
+const call = (service, data = {}) => utils.callService(
+    'mod_airoleplay_' + service,
+    Object.assign({cmid: cfg.cmid, submissionid: cfg.submissionid || 0}, data)
 );
 
 /**
@@ -256,7 +255,7 @@ const startSession = async() => {
 
     let data;
     try {
-        data = await call('roleplay_opening');
+        data = await call('start_session');
     } catch (e) {
         status(t('error_generic'), 'danger');
         state.sessionActive = false;
@@ -335,7 +334,7 @@ const endSession = async() => {
     status(t('roleplay_ending'));
 
     try {
-        const data = await call('roleplay_closing');
+        const data = await call('close_session');
         if (data.success && data.text) {
             await deliverAvatarTurn(data);
         }
@@ -362,7 +361,7 @@ const finalise = async() => {
     const evalStatus = $('airoleplay_eval_status');
 
     try {
-        const data = await call('roleplay_finalise');
+        const data = await call('finalise_session');
         if (data.success && data.evaluation_status === 'graded') {
             utils.showStatus(evalStatus, t('evaluation_complete'), 'success');
             setTimeout(() => window.location.reload(), 1500);
@@ -387,7 +386,7 @@ const pollEvaluation = (evalStatus, checks) => {
     }
     setTimeout(async() => {
         try {
-            const data = await call('check_evaluation');
+            const data = await call('get_evaluation_status');
             if (data.status === 'graded') {
                 utils.showStatus(evalStatus, t('evaluation_complete'), 'success');
                 setTimeout(() => window.location.reload(), 1500);
@@ -730,7 +729,7 @@ const submitResponse = async(text) => {
     state.rotation++;
 
     try {
-        const data = await call('roleplay_turn', {
+        const data = await call('submit_turn', {
             response: text,
             // eslint-disable-next-line camelcase
             suggested_avatar: suggested,
@@ -846,13 +845,13 @@ const playServerAudio = (base64, mime) => new Promise((resolve) => {
     const playWithElement = () => {
         const url = URL.createObjectURL(new Blob([bytes], {type: mime || 'audio/mpeg'}));
         const audio = new Audio(url);
-        const done = () => {
+        const release = () => {
             URL.revokeObjectURL(url);
             finish();
         };
-        audio.onended = done;
-        audio.onerror = done;
-        audio.play().catch(done);
+        audio.onended = release;
+        audio.onerror = release;
+        audio.play().catch(release);
     };
 
     const ctx = state.audioCtx;

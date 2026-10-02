@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_airoleplay';
-$plugin->version   = 2026093001;
+$plugin->version   = 2026100200;
 $plugin->requires  = 2024100700; // Moodle 4.5.
 $plugin->supported = [405, 503];  // Moodle 4.5 LTS to 5.3 LTS.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.1';
+$plugin->release   = '1.0.2';

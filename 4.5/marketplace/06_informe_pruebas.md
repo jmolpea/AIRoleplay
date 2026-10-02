@@ -67,3 +67,23 @@ Actualización 1.0.0 → 1.0.1 correcta en las cinco versiones (crea el ajuste `
 ## Incidencias del entorno (no son del plugin)
 - En el curso 8 de tu Moodle local hay actividades `peerreviewstudio` y `decisionarena` cuyo código ya no está instalado; rompen el recálculo del libro de calificaciones de ese curso. El plugin ahora lo tolera, pero conviene limpiarlo.
 - `$CFG->noemailever = 1` en local: no se envían correos (esperado en desarrollo).
+
+---
+
+# Pruebas de la 1.0.2 (2026-10-02) — correcciones de la revisión de Moodle
+
+| Comprobación | Resultado |
+|---|---|
+| Moodle Code Checker (`moodle` y `moodle-extra`) sobre todo el plugin | 0 errores, 0 avisos |
+| moodle-plugin-ci: phplint, phpcs `--max-warnings 0`, phpdoc `--max-warnings 0`, validate, savepoints | Todo OK (sobre Moodle 5.3) |
+| ESLint + compilación `grunt amd` (Moodle 4.5) | 0 errores |
+| PHPUnit (89 tests, 236 aserciones; 4 tests nuevos) | OK en Moodle 4.5, 5.0, 5.1, 5.2 y 5.3 |
+| ZIP 1.0.2 | Incluye `LICENSE`, `db/services.php`, `classes/external/`; no incluye `ajax.php` |
+
+## Pruebas funcionales (Moodle 4.5, navegador, proveedor de IA real)
+- `index.php` lista las actividades sin error (también comprobado en Moodle 5.3).
+- Sesión completa de estudiante por los nuevos servicios: `start_session` (apertura con audio), `submit_turn`, recarga y reanudación, `close_session` al agotarse el tiempo, `finalise_session` → intento calificado y resultados en pantalla.
+- Profesor: `regenerate_evaluation` regenera la evaluación; la segunda llamada devuelve el mensaje de espera (`regen_cooldown`).
+- Control de grupos en la regeneración: cubierto por test unitario (profesor de otro grupo → `nopermissions`).
+
+No ejecutado en esta ronda: mustache lint y PHPMD de moodle-plugin-ci (sin npm en el contenedor de pruebas; las plantillas no han cambiado), el diálogo de confirmación de «Regenerar» en navegador real (el navegador sin cabeza no lo mostró; se llamó al servicio directamente) y la entrada por voz con micrófono.

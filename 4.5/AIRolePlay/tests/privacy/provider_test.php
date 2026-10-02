@@ -79,7 +79,7 @@ final class provider_test extends provider_testcase {
         $names = array_map(fn($item) => $item->get_name(), $collection->get_collection());
         $expected = [
             'airoleplay_submissions', 'airoleplay_messages', 'airoleplay_overrides',
-            'openai', 'anthropic', 'gemini', 'deepseek',
+            'openai', 'anthropic', 'gemini', 'deepseek', 'speechrecognition',
         ];
         foreach ($expected as $name) {
             $this->assertContains($name, $names);
@@ -98,6 +98,35 @@ final class provider_test extends provider_testcase {
 
         $this->export_context_data_for_user($user->id, $this->context, 'mod_airoleplay');
         $this->assertTrue(writer::with_context($this->context)->has_any_data());
+    }
+
+    public function test_export_includes_attempts_graded_by_teacher(): void {
+        global $DB;
+        [$student, $submission] = $this->create_student_with_attempt();
+        $teacher = $this->getDataGenerator()->create_and_enrol($this->course, 'editingteacher');
+        $DB->update_record('airoleplay_submissions', (object)[
+            'id'             => $submission->id,
+            'status'         => 'graded',
+            'final_grade'    => 72.5,
+            'final_feedback' => 'Clear and polite.',
+            'grader_userid'  => $teacher->id,
+            'timegraded'     => time(),
+        ]);
+
+        $contextlist = provider::get_contexts_for_userid($teacher->id);
+        $this->assertEquals([$this->context->id], $contextlist->get_contextids());
+
+        $this->export_context_data_for_user($teacher->id, $this->context, 'mod_airoleplay');
+        $data = writer::with_context($this->context)->get_data([
+            get_string('pluginname', 'mod_airoleplay'),
+            get_string('privacy:gradedattempts', 'mod_airoleplay'),
+            get_string('submission', 'mod_airoleplay') . ' ' . $submission->id,
+        ]);
+        $this->assertEquals(72.5, (float)$data->final_grade);
+        $this->assertSame('Clear and polite.', $data->final_feedback);
+        // Nothing that identifies the student or reproduces the conversation.
+        $this->assertObjectNotHasProperty('userid', $data);
+        $this->assertObjectNotHasProperty('roleplay_transcript', $data);
     }
 
     public function test_delete_for_one_user_keeps_others(): void {
