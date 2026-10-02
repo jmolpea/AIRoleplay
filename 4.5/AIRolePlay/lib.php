@@ -25,7 +25,7 @@
 // Concurrency helpers.
 
 /**
- * Acquires a per-submission lock so concurrent ajax workers cannot duplicate
+ * Acquires a per-submission lock so concurrent web service workers cannot duplicate
  * state transitions or trigger the evaluator twice.
  *
  * @param int $submissionid The airoleplay_submissions.id to guard.
@@ -419,7 +419,7 @@ function airoleplay_start_new_attempt(stdClass $airoleplay, int $userid, int $gr
  * A short identifier-only line is always written; the exception detail (which
  * may quote provider responses) is added only in developer debug mode.
  *
- * @param string     $context Short, free-text context (e.g. "ajax dispatch").
+ * @param string     $context Short, free-text context (e.g. "service_submit_turn").
  * @param \Throwable $e       The caught exception.
  * @param array      $ids     Optional integer identifiers to include in the
  *                            log line (submission id, cmid, ...).

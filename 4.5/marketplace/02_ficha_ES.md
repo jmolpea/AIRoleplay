@@ -32,6 +32,11 @@ Apellido, usuario y correo se sustituyen por un identificador anónimo antes de 
 ### Requisitos
 Moodle 4.5 a 5.3 · HTTPS · clave API de un proveedor · cron activo · clave de licencia para la URL del sitio · voz en Chrome, Edge o Safari (en otros navegadores, respuesta escrita).
 
+### Novedades de la 1.0.2
+- Correcciones de la revisión del directorio de plugins de Moodle: la página de índice de actividades ya no falla; en grupos separados, el profesorado solo puede regenerar evaluaciones de sus propios grupos; cadenas de idioma que faltaban; fichero LICENSE incluido.
+- El navegador se comunica con Moodle mediante Servicios Externos (`core/ajax`) en lugar de un `ajax.php` propio.
+- Privacidad: el aviso de consentimiento explica que las respuestas habladas las transcribe el servicio de voz del navegador, que puede procesar el audio en los servidores de su fabricante; la exportación de datos del profesorado incluye los intentos que calificó.
+
 ### Novedades de la 1.0.1
 - Conversaciones más rápidas y fiables: una respuesta de voz colgada ya no bloquea el turno dos minutos; se reintenta en segundos y cada turno tiene un límite de tiempo.
 - Nuevo ajuste de sitio «Revisión del profesor antes de publicar»: revisión (por defecto) o publicación automática, con opción de bloquearlo para todas las actividades.

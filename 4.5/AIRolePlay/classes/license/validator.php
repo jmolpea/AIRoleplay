@@ -26,7 +26,7 @@
  * generate_license.php. Each plugin has its own keypair.
  *
  * Enforcement: when the license is missing, invalid, or expired the activity is
- * blocked (view.php shows a message, ajax.php returns an error, and the OpenAI
+ * blocked (view.php shows a message, the external services return an error, and the OpenAI
  * client refuses to run). A site administrator can always reach the plugin
  * settings to paste a key.
  *
@@ -102,7 +102,7 @@ class validator {
 
     /**
      * Return a user-facing message for non-valid license states, or null when
-     * the license is valid. Shown on the blocked activity page and AJAX errors.
+     * the license is valid. Shown on the blocked activity page.
      *
      * @return string|null
      */
@@ -123,6 +123,28 @@ class validator {
 
             default: // STATUS_VALID.
                 return null;
+        }
+    }
+
+    /**
+     * Stops the request when the license is not valid.
+     *
+     * @throws \moodle_exception carrying the same message as get_banner().
+     */
+    public static function require_valid(): void {
+        global $CFG;
+
+        $result = self::check();
+
+        switch ($result->status) {
+            case self::STATUS_MISSING:
+                throw new \moodle_exception('license_banner_missing', self::COMPONENT);
+
+            case self::STATUS_INVALID:
+                throw new \moodle_exception('license_banner_invalid', self::COMPONENT, '', rtrim($CFG->wwwroot, '/'));
+
+            case self::STATUS_EXPIRED:
+                throw new \moodle_exception('license_banner_expired', self::COMPONENT, '', $result->expires);
         }
     }
 

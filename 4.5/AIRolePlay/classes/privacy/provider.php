@@ -43,6 +43,8 @@ use core_privacy\local\request\writer;
  * Data sent to external service:
  *  - The configured AI provider (OpenAI, Anthropic, Google or DeepSeek): the
  *    participant's first name, transcribed replies and the conversation for evaluation
+ *  - The browser's own speech recognition service (Web Speech API), which may
+ *    receive the audio of spoken replies; the plugin itself never handles audio
  */
 class provider implements
     \core_privacy\local\metadata\provider,
@@ -129,6 +131,15 @@ class provider implements
         $collection->add_external_location_link('anthropic', $aifields, 'privacy:metadata:anthropic');
         $collection->add_external_location_link('gemini', $aifields, 'privacy:metadata:gemini');
         $collection->add_external_location_link('deepseek', $aifields, 'privacy:metadata:deepseek');
+
+        // Voice input: the browser's Web Speech API transcribes the spoken
+        // replies, and most browsers do it on their vendor's servers. The
+        // plugin only receives the resulting text.
+        $collection->add_external_location_link(
+            'speechrecognition',
+            ['audio' => 'privacy:metadata:speechrecognition:audio'],
+            'privacy:metadata:speechrecognition'
+        );
 
         return $collection;
     }
@@ -272,6 +283,36 @@ class provider implements
                         (object)['messages' => $msgdata]
                     );
                 }
+            }
+
+            // Attempts of other users that this user graded: what the grader
+            // set, without the student's identity or conversation.
+            $graded = $DB->get_records_select(
+                'airoleplay_submissions',
+                'airoleplay = :airoleplay AND grader_userid = :grader AND userid <> :userid',
+                ['airoleplay' => $cm->instance, 'grader' => $userid, 'userid' => $userid],
+                'id ASC'
+            );
+            foreach ($graded as $submission) {
+                writer::with_context($context)->export_data(
+                    [
+                        get_string('pluginname', 'mod_airoleplay'),
+                        get_string('privacy:gradedattempts', 'mod_airoleplay'),
+                        get_string('submission', 'mod_airoleplay') . ' ' . $submission->id,
+                    ],
+                    (object)[
+                        'attempt'        => $submission->attempt,
+                        'workflow_state' => $submission->workflow_state,
+                        'final_grade'    => $submission->final_grade,
+                        'final_feedback' => $submission->final_feedback,
+                        'timemodified'   => $submission->timemodified
+                            ? transform::datetime($submission->timemodified)
+                            : '-',
+                        'timegraded'     => $submission->timegraded
+                            ? transform::datetime($submission->timegraded)
+                            : '-',
+                    ]
+                );
             }
 
             // Per-user overrides for this activity.
